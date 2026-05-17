@@ -8,354 +8,152 @@
     <style>
         :root {
             --bg-dark: #0f0720;
-            --card-bg: rgba(76, 29, 149, 0.4); /* 🔧 Убрал backdrop-filter */
+            --card-bg: rgba(76, 29, 149, 0.25);
             --primary-gradient: linear-gradient(135deg, #a855f7 0%, #4c1d95 100%);
             --accent-glow: #d8b4fe;
             --text-main: #ffffff;
             --text-secondary: #cbd5e1;
         }
-
-        * {
-            box-sizing: border-box;
-            -webkit-tap-highlight-color: transparent;
-        }
-
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         body {
-            margin: 0;
-            padding: 0;
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-            background-color: var(--bg-dark);
-            color: var(--text-main);
-            overflow-x: hidden;
-            overflow-y: auto; /* 🔧 Вертикальный скролл */
-            min-height: 100vh;
-            position: relative;
-            width: 100%;
+            margin: 0; padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: var(--bg-dark); color: var(--text-main);
+            overflow-x: hidden; overflow-y: auto;
+            min-height: 100vh; position: relative; width: 100%;
         }
-
-        /* --- ЗВЕЗДНЫЙ ФОН (оптимизированный) --- */
         .stars-container {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: -1;
-            background: radial-gradient(ellipse at bottom, #1b2735 0%, #090a0f 100%);
-            overflow: hidden;
-            pointer-events: none;
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            z-index: -1; background: radial-gradient(ellipse at bottom, #1b2735 0%, #090a0f 100%);
+            overflow: hidden; pointer-events: none;
         }
-
         .star {
-            position: absolute;
-            background: white;
-            border-radius: 50%;
-            opacity: 0.6;
-            animation: twinkle infinite ease-in-out;
-            will-change: opacity, transform; /* 🔧 Оптимизация анимации */
+            position: absolute; background: white; border-radius: 50%;
+            opacity: 0.6; animation: twinkle infinite ease-in-out;
+            will-change: opacity;
         }
-
-        @keyframes twinkle {
-            0%, 100% { opacity: 0.3; }
-            50% { opacity: 0.8; }
-        }
-
+        @keyframes twinkle { 0%, 100% { opacity: 0.2; } 50% { opacity: 0.9; } }
         .background-glow {
-            position: fixed;
-            top: -20%;
-            left: -20%;
-            width: 140%;
-            height: 140%;
+            position: fixed; top: -20%; left: -20%; width: 140%; height: 140%;
             background: radial-gradient(circle at center, rgba(168, 85, 247, 0.1) 0%, rgba(15, 7, 32, 0) 70%);
-            z-index: -1;
-            pointer-events: none;
+            z-index: -1; pointer-events: none;
         }
-
         .container {
-            padding: 12px;
-            width: 100%;
-            max-width: 100%;
-            margin: 0 auto;
-            padding-bottom: 90px; /* 🔧 Место для кнопки */
-            position: relative;
-            z-index: 1;
+            padding: 12px; width: 100%; max-width: 100%; margin: 0 auto;
+            padding-bottom: 90px; position: relative; z-index: 1;
         }
-
         h2 {
-            font-size: 15px;
-            font-weight: 600;
-            margin: 0 0 10px 0;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            color: var(--accent-glow);
+            font-size: 15px; font-weight: 600; margin: 0 0 10px 0;
+            display: flex; align-items: center; gap: 6px; color: var(--accent-glow);
         }
-
         .card {
-            background: var(--card-bg);
-            /* 🔧 Убрал backdrop-filter для производительности */
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 16px;
-            padding: 14px;
-            margin-bottom: 12px;
-            width: 100%;
+            background: var(--card-bg); border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px; padding: 14px; margin-bottom: 12px; width: 100%;
         }
-
         label {
-            display: block;
-            font-size: 12px;
-            color: var(--text-secondary);
-            margin-bottom: 8px;
-            margin-top: 10px;
+            display: block; font-size: 12px; color: var(--text-secondary);
+            margin-bottom: 8px; margin-top: 10px;
         }
-        
-        label:first-child {
-            margin-top: 0;
-        }
-
+        label:first-child { margin-top: 0; }
         .chips-container {
-            display: flex;
-            gap: 6px;
-            overflow-x: auto;
-            padding-bottom: 4px;
-            scrollbar-width: none;
-            width: 100%;
-            -webkit-overflow-scrolling: touch; /* 🔧 Плавный скролл на iOS */
+            display: flex; gap: 6px; overflow-x: auto; padding-bottom: 4px;
+            scrollbar-width: none; width: 100%; -webkit-overflow-scrolling: touch;
         }
         .chips-container::-webkit-scrollbar { display: none; }
-
         .chip {
-            flex: 1;
-            min-width: 65px;
-            padding: 8px 6px;
-            border-radius: 12px;
-            background: rgba(0, 0, 0, 0.4);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            color: var(--text-secondary);
-            font-size: 11px;
-            font-weight: 500;
-            text-align: center;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            gap: 4px;
-            white-space: nowrap;
+            flex: 1; min-width: 65px; padding: 8px 6px; border-radius: 12px;
+            background: rgba(0, 0, 0, 0.4); border: 1px solid rgba(255, 255, 255, 0.1);
+            color: var(--text-secondary); font-size: 11px; font-weight: 500;
+            text-align: center; cursor: pointer; transition: all 0.2s ease;
+            display: flex; flex-direction: column; align-items: center;
+            justify-content: center; gap: 4px; white-space: nowrap;
         }
-
         .chip.active {
-            background: var(--primary-gradient);
-            color: white;
-            border-color: transparent;
+            background: var(--primary-gradient); color: white; border-color: transparent;
             box-shadow: 0 0 10px rgba(168, 85, 247, 0.5);
         }
-
-        .chip-icon {
-            font-size: 16px;
-        }
-
-        textarea, input[type="text"] {
-            width: 100%;
-            background: rgba(0, 0, 0, 0.5);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 12px;
-            padding: 10px;
-            color: white;
-            font-size: 13px;
-            font-family: inherit;
-            resize: none;
-            box-sizing: border-box;
-            outline: none;
-        }
-
-        textarea:focus, input[type="text"]:focus {
-            border-color: #a855f7;
-        }
-
+        .chip-icon { font-size: 16px; }
         textarea {
-            min-height: 70px;
+            width: 100%; background: rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 12px;
+            padding: 10px; color: white; font-size: 13px; font-family: inherit;
+            resize: none; box-sizing: border-box; outline: none;
         }
-
-        /* 🔧 ИСПРАВЛЕННАЯ КНОПКА */
+        textarea:focus { border-color: #a855f7; }
+        textarea { min-height: 70px; }
         .save-btn-container {
-            position: fixed;
-            bottom: 12px;
-            left: 12px;
-            right: 12px;
-            z-index: 100;
-            pointer-events: none; /* Чтобы не перекрывала контент */
+            position: fixed; bottom: 12px; left: 12px; right: 12px;
+            z-index: 100; pointer-events: none;
         }
-
         .main-btn {
-            width: 100%;
-            padding: 12px;
-            border-radius: 16px;
-            border: none;
-            background: var(--primary-gradient);
-            color: white;
-            font-size: 14px;
-            font-weight: bold;
-            cursor: pointer;
-            box-shadow: 0 4px 15px rgba(168, 85, 247, 0.4);
-            pointer-events: auto; /* Кнопка кликабельна */
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
+            width: 100%; padding: 12px; border-radius: 16px; border: none;
+            background: var(--primary-gradient); color: white; font-size: 14px;
+            font-weight: bold; cursor: pointer; box-shadow: 0 4px 15px rgba(168, 85, 247, 0.4);
+            pointer-events: auto; display: flex; align-items: center;
+            justify-content: center; gap: 8px;
         }
-
-        .main-btn:active {
-            transform: scale(0.98);
-            opacity: 0.9;
-        }
-
+        .main-btn:active { transform: scale(0.98); opacity: 0.9; }
         .loader {
-            display: none;
-            width: 18px;
-            height: 18px;
-            border: 2px solid rgba(255,255,255,0.3);
-            border-radius: 50%;
-            border-top-color: #fff;
-            animation: spin 1s ease-in-out infinite;
+            display: none; width: 18px; height: 18px;
+            border: 2px solid rgba(255,255,255,0.3); border-radius: 50%;
+            border-top-color: #fff; animation: spin 1s ease-in-out infinite;
         }
-
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-
-        .icon-svg {
-            width: 20px;
-            height: 20px;
-            fill: currentColor;
-            flex-shrink: 0;
-        }
-
-        /* Адаптация для маленьких экранов */
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .icon-svg { width: 20px; height: 20px; fill: currentColor; flex-shrink: 0; }
         @media (max-width: 360px) {
-            .container {
-                padding: 10px;
-                padding-bottom: 85px;
-            }
-            .card {
-                padding: 12px;
-            }
-            .chip {
-                font-size: 10px;
-                padding: 7px 5px;
-                min-width: 60px;
-            }
-            h2 {
-                font-size: 14px;
-            }
-            textarea, input[type="text"] {
-                font-size: 12px;
-                padding: 8px;
-            }
+            .container { padding: 10px; padding-bottom: 85px; }
+            .card { padding: 12px; }
+            .chip { font-size: 10px; padding: 7px 5px; min-width: 60px; }
+            h2 { font-size: 14px; }
+            textarea { font-size: 12px; padding: 8px; }
         }
     </style>
 </head>
 <body>
-
     <div class="stars-container" id="stars"></div>
     <div class="background-glow"></div>
 
     <div class="container">
-        <!-- Блок 1: Поведение -->
         <div class="card">
-            <h2>
-                <svg class="icon-svg" viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zm0 9l2.5-1.25L12 8.5l-2.5 1.25L12 11zm0 2.5l-5-2.5-5 2.5L12 22l10-8.5-5-2.5-5 2.5z"/></svg>
-                Поведение персонажа
-            </h2>
-            
-            <label>Инициатива в игре</label>
+            <h2><svg class="icon-svg" viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zm0 9l2.5-1.25L12 8.5l-2.5 1.25L12 11zm0 2.5l-5-2.5-5 2.5L12 22l10-8.5-5-2.5-5 2.5z"/></svg>Поведение персонажа</h2>
+            <label>Инициатива</label>
             <div class="chips-container" id="initiative-group">
-                <div class="chip" onclick="selectChip('initiative', 'passive', this)">
-                    <span class="chip-icon">🌙</span>
-                    Пассивный
-                </div>
-                <div class="chip active" onclick="selectChip('initiative', 'balanced', this)">
-                    <span class="chip-icon">⚖️</span>
-                    Баланс
-                </div>
-                <div class="chip" onclick="selectChip('initiative', 'active', this)">
-                    <span class="chip-icon">🔥</span>
-                    Активный
-                </div>
-                <div class="chip" onclick="selectChip('initiative', 'dominant', this)">
-                    <span class="chip-icon">👑</span>
-                    Доминант
-                </div>
+                <div class="chip active" data-val="balanced" onclick="pick('initiative','balanced',this)">⚖️ Баланс</div>
+                <div class="chip" data-val="active" onclick="pick('initiative','active',this)">🔥 Активный</div>
+                <div class="chip" data-val="dominant" onclick="pick('initiative','dominant',this)">👑 Доминант</div>
             </div>
-
             <label>Длина ответов</label>
             <div class="chips-container" id="length-group">
-                <div class="chip" onclick="selectChip('length', 'short', this)">
-                    <span class="chip-icon">💬</span>
-                    Короткие
-                </div>
-                <div class="chip active" onclick="selectChip('length', 'medium', this)">
-                    <span class="chip-icon">📝</span>
-                    Средние
-                </div>
-                <div class="chip" onclick="selectChip('length', 'long', this)">
-                    <span class="chip-icon">📜</span>
-                    Длинные
-                </div>
+                <div class="chip" data-val="short" onclick="pick('length','short',this)">💬 Короткие</div>
+                <div class="chip active" data-val="medium" onclick="pick('length','medium',this)"> Средние</div>
+                <div class="chip" data-val="long" onclick="pick('length','long',this)">📜 Длинные</div>
             </div>
         </div>
 
-        <!-- Блок 2: Сюжет и Сеттинг -->
         <div class="card">
-            <h2>
-                <svg class="icon-svg" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>
-                Мир и Сюжет
-            </h2>
-
-            <label>Сеттинг (Место действия)</label>
-            <textarea id="setting-input" placeholder="Например: Киберпанк 2077, Неон, Дождь..."></textarea>
-
+            <h2><svg class="icon-svg" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>Мир и Сюжет</h2>
+            <label>Сеттинг (мир, эпоха, правила)</label>
+            <textarea id="setting-input" placeholder="Например: Киберпанк, магия запрещена, дождь..."></textarea>
             <label>Темп событий</label>
             <div class="chips-container" id="pacing-group">
-                <div class="chip" onclick="selectChip('pacing', 'slow', this)">
-                    <span class="chip-icon">🐢</span>
-                    Спокойный
-                </div>
-                <div class="chip active" onclick="selectChip('pacing', 'normal', this)">
-                    <span class="chip-icon">🚶</span>
-                    Нормальный
-                </div>
-                <div class="chip" onclick="selectChip('pacing', 'fast', this)">
-                    <span class="chip-icon">⚡</span>
-                    Экшен
-                </div>
+                <div class="chip" data-val="slow" onclick="pick('pacing','slow',this)">🐢 Спокойный</div>
+                <div class="chip active" data-val="normal" onclick="pick('pacing','normal',this)">🚶 Нормальный</div>
+                <div class="chip" data-val="fast" onclick="pick('pacing','fast',this)">⚡ Экшен</div>
             </div>
         </div>
 
-        <!-- Блок 3: Детали -->
         <div class="card">
-            <h2>
-                <svg class="icon-svg" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>
-                Дополнительно
-            </h2>
-            
+            <h2><svg class="icon-svg" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>Дополнительно</h2>
             <label>Второстепенные персонажи (NPC)</label>
             <div class="chips-container" id="npc-group">
-                <div class="chip active" onclick="selectChip('npc', 'none', this)">
-                    <span class="chip-icon">🚫</span>
-                    Запрещены
-                </div>
-                <div class="chip" onclick="selectChip('npc', 'allowed', this)">
-                    <span class="chip-icon">👥</span>
-                    Разрешены
-                </div>
+                <div class="chip active" data-val="none" onclick="pick('npc','none',this)">🚫 Запрещены</div>
+                <div class="chip" data-val="allowed" onclick="pick('npc','allowed',this)">👥 Разрешены</div>
             </div>
         </div>
     </div>
 
     <div class="save-btn-container">
-        <button class="main-btn" id="saveBtn" onclick="saveSettings()">
+        <button class="main-btn" id="saveBtn" onclick="save()">
             <div class="loader" id="loader"></div>
             <span id="btnText">💾 Сохранить настройки</span>
         </button>
@@ -363,89 +161,46 @@
 
     <script>
         const tg = window.Telegram.WebApp;
-        tg.expand();
+        tg.expand(); tg.ready();
 
-        // 🔧 ОПТИМИЗИРОВАННАЯ ГЕНЕРАЦИЯ ЗВЁЗД (50 вместо 100)
+        // Генерация звёзд
         function createStars() {
-            const starsContainer = document.getElementById('stars');
-            const starCount = 50; // 🔧 Меньше звёзд для производительности
-
-            for (let i = 0; i < starCount; i++) {
-                const star = document.createElement('div');
-                star.className = 'star';
-                
-                const x = Math.random() * 100;
-                const y = Math.random() * 100;
-                const size = Math.random() * 2 + 1;
-                const duration = Math.random() * 3 + 2;
-                const delay = Math.random() * 5;
-
-                star.style.left = `${x}%`;
-                star.style.top = `${y}%`;
-                star.style.width = `${size}px`;
-                star.style.height = `${size}px`;
-                star.style.animationDuration = `${duration}s`;
-                star.style.animationDelay = `${delay}s`;
-
-                starsContainer.appendChild(star);
+            const box = document.getElementById('stars');
+            for(let i=0; i<50; i++) {
+                const s = document.createElement('div'); s.className='star';
+                s.style.left = Math.random()*100+'%';
+                s.style.top = Math.random()*100+'%';
+                s.style.width = s.style.height = (Math.random()*2+1)+'px';
+                s.style.animationDuration = (Math.random()*3+2)+'s';
+                s.style.animationDelay = Math.random()*5+'s';
+                box.appendChild(s);
             }
-            console.log('✅ Stars created:', starCount);
+        }
+        createStars();
+
+        let data = { initiative:'balanced', length:'medium', pacing:'normal', setting:'', npc:'none' };
+
+        function pick(key, val, el) {
+            data[key] = val;
+            el.parentElement.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+            el.classList.add('active');
+            if(tg.HapticFeedback) tg.HapticFeedback.selectionChanged();
         }
 
-        window.onload = () => {
-            console.log('🚀 Page loaded');
-            createStars();
-            tg.ready();
-        };
-
-        let settings = {
-            initiative: 'balanced',
-            length: 'medium',
-            setting: '',
-            pacing: 'normal',
-            npc: 'none'
-        };
-
-        function selectChip(group, value, element) {
-            settings[group] = value;
-            const container = element.parentElement;
-            const chips = container.getElementsByClassName('chip');
-            for (let chip of chips) {
-                chip.classList.remove('active');
-            }
-            element.classList.add('active');
-        }
-
-        function saveSettings() {
-            const btn = document.getElementById('saveBtn');
-            const loader = document.getElementById('loader');
-            const btnText = document.getElementById('btnText');
+        function save() {
+            data.setting = document.getElementById('setting-input').value.trim();
+            const btn = document.getElementById('saveBtn'), ldr = document.getElementById('loader'), txt = document.getElementById('btnText');
+            btn.disabled = true; ldr.style.display='block'; txt.innerText='Отправка...';
             
-            settings.setting = document.getElementById('setting-input').value;
-
-            btn.disabled = true;
-            loader.style.display = 'block';
-            btnText.innerText = 'Сохраняем...';
-
-            setTimeout(() => {
-                try {
-                    if (tg && tg.sendData) {
-                        tg.sendData(JSON.stringify(settings));
-                        btn.style.background = '#22c55e';
-                        btnText.innerText = '✅ Сохранено!';
-                    } else {
-                        alert('Данные готовы:\n' + JSON.stringify(settings, null, 2));
-                        btn.disabled = false;
-                        loader.style.display = 'none';
-                        btnText.innerText = '💾 Сохранить настройки';
-                    }
-                } catch (e) {
-                    alert('Ошибка: ' + e.message);
-                    btn.disabled = false;
-                    loader.style.display = 'none';
-                    btnText.innerText = '💾 Сохранить настройки';
-                }
-            }, 500);
+            try {
+                tg.sendData(JSON.stringify(data));
+                if(tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
+                btn.style.background='#22c55e'; txt.innerText='✅ Отправлено!';
+                setTimeout(() => tg.close(), 800);
+            } catch(e) {
+                alert('Ошибка: '+e.message);
+                btn.disabled=false; ldr.style.display='none'; txt.innerText='💾 Сохранить';
+            }
         }
     </script>
 </body>
