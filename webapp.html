@@ -1,423 +1,250 @@
-<!DOCTYPE html>
-<html lang="ru">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Living Tales Settings</title>
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <style>
-        :root {
-            --bg-dark: #0f0720;
-            --card-bg: rgba(76, 29, 149, 0.25); /* Чуть прозрачнее для вида звезд */
-            --primary-gradient: linear-gradient(135deg, #a855f7 0%, #4c1d95 100%);
-            --accent-glow: #d8b4fe;
-            --text-main: #ffffff;
-            --text-secondary: #cbd5e1;
-        }
+<style>
+    :root {
+        --bg-dark: #0f0720;
+        --card-bg: rgba(76, 29, 149, 0.25);
+        --primary-gradient: linear-gradient(135deg, #a855f7 0%, #4c1d95 100%);
+        --accent-glow: #d8b4fe;
+        --text-main: #ffffff;
+        --text-secondary: #cbd5e1;
+    }
 
-        body {
-            margin: 0;
-            padding: 0;
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-            background-color: var(--bg-dark);
-            color: var(--text-main);
-            overflow-x: hidden;
-            -webkit-tap-highlight-color: transparent;
-            min-height: 100vh;
-            position: relative;
-        }
+    * {
+        box-sizing: border-box; /* 🔧 Важно: padding не увеличивает ширину */
+    }
 
-        /* --- ЗВЕЗДНЫЙ ФОН --- */
-        .stars-container {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: -1;
-            background: radial-gradient(ellipse at bottom, #1b2735 0%, #090a0f 100%);
-            overflow: hidden;
-        }
+    body {
+        margin: 0;
+        padding: 0;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        background-color: var(--bg-dark);
+        color: var(--text-main);
+        overflow-x: hidden; /* 🔧 Запрещаем горизонтальную прокрутку */
+        -webkit-tap-highlight-color: transparent;
+        min-height: 100vh;
+        position: relative;
+        width: 100%; /* 🔧 На всю ширину */
+    }
 
-        .star {
-            position: absolute;
-            background: white;
-            border-radius: 50%;
-            opacity: 0.8;
-            animation: twinkle infinite ease-in-out;
-        }
+    /* --- ЗВЕЗДНЫЙ ФОН --- */
+    .stars-container {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: -1;
+        background: radial-gradient(ellipse at bottom, #1b2735 0%, #090a0f 100%);
+        overflow: hidden;
+    }
 
-        @keyframes twinkle {
-            0%, 100% { opacity: 0.3; transform: scale(0.8); }
-            50% { opacity: 1; transform: scale(1.2); box-shadow: 0 0 4px #fff; }
-        }
+    .star {
+        position: absolute;
+        background: white;
+        border-radius: 50%;
+        opacity: 0.8;
+        animation: twinkle infinite ease-in-out;
+    }
 
-        /* Градиент сверху для мягкого перехода */
-        .background-glow {
-            position: fixed;
-            top: -20%;
-            left: -20%;
-            width: 140%;
-            height: 140%;
-            background: radial-gradient(circle at center, rgba(168, 85, 247, 0.1) 0%, rgba(15, 7, 32, 0) 70%);
-            z-index: -1;
-            pointer-events: none;
-        }
+    @keyframes twinkle {
+        0%, 100% { opacity: 0.3; transform: scale(0.8); }
+        50% { opacity: 1; transform: scale(1.2); box-shadow: 0 0 4px #fff; }
+    }
 
+    .background-glow {
+        position: fixed;
+        top: -20%;
+        left: -20%;
+        width: 140%;
+        height: 140%;
+        background: radial-gradient(circle at center, rgba(168, 85, 247, 0.1) 0%, rgba(15, 7, 32, 0) 70%);
+        z-index: -1;
+        pointer-events: none;
+    }
+
+    .container {
+        padding: 15px; /* 🔧 Уменьшили padding для мобильных */
+        width: 100%; /* 🔧 На всю ширину */
+        max-width: 100%; /* 🔧 Убрали ограничение в 600px */
+        margin: 0 auto;
+        padding-bottom: 100px;
+        position: relative;
+        z-index: 1;
+    }
+
+    h2 {
+        font-size: 16px; /* 🔧 Чуть меньше для мобильных */
+        font-weight: 600;
+        margin-bottom: 12px;
+        margin-top: 0;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        color: var(--accent-glow);
+        text-shadow: 0 0 10px rgba(168, 85, 247, 0.5);
+        flex-wrap: wrap; /* 🔧 Перенос на новую строку если не влезает */
+    }
+
+    .card {
+        background: var(--card-bg);
+        backdrop-filter: blur(15px);
+        -webkit-backdrop-filter: blur(15px);
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        border-radius: 20px; /* 🔧 Чуть меньше скругление */
+        padding: 16px; /* 🔧 Оптимальный padding */
+        margin-bottom: 16px;
+        box-shadow: 0 4px 30px rgba(0, 0, 0, 0.5);
+        width: 100%; /* 🔧 На всю ширину */
+    }
+
+    label {
+        display: block;
+        font-size: 13px; /* 🔧 Чуть меньше */
+        color: var(--text-secondary);
+        margin-bottom: 10px;
+        margin-top: 12px;
+        line-height: 1.4;
+    }
+    
+    label:first-child {
+        margin-top: 0;
+    }
+
+    .chips-container {
+        display: flex;
+        gap: 8px; /* 🔧 Меньше отступ */
+        overflow-x: auto;
+        padding-bottom: 5px;
+        scrollbar-width: none;
+        width: 100%; /* 🔧 На всю ширину */
+    }
+    .chips-container::-webkit-scrollbar { display: none; }
+
+    .chip {
+        flex: 1; /* 🔧 Растягиваем равномерно */
+        min-width: 70px; /* 🔧 Минимальная ширина */
+        padding: 10px 8px; /* 🔧 Оптимальный padding */
+        border-radius: 14px;
+        background: rgba(0, 0, 0, 0.4);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        color: var(--text-secondary);
+        font-size: 12px; /* 🔧 Читаемый размер */
+        font-weight: 500;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 5px;
+        white-space: nowrap; /* 🔧 Не переносить текст */
+    }
+
+    .chip.active {
+        background: var(--primary-gradient);
+        color: white;
+        border-color: transparent;
+        box-shadow: 0 0 15px rgba(168, 85, 247, 0.6);
+        transform: scale(1.02);
+    }
+
+    .chip-icon {
+        font-size: 18px; /* 🔧 Иконки поменьше */
+    }
+
+    textarea, input[type="text"] {
+        width: 100%; /* 🔧 На всю ширину */
+        background: rgba(0, 0, 0, 0.5);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 14px;
+        padding: 12px;
+        color: white;
+        font-size: 14px;
+        font-family: inherit;
+        resize: none;
+        box-sizing: border-box;
+        outline: none;
+        transition: border-color 0.3s;
+    }
+
+    textarea:focus, input[type="text"]:focus {
+        border-color: #a855f7;
+        box-shadow: 0 0 0 2px rgba(168, 85, 247, 0.2);
+        background: rgba(0, 0, 0, 0.7);
+    }
+
+    textarea {
+        min-height: 80px; /* 🔧 Чуть меньше высота */
+    }
+
+    .save-btn-container {
+        position: fixed;
+        bottom: 15px;
+        left: 15px;
+        right: 15px; /* 🔧 Фиксированные отступы */
+        max-width: calc(100% - 30px); /* 🔧 Не шире экрана */
+        margin: 0 auto;
+        z-index: 100;
+    }
+
+    .main-btn {
+        width: 100%; /* 🔧 На всю ширину контейнера */
+        padding: 14px; /* 🔧 Оптимальная высота */
+        border-radius: 18px;
+        border: none;
+        background: var(--primary-gradient);
+        color: white;
+        font-size: 15px;
+        font-weight: bold;
+        cursor: pointer;
+        box-shadow: 0 4px 20px rgba(168, 85, 247, 0.5);
+        transition: transform 0.2s, box-shadow 0.2s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+    }
+
+    .main-btn:active {
+        transform: scale(0.98);
+        box-shadow: 0 2px 10px rgba(168, 85, 247, 0.3);
+    }
+
+    .loader {
+        display: none;
+        width: 20px;
+        height: 20px;
+        border: 3px solid rgba(255,255,255,0.3);
+        border-radius: 50%;
+        border-top-color: #fff;
+        animation: spin 1s ease-in-out infinite;
+    }
+
+    @keyframes spin {
+        to { transform: rotate(360deg); }
+    }
+
+    .icon-svg {
+        width: 22px; /* 🔧 Иконки поменьше */
+        height: 22px;
+        fill: currentColor;
+        flex-shrink: 0; /* 🔧 Не сжимать */
+    }
+
+    /* 🔧 Адаптация для очень маленьких экранов */
+    @media (max-width: 360px) {
         .container {
-            padding: 20px;
-            max-width: 600px;
-            margin: 0 auto;
-            padding-bottom: 100px;
-            position: relative;
-            z-index: 1;
+            padding: 12px;
         }
-
-        h2 {
-            font-size: 18px;
-            font-weight: 600;
-            margin-bottom: 15px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            color: var(--accent-glow);
-            text-shadow: 0 0 10px rgba(168, 85, 247, 0.5);
-        }
-
         .card {
-            background: var(--card-bg);
-            backdrop-filter: blur(15px); /* Усилили размытие */
-            -webkit-backdrop-filter: blur(15px);
-            border: 1px solid rgba(255, 255, 255, 0.15);
-            border-radius: 24px;
-            padding: 20px;
-            margin-bottom: 20px;
-            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.5);
+            padding: 14px;
         }
-
-        label {
-            display: block;
-            font-size: 14px;
-            color: var(--text-secondary);
-            margin-bottom: 10px;
-            margin-top: 15px;
-        }
-        
-        label:first-child {
-            margin-top: 0;
-        }
-
-        .chips-container {
-            display: flex;
-            gap: 10px;
-            overflow-x: auto;
-            padding-bottom: 5px;
-            scrollbar-width: none;
-        }
-        .chips-container::-webkit-scrollbar { display: none; }
-
         .chip {
-            flex: 1;
-            min-width: 80px;
-            padding: 12px 10px;
-            border-radius: 16px;
-            background: rgba(0, 0, 0, 0.4); /* Темнее фон чипсов для контраста */
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            color: var(--text-secondary);
-            font-size: 13px;
-            font-weight: 500;
-            text-align: center;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            gap: 5px;
+            font-size: 11px;
+            padding: 8px 6px;
         }
-
-        .chip.active {
-            background: var(--primary-gradient);
-            color: white;
-            border-color: transparent;
-            box-shadow: 0 0 15px rgba(168, 85, 247, 0.6);
-            transform: scale(1.02);
-        }
-
-        .chip-icon {
-            font-size: 20px;
-        }
-
-        textarea, input[type="text"] {
-            width: 100%;
-            background: rgba(0, 0, 0, 0.5);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 16px;
-            padding: 15px;
-            color: white;
+        h2 {
             font-size: 15px;
-            font-family: inherit;
-            resize: none;
-            box-sizing: border-box;
-            outline: none;
-            transition: border-color 0.3s;
         }
-
-        textarea:focus, input[type="text"]:focus {
-            border-color: #a855f7;
-            box-shadow: 0 0 0 2px rgba(168, 85, 247, 0.2);
-            background: rgba(0, 0, 0, 0.7);
-        }
-
-        textarea {
-            min-height: 100px;
-        }
-
-        .save-btn-container {
-            position: fixed;
-            bottom: 20px;
-            left: 20px;
-            right: 20px;
-            max-width: 560px;
-            margin: 0 auto;
-            z-index: 100;
-        }
-
-        .main-btn {
-            width: 100%;
-            padding: 16px;
-            border-radius: 20px;
-            border: none;
-            background: var(--primary-gradient);
-            color: white;
-            font-size: 16px;
-            font-weight: bold;
-            cursor: pointer;
-            box-shadow: 0 4px 20px rgba(168, 85, 247, 0.5);
-            transition: transform 0.2s, box-shadow 0.2s;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-        }
-
-        .main-btn:active {
-            transform: scale(0.98);
-            box-shadow: 0 2px 10px rgba(168, 85, 247, 0.3);
-        }
-
-        .loader {
-            display: none;
-            width: 20px;
-            height: 20px;
-            border: 3px solid rgba(255,255,255,0.3);
-            border-radius: 50%;
-            border-top-color: #fff;
-            animation: spin 1s ease-in-out infinite;
-        }
-
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-
-        .icon-svg {
-            width: 24px;
-            height: 24px;
-            fill: currentColor;
-        }
-    </style>
-</head>
-<body>
-
-    <!-- Контейнер для звезд -->
-    <div class="stars-container" id="stars"></div>
-    <div class="background-glow"></div>
-
-    <div class="container">
-        <!-- Блок 1: Поведение -->
-        <div class="card">
-            <h2>
-                <svg class="icon-svg" viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zm0 9l2.5-1.25L12 8.5l-2.5 1.25L12 11zm0 2.5l-5-2.5-5 2.5L12 22l10-8.5-5-2.5-5 2.5z"/></svg>
-                Поведение персонажа
-            </h2>
-            
-            <label>Инициатива в игре</label>
-            <div class="chips-container" id="initiative-group">
-                <div class="chip" onclick="selectChip('initiative', 'passive', this)">
-                    <span class="chip-icon">🌙</span>
-                    Пассивный
-                </div>
-                <div class="chip active" onclick="selectChip('initiative', 'balanced', this)">
-                    <span class="chip-icon">⚖️</span>
-                    Баланс
-                </div>
-                <div class="chip" onclick="selectChip('initiative', 'active', this)">
-                    <span class="chip-icon">🔥</span>
-                    Активный
-                </div>
-                <div class="chip" onclick="selectChip('initiative', 'dominant', this)">
-                    <span class="chip-icon">👑</span>
-                    Доминант
-                </div>
-            </div>
-
-            <label>Длина ответов</label>
-            <div class="chips-container" id="length-group">
-                <div class="chip" onclick="selectChip('length', 'short', this)">
-                    <span class="chip-icon">💬</span>
-                    Короткие
-                </div>
-                <div class="chip active" onclick="selectChip('length', 'medium', this)">
-                    <span class="chip-icon">📝</span>
-                    Средние
-                </div>
-                <div class="chip" onclick="selectChip('length', 'long', this)">
-                    <span class="chip-icon">📜</span>
-                    Длинные
-                </div>
-            </div>
-        </div>
-
-        <!-- Блок 2: Сюжет и Сеттинг -->
-        <div class="card">
-            <h2>
-                <svg class="icon-svg" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>
-                Мир и Сюжет
-            </h2>
-
-            <label>Сеттинг (Место действия)</label>
-            <textarea id="setting-input" placeholder="Например: Киберпанк 2077, Неон, Дождь... или Фэнтези, Магия, Драконы..."></textarea>
-
-            <label>Темп событий</label>
-            <div class="chips-container" id="pacing-group">
-                <div class="chip" onclick="selectChip('pacing', 'slow', this)">
-                    <span class="chip-icon">🐢</span>
-                    Спокойный
-                </div>
-                <div class="chip active" onclick="selectChip('pacing', 'normal', this)">
-                    <span class="chip-icon">🚶</span>
-                    Нормальный
-                </div>
-                <div class="chip" onclick="selectChip('pacing', 'fast', this)">
-                    <span class="chip-icon">⚡</span>
-                    Экшен
-                </div>
-            </div>
-        </div>
-
-        <!-- Блок 3: Детали -->
-        <div class="card">
-            <h2>
-                <svg class="icon-svg" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>
-                Дополнительно
-            </h2>
-            
-            <label>Второстепенные персонажи (NPC)</label>
-            <div class="chips-container" id="npc-group">
-                <div class="chip active" onclick="selectChip('npc', 'none', this)">
-                    <span class="chip-icon">🚫</span>
-                    Запрещены
-                </div>
-                <div class="chip" onclick="selectChip('npc', 'allowed', this)">
-                    <span class="chip-icon">👥</span>
-                    Разрешены
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="save-btn-container">
-        <button class="main-btn" id="saveBtn" onclick="saveSettings()">
-            <div class="loader" id="loader"></div>
-            <span id="btnText">💾 Сохранить настройки</span>
-        </button>
-    </div>
-
-    <script>
-        const tg = window.Telegram.WebApp;
-        tg.expand();
-
-        // --- ГЕНЕРАЦИЯ ЗВЕЗД ---
-        function createStars() {
-            const starsContainer = document.getElementById('stars');
-            const starCount = 100; // Количество звезд
-
-            for (let i = 0; i < starCount; i++) {
-                const star = document.createElement('div');
-                star.className = 'star';
-                
-                // Случайная позиция
-                const x = Math.random() * 100;
-                const y = Math.random() * 100;
-                
-                // Случайный размер (от 1px до 3px)
-                const size = Math.random() * 2 + 1;
-                
-                // Случайная длительность анимации (от 2s до 5s)
-                const duration = Math.random() * 3 + 2;
-                
-                // Случайная задержка анимации
-                const delay = Math.random() * 5;
-
-                star.style.left = `${x}%`;
-                star.style.top = `${y}%`;
-                star.style.width = `${size}px`;
-                star.style.height = `${size}px`;
-                star.style.animationDuration = `${duration}s`;
-                star.style.animationDelay = `${delay}s`;
-
-                starsContainer.appendChild(star);
-            }
-        }
-
-        // Запускаем создание звезд при загрузке
-        window.onload = () => {
-            createStars();
-            tg.ready();
-        };
-
-        let settings = {
-            initiative: 'balanced',
-            length: 'medium',
-            setting: '',
-            pacing: 'normal',
-            npc: 'none'
-        };
-
-        function selectChip(group, value, element) {
-            settings[group] = value;
-            const container = element.parentElement;
-            const chips = container.getElementsByClassName('chip');
-            for (let chip of chips) {
-                chip.classList.remove('active');
-            }
-            element.classList.add('active');
-        }
-
-        function saveSettings() {
-            const btn = document.getElementById('saveBtn');
-            const loader = document.getElementById('loader');
-            const btnText = document.getElementById('btnText');
-            
-            settings.setting = document.getElementById('setting-input').value;
-
-            btn.disabled = true;
-            loader.style.display = 'block';
-            btnText.innerText = 'Сохраняем...';
-
-            setTimeout(() => {
-                try {
-                    tg.sendData(JSON.stringify(settings));
-                    btn.style.background = '#22c55e';
-                    btnText.innerText = '✅ Сохранено!';
-                } catch (e) {
-                    alert('Ошибка отправки данных: ' + e);
-                    btn.disabled = false;
-                    loader.style.display = 'none';
-                    btnText.innerText = '💾 Сохранить настройки';
-                }
-            }, 500);
-        }
-    </script>
-</body>
-</html>
+    }
+</style>
