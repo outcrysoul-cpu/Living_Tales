@@ -284,7 +284,6 @@
             npc: 'none'
         };
         
-        // Загрузка настроек из localStorage (СРАЗУ при загрузке)
         function loadSettings() {
             try {
                 const saved = localStorage.getItem(STORAGE_KEY);
@@ -293,84 +292,112 @@
                     settings = { ...settings, ...parsed };
                     console.log('✅ Настройки загружены:', settings);
                 } else {
-                    console.log('⚠️ Нет сохранённых настроек, используются значения по умолчанию');
+                    console.log('⚠️ Нет сохранённых настроек');
                 }
             } catch(e) { 
                 console.warn('Ошибка загрузки:', e);
             }
         }
         
-        // Сохранение в localStorage
         function saveToLocal() {
             localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
-            console.log('💾 Настройки сохранены в localStorage:', settings);
+            console.log('💾 Сохранено в localStorage');
         }
         
-        // Обновление интерфейса (подсветка активных кнопок + текстовое поле)
         function updateUI() {
-            // Инициатива
-            document.querySelectorAll('#initiative-group .chip').forEach(chip => {
-                if (chip.getAttribute('data-val') === settings.initiative) chip.classList.add('active');
-                else chip.classList.remove('active');
-            });
-            // Длина ответов
-            document.querySelectorAll('#length-group .chip').forEach(chip => {
-                if (chip.getAttribute('data-val') === settings.length) chip.classList.add('active');
-                else chip.classList.remove('active');
-            });
-            // Темп событий
-            document.querySelectorAll('#pacing-group .chip').forEach(chip => {
-                if (chip.getAttribute('data-val') === settings.pacing) chip.classList.add('active');
-                else chip.classList.remove('active');
-            });
-            // NPC
-            document.querySelectorAll('#npc-group .chip').forEach(chip => {
-                if (chip.getAttribute('data-val') === settings.npc) chip.classList.add('active');
-                else chip.classList.remove('active');
-            });
+            // --- ИНИЦИАТИВА ---
+            const initiativeChips = document.querySelectorAll('#initiative-group .chip');
+            initiativeChips.forEach(chip => chip.classList.remove('active'));
+            const activeInitiative = document.querySelector(`#initiative-group .chip[data-val="${settings.initiative}"]`);
+            if (activeInitiative) activeInitiative.classList.add('active');
             
-            // Текстовое поле (сеттинг)
+            // --- ДЛИНА ОТВЕТОВ ---
+            const lengthChips = document.querySelectorAll('#length-group .chip');
+            lengthChips.forEach(chip => chip.classList.remove('active'));
+            const activeLength = document.querySelector(`#length-group .chip[data-val="${settings.length}"]`);
+            if (activeLength) activeLength.classList.add('active');
+            
+            // --- ТЕМП СОБЫТИЙ ---
+            const pacingChips = document.querySelectorAll('#pacing-group .chip');
+            pacingChips.forEach(chip => chip.classList.remove('active'));
+            const activePacing = document.querySelector(`#pacing-group .chip[data-val="${settings.pacing}"]`);
+            if (activePacing) activePacing.classList.add('active');
+            
+            // --- NPC ---
+            const npcChips = document.querySelectorAll('#npc-group .chip');
+            npcChips.forEach(chip => chip.classList.remove('active'));
+            const activeNpc = document.querySelector(`#npc-group .chip[data-val="${settings.npc}"]`);
+            if (activeNpc) activeNpc.classList.add('active');
+            
+            // --- ТЕКСТОВОЕ ПОЛЕ ---
             const textarea = document.getElementById('setting-input');
             if (textarea) {
                 textarea.value = settings.setting || '';
-                console.log('📝 Поле сеттинга заполнено:', settings.setting);
             }
-        }
-        
-        // Настройка обработчиков кнопок
-        function setupChips() {
-            const groups = ['initiative-group', 'length-group', 'pacing-group', 'npc-group'];
             
-            groups.forEach(groupId => {
-                const group = document.getElementById(groupId);
-                if (!group) return;
-                
-                group.querySelectorAll('.chip').forEach(chip => {
-                    chip.removeEventListener('click', chip._handler);
-                    
-                    const handler = function() {
-                        let key = '';
-                        if (groupId === 'initiative-group') key = 'initiative';
-                        else if (groupId === 'length-group') key = 'length';
-                        else if (groupId === 'pacing-group') key = 'pacing';
-                        else if (groupId === 'npc-group') key = 'npc';
-                        
-                        const val = this.getAttribute('data-val');
-                        if (key && val) {
-                            settings[key] = val;
-                            saveToLocal();
-                            updateUI();
-                            if (tg.HapticFeedback) tg.HapticFeedback.selectionChanged();
-                        }
-                    };
-                    
-                    chip.addEventListener('click', handler);
-                    chip._handler = handler;
-                });
+            console.log('🎨 UI обновлён, активные:', {
+                initiative: settings.initiative,
+                length: settings.length,
+                pacing: settings.pacing,
+                npc: settings.npc,
+                setting: settings.setting
             });
         }
         
-        // Сохранение и отправка в бот
+        function setupChips() {
+            // Инициатива
+            document.querySelectorAll('#initiative-group .chip').forEach(chip => {
+                chip.onclick = () => {
+                    const val = chip.getAttribute('data-val');
+                    if (val) {
+                        settings.initiative = val;
+                        saveToLocal();
+                        updateUI();
+                        if (tg.HapticFeedback) tg.HapticFeedback.selectionChanged();
+                    }
+                };
+            });
+            
+            // Длина ответов
+            document.querySelectorAll('#length-group .chip').forEach(chip => {
+                chip.onclick = () => {
+                    const val = chip.getAttribute('data-val');
+                    if (val) {
+                        settings.length = val;
+                        saveToLocal();
+                        updateUI();
+                        if (tg.HapticFeedback) tg.HapticFeedback.selectionChanged();
+                    }
+                };
+            });
+            
+            // Темп событий
+            document.querySelectorAll('#pacing-group .chip').forEach(chip => {
+                chip.onclick = () => {
+                    const val = chip.getAttribute('data-val');
+                    if (val) {
+                        settings.pacing = val;
+                        saveToLocal();
+                        updateUI();
+                        if (tg.HapticFeedback) tg.HapticFeedback.selectionChanged();
+                    }
+                };
+            });
+            
+            // NPC
+            document.querySelectorAll('#npc-group .chip').forEach(chip => {
+                chip.onclick = () => {
+                    const val = chip.getAttribute('data-val');
+                    if (val) {
+                        settings.npc = val;
+                        saveToLocal();
+                        updateUI();
+                        if (tg.HapticFeedback) tg.HapticFeedback.selectionChanged();
+                    }
+                };
+            });
+        }
+        
         function saveAndClose() {
             const textarea = document.getElementById('setting-input');
             if (textarea) {
@@ -403,7 +430,6 @@
             }
         }
         
-        // Генерация звёзд
         function createStars() {
             const box = document.getElementById('stars');
             if (!box) return;
@@ -421,13 +447,12 @@
             }
         }
         
-        // Инициализация
         window.onload = () => {
             console.log('🚀 Mini App загружен');
             createStars();
-            loadSettings();      // Загружаем настройки
-            updateUI();          // Применяем к интерфейсу
-            setupChips();        // Настраиваем кнопки
+            loadSettings();
+            updateUI();
+            setupChips();
             
             const saveBtn = document.getElementById('saveBtn');
             if (saveBtn) saveBtn.addEventListener('click', saveAndClose);
