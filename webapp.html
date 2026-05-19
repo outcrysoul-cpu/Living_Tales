@@ -18,6 +18,8 @@
 
         * {
             -webkit-tap-highlight-color: transparent;
+            user-select: none;
+            -webkit-user-select: none;
         }
 
         body {
@@ -27,6 +29,7 @@
             background-color: var(--bg-dark);
             color: var(--text-main);
             overflow-x: hidden;
+            min-height: 100vh;
         }
 
         .stars-container {
@@ -111,15 +114,9 @@
         .chips-container {
             display: flex;
             flex-direction: row;
-            flex-wrap: nowrap;
+            flex-wrap: wrap;
             gap: 8px;
-            overflow-x: auto;
             padding-bottom: 5px;
-            -webkit-overflow-scrolling: touch;
-            scrollbar-width: none;
-        }
-        .chips-container::-webkit-scrollbar {
-            display: none;
         }
 
         .chip {
@@ -150,6 +147,12 @@
             box-shadow: 0 0 15px rgba(168, 85, 247, 0.4);
         }
 
+        /* Добавляем активное состояние для тач-устройств */
+        .chip:active {
+            transform: scale(0.95);
+            opacity: 0.8;
+        }
+
         .chip-icon {
             font-size: 18px;
         }
@@ -167,6 +170,8 @@
             box-sizing: border-box;
             outline: none;
             min-height: 100px;
+            -webkit-appearance: none;
+            appearance: none;
         }
 
         textarea:focus {
@@ -217,6 +222,13 @@
             width: 24px;
             height: 24px;
             fill: currentColor;
+        }
+
+        /* Улучшенная поддержка тач-экранов */
+        @media (hover: none) and (pointer: coarse) {
+            .chip, .main-btn {
+                cursor: default;
+            }
         }
     </style>
 </head>
@@ -269,12 +281,83 @@
     </div>
 
     <script>
+        // Универсальная функция для хранения данных (работает везде)
+        function getStorage() {
+            // Пробуем использовать Telegram WebApp напрямую
+            if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe) {
+                try {
+                    // Используем user_id как уникальный ключ
+                    const userId = window.Telegram.WebApp.initDataUnsafe.user?.id;
+                    if (userId) {
+                        return {
+                            get: function(key) {
+                                try {
+                                    const fullKey = `living_tales_${userId}_${key}`;
+                                    // Пробуем localStorage
+                                    if (window.localStorage) {
+                                        const val = localStorage.getItem(fullKey);
+                                        if (val) return JSON.parse(val);
+                                    }
+                                    // Пробуем sessionStorage как fallback
+                                    if (window.sessionStorage) {
+                                        const val = sessionStorage.getItem(fullKey);
+                                        if (val) return JSON.parse(val);
+                                    }
+                                } catch(e) {}
+                                return null;
+                            },
+                            set: function(key, value) {
+                                try {
+                                    const fullKey = `living_tales_${userId}_${key}`;
+                                    if (window.localStorage) {
+                                        localStorage.setItem(fullKey, JSON.stringify(value));
+                                    }
+                                    if (window.sessionStorage) {
+                                        sessionStorage.setItem(fullKey, JSON.stringify(value));
+                                    }
+                                } catch(e) {}
+                            }
+                        };
+                    }
+                } catch(e) {}
+            }
+            
+            // Fallback: обычный localStorage с проверкой
+            return {
+                get: function(key) {
+                    try {
+                        if (window.localStorage) {
+                            const val = localStorage.getItem(key);
+                            if (val) return JSON.parse(val);
+                        }
+                    } catch(e) {}
+                    return null;
+                },
+                set: function(key, value) {
+                    try {
+                        if (window.localStorage) {
+                            localStorage.setItem(key, JSON.stringify(value));
+                        }
+                    } catch(e) {}
+                }
+            };
+        }
+
         const tg = window.Telegram.WebApp;
-        tg.expand();
-        tg.ready();
-        if (tg.enableClosingConfirmation) tg.enableClosingConfirmation();
         
-        const STORAGE_KEY = 'living_tales_settings';
+        // Инициализация WebApp с задержкой для Samsung
+        setTimeout(() => {
+            try {
+                tg.expand();
+                tg.ready();
+                if (tg.enableClosingConfirmation) tg.enableClosingConfirmation();
+                console.log('✅ WebApp инициализирован');
+            } catch(e) {
+                console.warn('WebApp init error:', e);
+            }
+        }, 100);
+        
+        const storage = getStorage();
         
         let settings = {
             initiative: 'balanced',
@@ -284,29 +367,35 @@
             npc: 'none'
         };
         
-        // Загрузка настроек из localStorage (СРАЗУ при загрузке)
+        // Загрузка настроек
         function loadSettings() {
             try {
-                const saved = localStorage.getItem(STORAGE_KEY);
+                // Пробуем загрузить из универсального хранилища
+                const saved = storage.get('settings');
                 if (saved) {
-                    const parsed = JSON.parse(saved);
-                    settings = { ...settings, ...parsed };
+                    settings = { ...settings, ...saved };
                     console.log('✅ Настройки загружены:', settings);
                 } else {
-                    console.log('⚠️ Нет сохранённых настроек, используются значения по умолчанию');
+                    console.log('⚠️ Нет сохранённых настроек, используем значения по умолчанию');
                 }
             } catch(e) { 
                 console.warn('Ошибка загрузки:', e);
             }
         }
         
-        // Сохранение в localStorage
+        // Сохранение в хранилище
         function saveToLocal() {
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
-            console.log('💾 Настройки сохранены в localStorage:', settings);
+            try {
+                storage.set('settings', settings);
+                console.log('💾 Настройки сохранены:', settings);
+                return true;
+            } catch(e) {
+                console.warn('Ошибка сохранения:', e);
+                return false;
+            }
         }
         
-        // Обновление интерфейса (подсветка активных кнопок + текстовое поле)
+        // Обновление интерфейса
         function updateUI() {
             // Инициатива
             document.querySelectorAll('#initiative-group .chip').forEach(chip => {
@@ -329,15 +418,14 @@
                 else chip.classList.remove('active');
             });
             
-            // Текстовое поле (сеттинг)
+            // Текстовое поле
             const textarea = document.getElementById('setting-input');
             if (textarea) {
                 textarea.value = settings.setting || '';
-                console.log('📝 Поле сеттинга заполнено:', settings.setting);
             }
         }
         
-        // Настройка обработчиков кнопок
+        // Настройка обработчиков с использованием события touchstart для Samsung
         function setupChips() {
             const groups = ['initiative-group', 'length-group', 'pacing-group', 'npc-group'];
             
@@ -346,9 +434,17 @@
                 if (!group) return;
                 
                 group.querySelectorAll('.chip').forEach(chip => {
-                    chip.removeEventListener('click', chip._handler);
+                    // Удаляем старые обработчики
+                    const oldHandler = chip._handler;
+                    if (oldHandler) {
+                        chip.removeEventListener('click', oldHandler);
+                        chip.removeEventListener('touchstart', oldHandler);
+                    }
                     
-                    const handler = function() {
+                    const handler = function(e) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        
                         let key = '';
                         if (groupId === 'initiative-group') key = 'initiative';
                         else if (groupId === 'length-group') key = 'length';
@@ -356,15 +452,23 @@
                         else if (groupId === 'npc-group') key = 'npc';
                         
                         const val = this.getAttribute('data-val');
-                        if (key && val) {
+                        if (key && val && settings[key] !== val) {
                             settings[key] = val;
                             saveToLocal();
                             updateUI();
-                            if (tg.HapticFeedback) tg.HapticFeedback.selectionChanged();
+                            
+                            // Вибрация для Android/Samsung
+                            if (tg.HapticFeedback) {
+                                try {
+                                    tg.HapticFeedback.selectionChanged();
+                                } catch(e) {}
+                            }
                         }
                     };
                     
+                    // Добавляем оба события для максимальной совместимости
                     chip.addEventListener('click', handler);
+                    chip.addEventListener('touchstart', handler, { passive: false });
                     chip._handler = handler;
                 });
             });
@@ -385,15 +489,39 @@
             btn.classList.add('disabled');
             
             try {
+                // Отправляем данные в бот
                 tg.sendData(JSON.stringify(settings));
-                if (tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
+                
+                // Вибрация при успехе
+                if (tg.HapticFeedback) {
+                    try {
+                        tg.HapticFeedback.notificationOccurred('success');
+                    } catch(e) {}
+                }
+                
                 btn.innerHTML = '✅ Отправлено!';
                 btn.style.background = '#22c55e';
-                setTimeout(() => tg.close(), 500);
+                
+                // Закрываем через полсекунды
+                setTimeout(() => {
+                    try {
+                        tg.close();
+                    } catch(e) {
+                        console.warn('Close error:', e);
+                    }
+                }, 500);
             } catch(e) {
                 console.error('Ошибка отправки:', e);
                 btn.innerHTML = '❌ Ошибка!';
                 btn.style.background = '#ef4444';
+                
+                // Пробуем отправить через альтернативный метод
+                try {
+                    if (window.parent && window.parent.postMessage) {
+                        window.parent.postMessage(JSON.stringify(settings), '*');
+                    }
+                } catch(e2) {}
+                
                 setTimeout(() => {
                     btn.innerHTML = originalText;
                     btn.disabled = false;
@@ -421,17 +549,52 @@
             }
         }
         
-        // Инициализация
-        window.onload = () => {
-            console.log('🚀 Mini App загружен');
+        // Инициализация с задержкой для Samsung
+        function init() {
             createStars();
-            loadSettings();      // Загружаем настройки
-            updateUI();          // Применяем к интерфейсу
-            setupChips();        // Настраиваем кнопки
+            loadSettings();
+            updateUI();
+            setupChips();
             
             const saveBtn = document.getElementById('saveBtn');
-            if (saveBtn) saveBtn.addEventListener('click', saveAndClose);
-        };
+            if (saveBtn) {
+                // Удаляем старые обработчики
+                const oldClick = saveBtn._clickHandler;
+                if (oldClick) saveBtn.removeEventListener('click', oldClick);
+                const oldTouch = saveBtn._touchHandler;
+                if (oldTouch) saveBtn.removeEventListener('touchstart', oldTouch);
+                
+                // Добавляем новые
+                const clickHandler = function(e) {
+                    e.preventDefault();
+                    saveAndClose();
+                };
+                saveBtn.addEventListener('click', clickHandler);
+                saveBtn.addEventListener('touchstart', clickHandler, { passive: false });
+                saveBtn._clickHandler = clickHandler;
+                saveBtn._touchHandler = clickHandler;
+            }
+            
+            // Логируем успешную инициализацию
+            console.log('✅ Mini App полностью инициализирован');
+        }
+        
+        // Запускаем инициализацию после полной загрузки DOM
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', init);
+        } else {
+            init();
+        }
+        
+        // Дополнительная задержка для Samsung Internet
+        setTimeout(() => {
+            if (document.getElementById('stars') && document.getElementById('stars').children.length === 0) {
+                createStars();
+            }
+            if (!document.querySelector('.chip.active')) {
+                updateUI();
+            }
+        }, 500);
     </script>
 </body>
 </html>
