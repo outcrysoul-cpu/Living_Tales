@@ -13,8 +13,6 @@
             --accent-glow: #d8b4fe;
             --text-main: #ffffff;
             --text-secondary: #cbd5e1;
-            --success: #22c55e;
-            --danger: #ef4444;
             --safe-area-bottom: env(safe-area-inset-bottom, 20px);
         }
 
@@ -110,31 +108,39 @@
             margin-top: 0;
         }
 
-        /* Кнопки выбора (Chips) — ПРЕЖНИЙ СТИЛЬ */
+        /* Кнопки в одну линию */
         .chips-container {
             display: flex;
-            flex-wrap: wrap;
-            gap: 12px;
+            flex-direction: row;
+            flex-wrap: nowrap;
+            gap: 8px;
+            overflow-x: auto;
+            padding-bottom: 5px;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: none;
+        }
+        .chips-container::-webkit-scrollbar {
+            display: none;
         }
 
         .chip {
-            flex: 1;
-            min-width: 80px;
-            padding: 12px 10px;
+            flex: 0 0 auto;
+            min-width: 65px;
+            padding: 10px 8px;
             border-radius: 16px;
             background: rgba(255, 255, 255, 0.05);
             border: 1px solid rgba(255, 255, 255, 0.1);
             color: var(--text-secondary);
-            font-size: 13px;
+            font-size: 12px;
             font-weight: 500;
             text-align: center;
             cursor: pointer;
-            transition: all 0.3s ease;
+            transition: all 0.2s ease;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            gap: 5px;
+            gap: 4px;
             white-space: nowrap;
         }
 
@@ -143,11 +149,10 @@
             color: white;
             border-color: transparent;
             box-shadow: 0 0 15px rgba(168, 85, 247, 0.4);
-            transform: scale(1.02);
         }
 
         .chip-icon {
-            font-size: 20px;
+            font-size: 18px;
         }
 
         textarea {
@@ -209,20 +214,6 @@
             pointer-events: none;
         }
 
-        .loader {
-            display: none;
-            width: 20px;
-            height: 20px;
-            border: 3px solid rgba(255,255,255,0.3);
-            border-radius: 50%;
-            border-top-color: #fff;
-            animation: spin 1s ease-in-out infinite;
-        }
-
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-
         .icon-svg {
             width: 24px;
             height: 24px;
@@ -236,10 +227,7 @@
 
     <div class="container">
         <div class="card">
-            <h2>
-                <svg class="icon-svg" viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zm0 9l2.5-1.25L12 8.5l-2.5 1.25L12 11zm0 2.5l-5-2.5-5 2.5L12 22l10-8.5-5-2.5-5 2.5z"/></svg>
-                Поведение персонажа
-            </h2>
+            <h2>🎭 Поведение персонажа</h2>
             <label>Инициатива в игре</label>
             <div class="chips-container" id="initiative-group">
                 <div class="chip" data-val="passive"><span class="chip-icon">🌙</span>Пассивный</div>
@@ -256,10 +244,7 @@
         </div>
 
         <div class="card">
-            <h2>
-                <svg class="icon-svg" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>
-                Мир и Сюжет
-            </h2>
+            <h2>🌍 Мир и Сюжет</h2>
             <label>Сеттинг (Место действия)</label>
             <textarea id="setting-input" placeholder="Например: Киберпанк 2077, Неон, Дождь... или Фэнтези, Магия, Драконы..."></textarea>
             <label>Темп событий</label>
@@ -271,10 +256,7 @@
         </div>
 
         <div class="card">
-            <h2>
-                <svg class="icon-svg" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>
-                Дополнительно
-            </h2>
+            <h2>⚙️ Дополнительно</h2>
             <label>Второстепенные персонажи (NPC)</label>
             <div class="chips-container" id="npc-group">
                 <div class="chip active" data-val="none"><span class="chip-icon">🚫</span>Запрещены</div>
@@ -317,22 +299,18 @@
         }
         
         function updateUI() {
-            // Инициатива
             document.querySelectorAll('#initiative-group .chip').forEach(chip => {
                 if (chip.getAttribute('data-val') === settings.initiative) chip.classList.add('active');
                 else chip.classList.remove('active');
             });
-            // Длина
             document.querySelectorAll('#length-group .chip').forEach(chip => {
                 if (chip.getAttribute('data-val') === settings.length) chip.classList.add('active');
                 else chip.classList.remove('active');
             });
-            // Темп
             document.querySelectorAll('#pacing-group .chip').forEach(chip => {
                 if (chip.getAttribute('data-val') === settings.pacing) chip.classList.add('active');
                 else chip.classList.remove('active');
             });
-            // NPC
             document.querySelectorAll('#npc-group .chip').forEach(chip => {
                 if (chip.getAttribute('data-val') === settings.npc) chip.classList.add('active');
                 else chip.classList.remove('active');
