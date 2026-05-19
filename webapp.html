@@ -13,7 +13,10 @@
             --accent-glow: #d8b4fe;
             --text-main: #ffffff;
             --text-secondary: #cbd5e1;
+            --success: #22c55e;
+            --danger: #ef4444;
             --safe-area-bottom: env(safe-area-inset-bottom, 20px);
+            --safe-area-top: env(safe-area-inset-top, 0px);
         }
 
         * {
@@ -27,8 +30,10 @@
             background-color: var(--bg-dark);
             color: var(--text-main);
             overflow-x: hidden;
+            touch-action: pan-y pinch-zoom;
         }
 
+        /* ЗВЁЗДНЫЙ ФОН */
         .stars-container {
             position: fixed;
             top: 0;
@@ -108,14 +113,12 @@
             margin-top: 0;
         }
 
-        /* Кнопки в одну линию */
+        /* КОНТЕЙНЕР ДЛЯ CHIPS — ГОРИЗОНТАЛЬНЫЙ СКРОЛЛ */
         .chips-container {
             display: flex;
-            flex-direction: row;
-            flex-wrap: nowrap;
-            gap: 8px;
+            gap: 10px;
             overflow-x: auto;
-            padding-bottom: 5px;
+            padding-bottom: 8px;
             -webkit-overflow-scrolling: touch;
             scrollbar-width: none;
         }
@@ -123,15 +126,16 @@
             display: none;
         }
 
+        /* КНОПКИ CHIPS — оптимизированы для iOS */
         .chip {
             flex: 0 0 auto;
-            min-width: 65px;
-            padding: 10px 8px;
+            min-width: 85px;
+            padding: 12px 8px;
             border-radius: 16px;
             background: rgba(255, 255, 255, 0.05);
             border: 1px solid rgba(255, 255, 255, 0.1);
             color: var(--text-secondary);
-            font-size: 12px;
+            font-size: 13px;
             font-weight: 500;
             text-align: center;
             cursor: pointer;
@@ -140,10 +144,12 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            gap: 4px;
+            gap: 6px;
             white-space: nowrap;
+            touch-action: manipulation;
         }
 
+        /* Активная кнопка */
         .chip.active {
             background: var(--primary-gradient);
             color: white;
@@ -151,10 +157,20 @@
             box-shadow: 0 0 15px rgba(168, 85, 247, 0.4);
         }
 
-        .chip-icon {
-            font-size: 18px;
+        /* Визуальный фидбек при нажатии (для iOS) */
+        .chip:active {
+            transform: scale(0.96);
+            background: rgba(168, 85, 247, 0.4);
+        }
+        .chip.active:active {
+            transform: scale(0.96);
         }
 
+        .chip-icon {
+            font-size: 22px;
+        }
+
+        /* ТЕКСТОВОЕ ПОЛЕ */
         textarea {
             width: 100%;
             background: rgba(0, 0, 0, 0.3);
@@ -167,7 +183,10 @@
             resize: none;
             box-sizing: border-box;
             outline: none;
+            transition: border-color 0.3s;
             min-height: 100px;
+            -webkit-appearance: none;
+            appearance: none;
         }
 
         textarea:focus {
@@ -175,6 +194,7 @@
             box-shadow: 0 0 0 2px rgba(168, 85, 247, 0.2);
         }
 
+        /* КНОПКА СОХРАНЕНИЯ (фиксированная внизу) */
         .save-btn-container {
             position: fixed;
             bottom: calc(20px + var(--safe-area-bottom));
@@ -197,21 +217,38 @@
             font-weight: bold;
             cursor: pointer;
             box-shadow: 0 4px 20px rgba(168, 85, 247, 0.5);
-            transition: transform 0.15s;
+            transition: transform 0.15s, box-shadow 0.15s;
             display: flex;
             align-items: center;
             justify-content: center;
             gap: 10px;
             pointer-events: auto;
+            touch-action: manipulation;
         }
 
         .main-btn:active {
             transform: scale(0.97);
+            box-shadow: 0 2px 10px rgba(168, 85, 247, 0.3);
         }
 
         .main-btn.disabled {
-            opacity: 0.6;
+            opacity: 0.7;
+            transform: none;
             pointer-events: none;
+        }
+
+        .loader {
+            display: none;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,0.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
         }
 
         .icon-svg {
@@ -227,161 +264,227 @@
 
     <div class="container">
         <div class="card">
-            <h2>🎭 Поведение персонажа</h2>
+            <h2>
+                <svg class="icon-svg" viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zm0 9l2.5-1.25L12 8.5l-2.5 1.25L12 11zm0 2.5l-5-2.5-5 2.5L12 22l10-8.5-5-2.5-5 2.5z"/></svg>
+                Поведение персонажа
+            </h2>
             <label>Инициатива в игре</label>
             <div class="chips-container" id="initiative-group">
-                <div class="chip" data-val="passive"><span class="chip-icon">🌙</span>Пассивный</div>
-                <div class="chip active" data-val="balanced"><span class="chip-icon">⚖️</span>Баланс</div>
-                <div class="chip" data-val="active"><span class="chip-icon">🔥</span>Активный</div>
-                <div class="chip" data-val="dominant"><span class="chip-icon">👑</span>Доминант</div>
+                <div class="chip" data-val="passive">
+                    <span class="chip-icon">🌙</span>
+                    Пассивный
+                </div>
+                <div class="chip active" data-val="balanced">
+                    <span class="chip-icon">⚖️</span>
+                    Баланс
+                </div>
+                <div class="chip" data-val="active">
+                    <span class="chip-icon">🔥</span>
+                    Активный
+                </div>
+                <div class="chip" data-val="dominant">
+                    <span class="chip-icon">👑</span>
+                    Доминант
+                </div>
             </div>
             <label>Длина ответов</label>
             <div class="chips-container" id="length-group">
-                <div class="chip" data-val="short"><span class="chip-icon">💬</span>Короткие</div>
-                <div class="chip active" data-val="medium"><span class="chip-icon">📝</span>Средние</div>
-                <div class="chip" data-val="long"><span class="chip-icon">📜</span>Длинные</div>
+                <div class="chip" data-val="short">
+                    <span class="chip-icon">💬</span>
+                    Короткие
+                </div>
+                <div class="chip active" data-val="medium">
+                    <span class="chip-icon">📝</span>
+                    Средние
+                </div>
+                <div class="chip" data-val="long">
+                    <span class="chip-icon">📜</span>
+                    Длинные
+                </div>
             </div>
         </div>
 
         <div class="card">
-            <h2>🌍 Мир и Сюжет</h2>
+            <h2>
+                <svg class="icon-svg" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>
+                Мир и Сюжет
+            </h2>
             <label>Сеттинг (Место действия)</label>
             <textarea id="setting-input" placeholder="Например: Киберпанк 2077, Неон, Дождь... или Фэнтези, Магия, Драконы..."></textarea>
             <label>Темп событий</label>
             <div class="chips-container" id="pacing-group">
-                <div class="chip" data-val="slow"><span class="chip-icon">🐢</span>Спокойный</div>
-                <div class="chip active" data-val="normal"><span class="chip-icon">🚶</span>Нормальный</div>
-                <div class="chip" data-val="fast"><span class="chip-icon">⚡</span>Экшен</div>
+                <div class="chip" data-val="slow">
+                    <span class="chip-icon">🐢</span>
+                    Спокойный
+                </div>
+                <div class="chip active" data-val="normal">
+                    <span class="chip-icon">🚶</span>
+                    Нормальный
+                </div>
+                <div class="chip" data-val="fast">
+                    <span class="chip-icon">⚡</span>
+                    Экшен
+                </div>
             </div>
         </div>
 
         <div class="card">
-            <h2>⚙️ Дополнительно</h2>
+            <h2>
+                <svg class="icon-svg" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>
+                Дополнительно
+            </h2>
             <label>Второстепенные персонажи (NPC)</label>
             <div class="chips-container" id="npc-group">
-                <div class="chip active" data-val="none"><span class="chip-icon">🚫</span>Запрещены</div>
-                <div class="chip" data-val="allowed"><span class="chip-icon">👥</span>Разрешены</div>
+                <div class="chip active" data-val="none">
+                    <span class="chip-icon">🚫</span>
+                    Запрещены
+                </div>
+                <div class="chip" data-val="allowed">
+                    <span class="chip-icon">👥</span>
+                    Разрешены
+                </div>
             </div>
         </div>
     </div>
 
     <div class="save-btn-container">
-        <button class="main-btn" id="saveBtn">💾 Сохранить настройки</button>
+        <button class="main-btn" id="saveBtn">
+            <div class="loader" id="loader"></div>
+            <span id="btnText">💾 Сохранить настройки</span>
+        </button>
     </div>
 
     <script>
         const tg = window.Telegram.WebApp;
         tg.expand();
-        tg.ready();
-        if (tg.enableClosingConfirmation) tg.enableClosingConfirmation();
+        tg.enableClosingConfirmation();
+
+        const STORAGE_KEY = 'lt_settings_v1';
         
-        const STORAGE_KEY = 'living_tales_settings';
-        
-        let settings = {
+        let data = {
             initiative: 'balanced',
             length: 'medium',
             pacing: 'normal',
             setting: '',
             npc: 'none'
         };
-        
-        function loadSettings() {
+
+        // Загрузка из localStorage
+        function loadFromStorage() {
             try {
                 const saved = localStorage.getItem(STORAGE_KEY);
                 if (saved) {
-                    settings = { ...settings, ...JSON.parse(saved) };
+                    const parsed = JSON.parse(saved);
+                    data = { ...data, ...parsed };
                 }
-            } catch(e) { console.warn(e); }
+            } catch(e) {
+                console.warn('Ошибка загрузки:', e);
+            }
         }
-        
-        function saveToLocal() {
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
+
+        // Сохранение в localStorage
+        function saveToStorage() {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
         }
-        
-        function updateUI() {
-            document.querySelectorAll('#initiative-group .chip').forEach(chip => {
-                if (chip.getAttribute('data-val') === settings.initiative) chip.classList.add('active');
-                else chip.classList.remove('active');
-            });
-            document.querySelectorAll('#length-group .chip').forEach(chip => {
-                if (chip.getAttribute('data-val') === settings.length) chip.classList.add('active');
-                else chip.classList.remove('active');
-            });
-            document.querySelectorAll('#pacing-group .chip').forEach(chip => {
-                if (chip.getAttribute('data-val') === settings.pacing) chip.classList.add('active');
-                else chip.classList.remove('active');
-            });
-            document.querySelectorAll('#npc-group .chip').forEach(chip => {
-                if (chip.getAttribute('data-val') === settings.npc) chip.classList.add('active');
-                else chip.classList.remove('active');
-            });
+
+        // Применение настроек к интерфейсу
+        function applyToUI() {
+            // Активные кнопки
+            document.querySelectorAll(`.chip[data-val="${data.initiative}"]`).forEach(c => c.classList.add('active'));
+            document.querySelectorAll(`.chip[data-val="${data.length}"]`).forEach(c => c.classList.add('active'));
+            document.querySelectorAll(`.chip[data-val="${data.pacing}"]`).forEach(c => c.classList.add('active'));
+            document.querySelectorAll(`.chip[data-val="${data.npc}"]`).forEach(c => c.classList.add('active'));
             
-            const textarea = document.getElementById('setting-input');
-            if (textarea) textarea.value = settings.setting || '';
+            // Текстовое поле
+            const settingInput = document.getElementById('setting-input');
+            if (settingInput) settingInput.value = data.setting || '';
         }
-        
+
+        // Обработчик клика по кнопке (улучшен для iOS)
         function setupChips() {
-            const groups = ['initiative-group', 'length-group', 'pacing-group', 'npc-group'];
-            
-            groups.forEach(groupId => {
-                const group = document.getElementById(groupId);
-                if (!group) return;
-                
-                group.querySelectorAll('.chip').forEach(chip => {
-                    chip.removeEventListener('click', chip._handler);
+            const chips = document.querySelectorAll('.chip');
+            chips.forEach(chip => {
+                chip.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const key = chip.parentElement.id.replace('-group', '');
+                    const val = chip.getAttribute('data-val');
                     
-                    const handler = function() {
-                        let key = '';
-                        if (groupId === 'initiative-group') key = 'initiative';
-                        else if (groupId === 'length-group') key = 'length';
-                        else if (groupId === 'pacing-group') key = 'pacing';
-                        else if (groupId === 'npc-group') key = 'npc';
-                        
-                        const val = this.getAttribute('data-val');
-                        if (key && val) {
-                            settings[key] = val;
-                            saveToLocal();
-                            updateUI();
-                            if (tg.HapticFeedback) tg.HapticFeedback.selectionChanged();
-                        }
-                    };
+                    if (!val) return;
                     
-                    chip.addEventListener('click', handler);
-                    chip._handler = handler;
+                    // Маппинг ID групп
+                    let settingKey = '';
+                    if (chip.parentElement.id === 'initiative-group') settingKey = 'initiative';
+                    else if (chip.parentElement.id === 'length-group') settingKey = 'length';
+                    else if (chip.parentElement.id === 'pacing-group') settingKey = 'pacing';
+                    else if (chip.parentElement.id === 'npc-group') settingKey = 'npc';
+                    else return;
+                    
+                    // Обновляем данные
+                    data[settingKey] = val;
+                    
+                    // Обновляем активные классы в этой группе
+                    const group = chip.parentElement;
+                    const allChips = group.querySelectorAll('.chip');
+                    allChips.forEach(c => c.classList.remove('active'));
+                    chip.classList.add('active');
+                    
+                    // Сохраняем
+                    saveToStorage();
+                    
+                    // Виброотклик
+                    if (tg.HapticFeedback) tg.HapticFeedback.selectionChanged();
                 });
             });
         }
-        
-        function saveAndClose() {
-            const textarea = document.getElementById('setting-input');
-            if (textarea) settings.setting = textarea.value.trim();
-            saveToLocal();
+
+        // Сохранение и отправка
+        async function saveSettings() {
+            // Получаем текст из textarea
+            const settingInput = document.getElementById('setting-input');
+            if (settingInput) {
+                data.setting = settingInput.value.trim();
+            }
+            
+            // Сохраняем в localStorage
+            saveToStorage();
             
             const btn = document.getElementById('saveBtn');
-            const originalText = btn.innerHTML;
-            btn.innerHTML = '⏳ Отправка...';
+            const loader = document.getElementById('loader');
+            const btnText = document.getElementById('btnText');
+            
             btn.disabled = true;
             btn.classList.add('disabled');
+            loader.style.display = 'block';
+            btnText.innerText = 'Отправка...';
             
             try {
-                tg.sendData(JSON.stringify(settings));
+                tg.sendData(JSON.stringify(data));
+                
                 if (tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
-                btn.innerHTML = '✅ Отправлено!';
+                
                 btn.style.background = '#22c55e';
-                setTimeout(() => tg.close(), 500);
-            } catch(e) {
-                console.error(e);
-                btn.innerHTML = '❌ Ошибка!';
-                btn.style.background = '#ef4444';
+                btnText.innerText = '✅ Отправлено!';
+                
                 setTimeout(() => {
-                    btn.innerHTML = originalText;
+                    tg.close();
+                }, 800);
+                
+            } catch(e) {
+                console.error('Ошибка отправки:', e);
+                btnText.innerText = '❌ Ошибка! Попробуй ещё';
+                btn.style.background = '#ef4444';
+                
+                setTimeout(() => {
                     btn.disabled = false;
                     btn.classList.remove('disabled');
+                    loader.style.display = 'none';
+                    btnText.innerText = '💾 Сохранить настройки';
                     btn.style.background = '';
                 }, 2000);
             }
         }
-        
+
+        // Генерация звёзд
         function createStars() {
             const box = document.getElementById('stars');
             if (!box) return;
@@ -398,15 +501,38 @@
                 box.appendChild(s);
             }
         }
-        
-        window.onload = () => {
-            createStars();
-            loadSettings();
-            updateUI();
-            setupChips();
+
+        // Обработка клавиатуры (сдвиг контента)
+        function handleKeyboard() {
+            const container = document.querySelector('.container');
+            if (!container) return;
             
+            const inputs = document.querySelectorAll('textarea, input');
+            inputs.forEach(input => {
+                input.addEventListener('focus', () => {
+                    setTimeout(() => {
+                        input.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }, 300);
+                });
+            });
+        }
+
+        // Инициализация
+        window.onload = () => {
+            console.log('🚀 Mini App загружен');
+            createStars();
+            loadFromStorage();
+            applyToUI();
+            setupChips();
+            handleKeyboard();
+            
+            // Кнопка сохранения
             const saveBtn = document.getElementById('saveBtn');
-            if (saveBtn) saveBtn.addEventListener('click', saveAndClose);
+            if (saveBtn) {
+                saveBtn.addEventListener('click', saveSettings);
+            }
+            
+            tg.ready();
         };
     </script>
 </body>
