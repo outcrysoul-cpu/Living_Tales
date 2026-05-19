@@ -2,10 +2,15 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Living Tales Settings</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
+        * {
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
         :root {
             --bg-dark: #0f0720;
             --card-bg: rgba(76, 29, 149, 0.3);
@@ -24,7 +29,7 @@
             background-color: var(--bg-dark);
             color: var(--text-main);
             overflow-x: hidden;
-            -webkit-tap-highlight-color: transparent;
+            min-height: 100vh;
         }
 
         /* --- ЗВЕЗДНЫЙ ФОН --- */
@@ -46,15 +51,13 @@
             border-radius: 50%;
             opacity: 0.8;
             animation: twinkle infinite ease-in-out;
-            will-change: opacity;
         }
 
         @keyframes twinkle {
-            0%, 100% { opacity: 0.3; transform: scale(0.8); }
+            0%, 100% { opacity: 0.2; transform: scale(0.8); }
             50% { opacity: 1; transform: scale(1.2); box-shadow: 0 0 4px #fff; }
         }
 
-        /* Фон с градиентом как на лого */
         .background-glow {
             position: fixed;
             top: -20%;
@@ -67,65 +70,62 @@
         }
 
         .container {
-            padding: 20px;
+            padding: 16px;
+            padding-bottom: 100px;
             max-width: 600px;
             margin: 0 auto;
-            padding-bottom: 100px;
             position: relative;
             z-index: 1;
         }
 
-        h2 {
-            font-size: 18px;
-            font-weight: 600;
-            margin-bottom: 15px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            color: var(--accent-glow);
-            text-shadow: 0 0 10px rgba(168, 85, 247, 0.5);
-        }
-
+        /* Карточки */
         .card {
             background: var(--card-bg);
             backdrop-filter: blur(12px);
             -webkit-backdrop-filter: blur(12px);
             border: 1px solid rgba(255, 255, 255, 0.1);
             border-radius: 24px;
-            padding: 20px;
-            margin-bottom: 20px;
-            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.3);
+            padding: 18px;
+            margin-bottom: 16px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        h2 {
+            font-size: 17px;
+            font-weight: 600;
+            margin: 0 0 12px 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: var(--accent-glow);
+            text-shadow: 0 0 10px rgba(168, 85, 247, 0.3);
         }
 
         label {
             display: block;
-            font-size: 14px;
+            font-size: 13px;
             color: var(--text-secondary);
-            margin-bottom: 10px;
-            margin-top: 15px;
+            margin-bottom: 8px;
+            margin-top: 14px;
         }
         
-        label:first-child {
+        label:first-of-type {
             margin-top: 0;
         }
 
-        /* Кнопки выбора (Chips) — ТОЧНО КАК В ТВОЁМ КОДЕ */
+        /* Чипсы — адаптивные */
         .chips-container {
             display: flex;
+            flex-wrap: wrap;
             gap: 10px;
-            overflow-x: auto;
-            padding-bottom: 5px;
-            scrollbar-width: none;
-            width: 100%;
-            -webkit-overflow-scrolling: touch;
+            margin: 0 -2px;
         }
-        .chips-container::-webkit-scrollbar { display: none; }
 
         .chip {
-            flex: 1;
-            min-width: 80px;
-            padding: 12px 10px;
-            border-radius: 16px;
+            flex: 1 1 auto;
+            min-width: 70px;
+            padding: 10px 8px;
+            border-radius: 40px;
             background: rgba(255, 255, 255, 0.05);
             border: 1px solid rgba(255, 255, 255, 0.1);
             color: var(--text-secondary);
@@ -133,42 +133,56 @@
             font-weight: 500;
             text-align: center;
             cursor: pointer;
-            transition: all 0.3s ease;
-            display: flex;
+            transition: all 0.2s ease;
+            display: inline-flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            gap: 5px;
+            gap: 4px;
             white-space: nowrap;
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
+        }
+
+        /* На маленьких экранах — переносим текст */
+        @media (max-width: 450px) {
+            .chip {
+                white-space: normal;
+                word-break: keep-all;
+                min-width: 65px;
+                padding: 8px 6px;
+            }
+            .chip .chip-icon {
+                font-size: 18px;
+            }
         }
 
         .chip.active {
             background: var(--primary-gradient);
             color: white;
             border-color: transparent;
-            box-shadow: 0 0 15px rgba(168, 85, 247, 0.4);
-            transform: scale(1.02);
+            box-shadow: 0 0 12px rgba(168, 85, 247, 0.4);
         }
 
         .chip-icon {
             font-size: 20px;
         }
 
-        /* Поля ввода */
+        /* Текстовое поле */
         textarea {
             width: 100%;
-            background: rgba(0, 0, 0, 0.3);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 16px;
-            padding: 15px;
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 20px;
+            padding: 14px;
             color: white;
             font-size: 15px;
             font-family: inherit;
-            resize: none;
+            resize: vertical;
             box-sizing: border-box;
             outline: none;
-            transition: border-color 0.3s;
-            min-height: 100px;
+            transition: border-color 0.2s;
+            min-height: 90px;
         }
 
         textarea:focus {
@@ -176,13 +190,13 @@
             box-shadow: 0 0 0 2px rgba(168, 85, 247, 0.2);
         }
 
-        /* Главная кнопка сохранения */
+        /* Фиксированная кнопка сохранения */
         .save-btn-container {
             position: fixed;
-            bottom: 20px;
-            left: 20px;
-            right: 20px;
-            max-width: 560px;
+            bottom: 16px;
+            left: 16px;
+            right: 16px;
+            max-width: 568px;
             margin: 0 auto;
             z-index: 100;
             pointer-events: none;
@@ -190,25 +204,26 @@
 
         .main-btn {
             width: 100%;
-            padding: 16px;
-            border-radius: 20px;
+            padding: 15px;
+            border-radius: 50px;
             border: none;
             background: var(--primary-gradient);
             color: white;
             font-size: 16px;
-            font-weight: bold;
+            font-weight: 600;
             cursor: pointer;
-            box-shadow: 0 4px 20px rgba(168, 85, 247, 0.5);
-            transition: transform 0.2s, box-shadow 0.2s;
+            box-shadow: 0 4px 20px rgba(168, 85, 247, 0.4);
+            transition: transform 0.15s, box-shadow 0.15s;
             display: flex;
             align-items: center;
             justify-content: center;
             gap: 10px;
             pointer-events: auto;
+            touch-action: manipulation;
         }
 
         .main-btn:active {
-            transform: scale(0.98);
+            transform: scale(0.97);
             box-shadow: 0 2px 10px rgba(168, 85, 247, 0.3);
         }
 
@@ -219,7 +234,7 @@
             border: 3px solid rgba(255,255,255,0.3);
             border-radius: 50%;
             border-top-color: #fff;
-            animation: spin 1s ease-in-out infinite;
+            animation: spin 0.8s linear infinite;
         }
 
         @keyframes spin {
@@ -227,8 +242,8 @@
         }
 
         .icon-svg {
-            width: 24px;
-            height: 24px;
+            width: 22px;
+            height: 22px;
             fill: currentColor;
         }
     </style>
@@ -238,83 +253,88 @@
     <div class="background-glow"></div>
 
     <div class="container">
+        <!-- Поведение персонажа -->
         <div class="card">
             <h2>
                 <svg class="icon-svg" viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zm0 9l2.5-1.25L12 8.5l-2.5 1.25L12 11zm0 2.5l-5-2.5-5 2.5L12 22l10-8.5-5-2.5-5 2.5z"/></svg>
                 Поведение персонажа
             </h2>
             <label>Инициатива в игре</label>
-            <div class="chips-container" id="initiative-group">
-                <div class="chip" data-val="passive" onclick="pick('initiative','passive',this)">
+            <div class="chips-container">
+                <div class="chip" data-key="initiative" data-val="passive">
                     <span class="chip-icon">🌙</span>
                     Пассивный
                 </div>
-                <div class="chip active" data-val="balanced" onclick="pick('initiative','balanced',this)">
+                <div class="chip" data-key="initiative" data-val="balanced">
                     <span class="chip-icon">⚖️</span>
                     Баланс
                 </div>
-                <div class="chip" data-val="active" onclick="pick('initiative','active',this)">
+                <div class="chip" data-key="initiative" data-val="active">
                     <span class="chip-icon">🔥</span>
                     Активный
                 </div>
-                <div class="chip" data-val="dominant" onclick="pick('initiative','dominant',this)">
+                <div class="chip" data-key="initiative" data-val="dominant">
                     <span class="chip-icon">👑</span>
                     Доминант
                 </div>
             </div>
+
             <label>Длина ответов</label>
-            <div class="chips-container" id="length-group">
-                <div class="chip" data-val="short" onclick="pick('length','short',this)">
+            <div class="chips-container">
+                <div class="chip" data-key="length" data-val="short">
                     <span class="chip-icon">💬</span>
                     Короткие
                 </div>
-                <div class="chip active" data-val="medium" onclick="pick('length','medium',this)">
+                <div class="chip" data-key="length" data-val="medium">
                     <span class="chip-icon">📝</span>
                     Средние
                 </div>
-                <div class="chip" data-val="long" onclick="pick('length','long',this)">
+                <div class="chip" data-key="length" data-val="long">
                     <span class="chip-icon">📜</span>
                     Длинные
                 </div>
             </div>
         </div>
 
+        <!-- Мир и Сюжет -->
         <div class="card">
             <h2>
                 <svg class="icon-svg" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>
                 Мир и Сюжет
             </h2>
             <label>Сеттинг (Место действия)</label>
-            <textarea id="setting-input" placeholder="Например: Киберпанк 2077, Неон, Дождь... или Фэнтези, Магия, Драконы..."></textarea>
+            <textarea id="setting-input" rows="2" placeholder="Пример: Киберпанк 2077, неон, дождь... или Фэнтези, магия, драконы..."></textarea>
+
             <label>Темп событий</label>
-            <div class="chips-container" id="pacing-group">
-                <div class="chip" data-val="slow" onclick="pick('pacing','slow',this)">
+            <div class="chips-container">
+                <div class="chip" data-key="pacing" data-val="slow">
                     <span class="chip-icon">🐢</span>
                     Спокойный
                 </div>
-                <div class="chip active" data-val="normal" onclick="pick('pacing','normal',this)">
+                <div class="chip" data-key="pacing" data-val="normal">
                     <span class="chip-icon">🚶</span>
                     Нормальный
                 </div>
-                <div class="chip" data-val="fast" onclick="pick('pacing','fast',this)">
+                <div class="chip" data-key="pacing" data-val="fast">
                     <span class="chip-icon">⚡</span>
                     Экшен
                 </div>
             </div>
         </div>
 
+        <!-- Дополнительно -->
         <div class="card">
             <h2>
                 <svg class="icon-svg" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>
                 Дополнительно
             </h2>
             <label>Второстепенные персонажи (NPC)</label>
-            <div class="chips-container" id="npc-group">
-                <div class="chip active" data-val="none" onclick="pick('npc','none',this)">
+            <div class="chips-container">
+                <div class="chip" data-key="npc" data-val="none">
                     <span class="chip-icon">🚫</span>
                     Запрещены
                 </div>
-                <div class="chip" data-val="allowed" onclick="pick('npc','allowed',this)">
+                <div class="chip" data-key="npc" data-val="allowed">
                     <span class="chip-icon">👥</span>
                     Разрешены
                 </div>
@@ -323,7 +343,7 @@
     </div>
 
     <div class="save-btn-container">
-        <button class="main-btn" id="saveBtn" onclick="save()">
+        <button class="main-btn" id="saveBtn">
             <div class="loader" id="loader"></div>
             <span id="btnText">💾 Сохранить настройки</span>
         </button>
@@ -332,86 +352,181 @@
     <script>
         const tg = window.Telegram.WebApp;
         tg.expand();
+        tg.enableClosingConfirmation(); // предупреждение при закрытии
 
-        // 🔹 localStorage для сохранения настроек
-        const STORAGE_KEY = 'lt_settings_v1';
-        let data = { initiative:'balanced', length:'medium', pacing:'normal', setting:'', npc:'none' };
+        // Ключ для localStorage
+        const STORAGE_KEY = 'living_tales_settings';
+        
+        // Данные по умолчанию
+        let userSettings = {
+            initiative: 'balanced',
+            length: 'medium',
+            pacing: 'normal',
+            setting: '',
+            npc: 'none'
+        };
 
         // Загрузка из localStorage
-        function loadFromStorage() {
+        function loadSettings() {
             try {
                 const saved = localStorage.getItem(STORAGE_KEY);
-                if (saved) data = { ...data, ...JSON.parse(saved) };
-            } catch(e) { console.warn('Ошибка загрузки:', e); }
+                if (saved) {
+                    const parsed = JSON.parse(saved);
+                    userSettings = { ...userSettings, ...parsed };
+                    console.log('📦 Загружены настройки:', userSettings);
+                } else {
+                    console.log('🆕 Настроек нет, используем значения по умолчанию');
+                }
+            } catch(e) {
+                console.warn('Ошибка загрузки:', e);
+            }
         }
 
         // Применение настроек к интерфейсу
-        function applyToUI() {
-            document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
-            document.querySelectorAll(`.chip[data-val="${data.initiative}"]`).forEach(c => c.classList.add('active'));
-            document.querySelectorAll(`.chip[data-val="${data.length}"]`).forEach(c => c.classList.add('active'));
-            document.querySelectorAll(`.chip[data-val="${data.pacing}"]`).forEach(c => c.classList.add('active'));
-            document.querySelectorAll(`.chip[data-val="${data.npc}"]`).forEach(c => c.classList.add('active'));
-            document.getElementById('setting-input').value = data.setting || '';
+        function applySettingsToUI() {
+            // Чипсы
+            document.querySelectorAll('.chip').forEach(chip => {
+                const key = chip.getAttribute('data-key');
+                const val = chip.getAttribute('data-val');
+                if (userSettings[key] === val) {
+                    chip.classList.add('active');
+                } else {
+                    chip.classList.remove('active');
+                }
+            });
+            
+            // Текстовое поле
+            const settingField = document.getElementById('setting-input');
+            if (settingField) {
+                settingField.value = userSettings.setting || '';
+            }
         }
 
         // Сохранение в localStorage
-        function saveToStorage() { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); }
+        function persistSettings() {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(userSettings));
+        }
+
+        // Обработчик выбора чипса
+        function handleChipClick(event) {
+            const chip = event.currentTarget;
+            const key = chip.getAttribute('data-key');
+            const val = chip.getAttribute('data-val');
+            
+            if (!key || !val) return;
+            
+            // Обновляем данные
+            userSettings[key] = val;
+            
+            // Обновляем UI: активируем только текущий чипс в группе
+            const container = chip.parentElement;
+            const chips = container.querySelectorAll('.chip');
+            chips.forEach(c => {
+                if (c.getAttribute('data-key') === key) {
+                    if (c.getAttribute('data-val') === val) {
+                        c.classList.add('active');
+                    } else {
+                        c.classList.remove('active');
+                    }
+                }
+            });
+            
+            // Сохраняем в localStorage
+            persistSettings();
+            
+            // Виброотклик
+            if (tg.HapticFeedback) tg.HapticFeedback.selectionChanged();
+        }
+
+        // Привязка обработчиков к чипсам
+        function bindChipEvents() {
+            document.querySelectorAll('.chip').forEach(chip => {
+                chip.removeEventListener('click', handleChipClick);
+                chip.addEventListener('click', handleChipClick);
+            });
+        }
+
+        // Сохранение и отправка в бот
+        function saveAndSend() {
+            // Считываем сеттинг из текстового поля
+            const settingInput = document.getElementById('setting-input');
+            userSettings.setting = settingInput.value.trim();
+            
+            // Обновляем localStorage
+            persistSettings();
+            
+            const btn = document.getElementById('saveBtn');
+            const loader = document.getElementById('loader');
+            const btnText = document.getElementById('btnText');
+            
+            btn.disabled = true;
+            loader.style.display = 'block';
+            btnText.innerText = 'Отправка...';
+            
+            try {
+                // Отправляем данные в бот
+                tg.sendData(JSON.stringify(userSettings));
+                
+                if (tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
+                
+                btn.style.background = '#22c55e';
+                btnText.innerText = '✅ Отправлено!';
+                
+                setTimeout(() => {
+                    tg.close();
+                }, 800);
+            } catch(e) {
+                console.error('Ошибка отправки:', e);
+                alert('Ошибка: ' + e.message);
+                btn.disabled = false;
+                loader.style.display = 'none';
+                btnText.innerText = '💾 Сохранить настройки';
+                btn.style.background = '';
+            }
+        }
 
         // Генерация звёзд
         function createStars() {
-            const box = document.getElementById('stars');
-            for(let i=0; i<50; i++) {
-                const s = document.createElement('div'); s.className='star';
-                s.style.left = Math.random()*100+'%';
-                s.style.top = Math.random()*100+'%';
-                s.style.width = s.style.height = (Math.random()*2+1)+'px';
-                s.style.animationDuration = (Math.random()*3+2)+'s';
-                s.style.animationDelay = Math.random()*5+'s';
-                box.appendChild(s);
-            }
-        }
-
-        // Обработчик клика (как в твоём коде)
-        function pick(key, val, el) {
-            data[key] = val;
-            const container = el.parentElement;
-            const chips = container.getElementsByClassName('chip');
-            for (let chip of chips) {
-                chip.classList.remove('active');
-            }
-            el.classList.add('active');
-            saveToStorage(); // 🔹 Мгновенно сохраняем
-            if(tg.HapticFeedback) tg.HapticFeedback.selectionChanged();
-        }
-
-        // Кнопка "Сохранить" (как в твоём коде)
-        function save() {
-            data.setting = document.getElementById('setting-input').value.trim();
-            saveToStorage(); // 🔹 Сохраняем и тут
-            
-            const btn = document.getElementById('saveBtn'), ldr = document.getElementById('loader'), txt = document.getElementById('btnText');
-            btn.disabled = true; ldr.style.display='block'; txt.innerText='Отправка...';
-            
-            try {
-                tg.sendData(JSON.stringify(data));
-                if(tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
-                btn.style.background='#22c55e'; txt.innerText='✅ Отправлено!';
-                setTimeout(() => tg.close(), 800);
-            } catch(e) {
-                alert('Ошибка: '+e.message);
-                btn.disabled=false; ldr.style.display='none'; txt.innerText='💾 Сохранить';
+            const container = document.getElementById('stars');
+            if (!container) return;
+            container.innerHTML = '';
+            const starCount = Math.min(80, Math.floor(window.innerWidth / 8));
+            for (let i = 0; i < starCount; i++) {
+                const star = document.createElement('div');
+                star.className = 'star';
+                star.style.left = Math.random() * 100 + '%';
+                star.style.top = Math.random() * 100 + '%';
+                const size = Math.random() * 2.5 + 1;
+                star.style.width = size + 'px';
+                star.style.height = size + 'px';
+                star.style.animationDuration = Math.random() * 4 + 2 + 's';
+                star.style.animationDelay = Math.random() * 5 + 's';
+                container.appendChild(star);
             }
         }
 
         // Инициализация
         window.onload = () => {
-            console.log('🚀 Page loaded');
+            console.log('🚀 Mini App загружен');
             createStars();
-            loadFromStorage(); // 🔹 Загружаем прошлые настройки
-            applyToUI();       // 🔹 Применяем их к интерфейсу
+            loadSettings();
+            applySettingsToUI();
+            bindChipEvents();
+            
+            // Кнопка сохранения
+            const saveBtn = document.getElementById('saveBtn');
+            if (saveBtn) {
+                saveBtn.removeEventListener('click', saveAndSend);
+                saveBtn.addEventListener('click', saveAndSend);
+            }
+            
             tg.ready();
         };
+        
+        // При изменении размера окна — пересоздаём звёзды (опционально)
+        window.addEventListener('resize', () => {
+            createStars();
+        });
     </script>
 </body>
 </html>
