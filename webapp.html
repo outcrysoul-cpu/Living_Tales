@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Living Tales Settings</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
@@ -15,6 +15,12 @@
             --text-secondary: #cbd5e1;
             --success: #22c55e;
             --danger: #ef4444;
+            --safe-area-bottom: env(safe-area-inset-bottom, 20px);
+            --safe-area-top: env(safe-area-inset-top, 0px);
+        }
+
+        * {
+            -webkit-tap-highlight-color: transparent;
         }
 
         body {
@@ -24,10 +30,10 @@
             background-color: var(--bg-dark);
             color: var(--text-main);
             overflow-x: hidden;
-            -webkit-tap-highlight-color: transparent;
+            touch-action: pan-y pinch-zoom;
         }
 
-        /* --- ЗВЕЗДНЫЙ ФОН --- */
+        /* ЗВЁЗДНЫЙ ФОН */
         .stars-container {
             position: fixed;
             top: 0;
@@ -46,7 +52,6 @@
             border-radius: 50%;
             opacity: 0.8;
             animation: twinkle infinite ease-in-out;
-            will-change: opacity;
         }
 
         @keyframes twinkle {
@@ -54,7 +59,6 @@
             50% { opacity: 1; transform: scale(1.2); box-shadow: 0 0 4px #fff; }
         }
 
-        /* Фон с градиентом как на лого */
         .background-glow {
             position: fixed;
             top: -20%;
@@ -68,9 +72,9 @@
 
         .container {
             padding: 20px;
+            padding-bottom: calc(100px + var(--safe-area-bottom));
             max-width: 600px;
             margin: 0 auto;
-            padding-bottom: 100px;
             position: relative;
             z-index: 1;
         }
@@ -109,22 +113,24 @@
             margin-top: 0;
         }
 
-        /* Кнопки выбора (Chips) — ТОЧНО КАК В ТВОЁМ КОДЕ */
+        /* КОНТЕЙНЕР ДЛЯ CHIPS — ГОРИЗОНТАЛЬНЫЙ СКРОЛЛ */
         .chips-container {
             display: flex;
             gap: 10px;
             overflow-x: auto;
-            padding-bottom: 5px;
-            scrollbar-width: none;
-            width: 100%;
+            padding-bottom: 8px;
             -webkit-overflow-scrolling: touch;
+            scrollbar-width: none;
         }
-        .chips-container::-webkit-scrollbar { display: none; }
+        .chips-container::-webkit-scrollbar {
+            display: none;
+        }
 
+        /* КНОПКИ CHIPS — оптимизированы для iOS */
         .chip {
-            flex: 1;
-            min-width: 80px;
-            padding: 12px 10px;
+            flex: 0 0 auto;
+            min-width: 85px;
+            padding: 12px 8px;
             border-radius: 16px;
             background: rgba(255, 255, 255, 0.05);
             border: 1px solid rgba(255, 255, 255, 0.1);
@@ -133,28 +139,38 @@
             font-weight: 500;
             text-align: center;
             cursor: pointer;
-            transition: all 0.3s ease;
+            transition: all 0.2s ease;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            gap: 5px;
+            gap: 6px;
             white-space: nowrap;
+            touch-action: manipulation;
         }
 
+        /* Активная кнопка */
         .chip.active {
             background: var(--primary-gradient);
             color: white;
             border-color: transparent;
             box-shadow: 0 0 15px rgba(168, 85, 247, 0.4);
-            transform: scale(1.02);
+        }
+
+        /* Визуальный фидбек при нажатии (для iOS) */
+        .chip:active {
+            transform: scale(0.96);
+            background: rgba(168, 85, 247, 0.4);
+        }
+        .chip.active:active {
+            transform: scale(0.96);
         }
 
         .chip-icon {
-            font-size: 20px;
+            font-size: 22px;
         }
 
-        /* Поля ввода */
+        /* ТЕКСТОВОЕ ПОЛЕ */
         textarea {
             width: 100%;
             background: rgba(0, 0, 0, 0.3);
@@ -169,6 +185,8 @@
             outline: none;
             transition: border-color 0.3s;
             min-height: 100px;
+            -webkit-appearance: none;
+            appearance: none;
         }
 
         textarea:focus {
@@ -176,10 +194,10 @@
             box-shadow: 0 0 0 2px rgba(168, 85, 247, 0.2);
         }
 
-        /* Главная кнопка сохранения */
+        /* КНОПКА СОХРАНЕНИЯ (фиксированная внизу) */
         .save-btn-container {
             position: fixed;
-            bottom: 20px;
+            bottom: calc(20px + var(--safe-area-bottom));
             left: 20px;
             right: 20px;
             max-width: 560px;
@@ -199,17 +217,24 @@
             font-weight: bold;
             cursor: pointer;
             box-shadow: 0 4px 20px rgba(168, 85, 247, 0.5);
-            transition: transform 0.2s, box-shadow 0.2s;
+            transition: transform 0.15s, box-shadow 0.15s;
             display: flex;
             align-items: center;
             justify-content: center;
             gap: 10px;
             pointer-events: auto;
+            touch-action: manipulation;
         }
 
         .main-btn:active {
-            transform: scale(0.98);
+            transform: scale(0.97);
             box-shadow: 0 2px 10px rgba(168, 85, 247, 0.3);
+        }
+
+        .main-btn.disabled {
+            opacity: 0.7;
+            transform: none;
+            pointer-events: none;
         }
 
         .loader {
@@ -245,34 +270,34 @@
             </h2>
             <label>Инициатива в игре</label>
             <div class="chips-container" id="initiative-group">
-                <div class="chip" data-val="passive" onclick="pick('initiative','passive',this)">
+                <div class="chip" data-val="passive">
                     <span class="chip-icon">🌙</span>
                     Пассивный
                 </div>
-                <div class="chip active" data-val="balanced" onclick="pick('initiative','balanced',this)">
+                <div class="chip active" data-val="balanced">
                     <span class="chip-icon">⚖️</span>
                     Баланс
                 </div>
-                <div class="chip" data-val="active" onclick="pick('initiative','active',this)">
+                <div class="chip" data-val="active">
                     <span class="chip-icon">🔥</span>
                     Активный
                 </div>
-                <div class="chip" data-val="dominant" onclick="pick('initiative','dominant',this)">
+                <div class="chip" data-val="dominant">
                     <span class="chip-icon">👑</span>
                     Доминант
                 </div>
             </div>
             <label>Длина ответов</label>
             <div class="chips-container" id="length-group">
-                <div class="chip" data-val="short" onclick="pick('length','short',this)">
+                <div class="chip" data-val="short">
                     <span class="chip-icon">💬</span>
                     Короткие
                 </div>
-                <div class="chip active" data-val="medium" onclick="pick('length','medium',this)">
+                <div class="chip active" data-val="medium">
                     <span class="chip-icon">📝</span>
                     Средние
                 </div>
-                <div class="chip" data-val="long" onclick="pick('length','long',this)">
+                <div class="chip" data-val="long">
                     <span class="chip-icon">📜</span>
                     Длинные
                 </div>
@@ -288,15 +313,15 @@
             <textarea id="setting-input" placeholder="Например: Киберпанк 2077, Неон, Дождь... или Фэнтези, Магия, Драконы..."></textarea>
             <label>Темп событий</label>
             <div class="chips-container" id="pacing-group">
-                <div class="chip" data-val="slow" onclick="pick('pacing','slow',this)">
+                <div class="chip" data-val="slow">
                     <span class="chip-icon">🐢</span>
                     Спокойный
                 </div>
-                <div class="chip active" data-val="normal" onclick="pick('pacing','normal',this)">
+                <div class="chip active" data-val="normal">
                     <span class="chip-icon">🚶</span>
                     Нормальный
                 </div>
-                <div class="chip" data-val="fast" onclick="pick('pacing','fast',this)">
+                <div class="chip" data-val="fast">
                     <span class="chip-icon">⚡</span>
                     Экшен
                 </div>
@@ -310,11 +335,11 @@
             </h2>
             <label>Второстепенные персонажи (NPC)</label>
             <div class="chips-container" id="npc-group">
-                <div class="chip active" data-val="none" onclick="pick('npc','none',this)">
+                <div class="chip active" data-val="none">
                     <span class="chip-icon">🚫</span>
                     Запрещены
                 </div>
-                <div class="chip" data-val="allowed" onclick="pick('npc','allowed',this)">
+                <div class="chip" data-val="allowed">
                     <span class="chip-icon">👥</span>
                     Разрешены
                 </div>
@@ -323,7 +348,7 @@
     </div>
 
     <div class="save-btn-container">
-        <button class="main-btn" id="saveBtn" onclick="save()">
+        <button class="main-btn" id="saveBtn">
             <div class="loader" id="loader"></div>
             <span id="btnText">💾 Сохранить настройки</span>
         </button>
@@ -332,84 +357,181 @@
     <script>
         const tg = window.Telegram.WebApp;
         tg.expand();
+        tg.enableClosingConfirmation();
 
-        // 🔹 localStorage для сохранения настроек
         const STORAGE_KEY = 'lt_settings_v1';
-        let data = { initiative:'balanced', length:'medium', pacing:'normal', setting:'', npc:'none' };
+        
+        let data = {
+            initiative: 'balanced',
+            length: 'medium',
+            pacing: 'normal',
+            setting: '',
+            npc: 'none'
+        };
 
         // Загрузка из localStorage
         function loadFromStorage() {
             try {
                 const saved = localStorage.getItem(STORAGE_KEY);
-                if (saved) data = { ...data, ...JSON.parse(saved) };
-            } catch(e) { console.warn('Ошибка загрузки:', e); }
+                if (saved) {
+                    const parsed = JSON.parse(saved);
+                    data = { ...data, ...parsed };
+                }
+            } catch(e) {
+                console.warn('Ошибка загрузки:', e);
+            }
+        }
+
+        // Сохранение в localStorage
+        function saveToStorage() {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
         }
 
         // Применение настроек к интерфейсу
         function applyToUI() {
-            document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+            // Активные кнопки
             document.querySelectorAll(`.chip[data-val="${data.initiative}"]`).forEach(c => c.classList.add('active'));
             document.querySelectorAll(`.chip[data-val="${data.length}"]`).forEach(c => c.classList.add('active'));
             document.querySelectorAll(`.chip[data-val="${data.pacing}"]`).forEach(c => c.classList.add('active'));
             document.querySelectorAll(`.chip[data-val="${data.npc}"]`).forEach(c => c.classList.add('active'));
-            document.getElementById('setting-input').value = data.setting || '';
+            
+            // Текстовое поле
+            const settingInput = document.getElementById('setting-input');
+            if (settingInput) settingInput.value = data.setting || '';
         }
 
-        // Сохранение в localStorage
-        function saveToStorage() { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); }
+        // Обработчик клика по кнопке (улучшен для iOS)
+        function setupChips() {
+            const chips = document.querySelectorAll('.chip');
+            chips.forEach(chip => {
+                chip.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const key = chip.parentElement.id.replace('-group', '');
+                    const val = chip.getAttribute('data-val');
+                    
+                    if (!val) return;
+                    
+                    // Маппинг ID групп
+                    let settingKey = '';
+                    if (chip.parentElement.id === 'initiative-group') settingKey = 'initiative';
+                    else if (chip.parentElement.id === 'length-group') settingKey = 'length';
+                    else if (chip.parentElement.id === 'pacing-group') settingKey = 'pacing';
+                    else if (chip.parentElement.id === 'npc-group') settingKey = 'npc';
+                    else return;
+                    
+                    // Обновляем данные
+                    data[settingKey] = val;
+                    
+                    // Обновляем активные классы в этой группе
+                    const group = chip.parentElement;
+                    const allChips = group.querySelectorAll('.chip');
+                    allChips.forEach(c => c.classList.remove('active'));
+                    chip.classList.add('active');
+                    
+                    // Сохраняем
+                    saveToStorage();
+                    
+                    // Виброотклик
+                    if (tg.HapticFeedback) tg.HapticFeedback.selectionChanged();
+                });
+            });
+        }
+
+        // Сохранение и отправка
+        async function saveSettings() {
+            // Получаем текст из textarea
+            const settingInput = document.getElementById('setting-input');
+            if (settingInput) {
+                data.setting = settingInput.value.trim();
+            }
+            
+            // Сохраняем в localStorage
+            saveToStorage();
+            
+            const btn = document.getElementById('saveBtn');
+            const loader = document.getElementById('loader');
+            const btnText = document.getElementById('btnText');
+            
+            btn.disabled = true;
+            btn.classList.add('disabled');
+            loader.style.display = 'block';
+            btnText.innerText = 'Отправка...';
+            
+            try {
+                tg.sendData(JSON.stringify(data));
+                
+                if (tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
+                
+                btn.style.background = '#22c55e';
+                btnText.innerText = '✅ Отправлено!';
+                
+                setTimeout(() => {
+                    tg.close();
+                }, 800);
+                
+            } catch(e) {
+                console.error('Ошибка отправки:', e);
+                btnText.innerText = '❌ Ошибка! Попробуй ещё';
+                btn.style.background = '#ef4444';
+                
+                setTimeout(() => {
+                    btn.disabled = false;
+                    btn.classList.remove('disabled');
+                    loader.style.display = 'none';
+                    btnText.innerText = '💾 Сохранить настройки';
+                    btn.style.background = '';
+                }, 2000);
+            }
+        }
 
         // Генерация звёзд
         function createStars() {
             const box = document.getElementById('stars');
-            for(let i=0; i<50; i++) {
-                const s = document.createElement('div'); s.className='star';
-                s.style.left = Math.random()*100+'%';
-                s.style.top = Math.random()*100+'%';
-                s.style.width = s.style.height = (Math.random()*2+1)+'px';
-                s.style.animationDuration = (Math.random()*3+2)+'s';
-                s.style.animationDelay = Math.random()*5+'s';
+            if (!box) return;
+            for(let i = 0; i < 50; i++) {
+                const s = document.createElement('div');
+                s.className = 'star';
+                s.style.left = Math.random() * 100 + '%';
+                s.style.top = Math.random() * 100 + '%';
+                const size = Math.random() * 2 + 1;
+                s.style.width = size + 'px';
+                s.style.height = size + 'px';
+                s.style.animationDuration = (Math.random() * 3 + 2) + 's';
+                s.style.animationDelay = Math.random() * 5 + 's';
                 box.appendChild(s);
             }
         }
 
-        // Обработчик клика (как в твоём коде)
-        function pick(key, val, el) {
-            data[key] = val;
-            const container = el.parentElement;
-            const chips = container.getElementsByClassName('chip');
-            for (let chip of chips) {
-                chip.classList.remove('active');
-            }
-            el.classList.add('active');
-            saveToStorage(); // 🔹 Мгновенно сохраняем
-            if(tg.HapticFeedback) tg.HapticFeedback.selectionChanged();
-        }
-
-        // Кнопка "Сохранить" (как в твоём коде)
-        function save() {
-            data.setting = document.getElementById('setting-input').value.trim();
-            saveToStorage(); // 🔹 Сохраняем и тут
+        // Обработка клавиатуры (сдвиг контента)
+        function handleKeyboard() {
+            const container = document.querySelector('.container');
+            if (!container) return;
             
-            const btn = document.getElementById('saveBtn'), ldr = document.getElementById('loader'), txt = document.getElementById('btnText');
-            btn.disabled = true; ldr.style.display='block'; txt.innerText='Отправка...';
-            
-            try {
-                tg.sendData(JSON.stringify(data));
-                if(tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
-                btn.style.background='#22c55e'; txt.innerText='✅ Отправлено!';
-                setTimeout(() => tg.close(), 800);
-            } catch(e) {
-                alert('Ошибка: '+e.message);
-                btn.disabled=false; ldr.style.display='none'; txt.innerText='💾 Сохранить';
-            }
+            const inputs = document.querySelectorAll('textarea, input');
+            inputs.forEach(input => {
+                input.addEventListener('focus', () => {
+                    setTimeout(() => {
+                        input.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }, 300);
+                });
+            });
         }
 
         // Инициализация
         window.onload = () => {
-            console.log('🚀 Page loaded');
+            console.log('🚀 Mini App загружен');
             createStars();
-            loadFromStorage(); // 🔹 Загружаем прошлые настройки
-            applyToUI();       // 🔹 Применяем их к интерфейсу
+            loadFromStorage();
+            applyToUI();
+            setupChips();
+            handleKeyboard();
+            
+            // Кнопка сохранения
+            const saveBtn = document.getElementById('saveBtn');
+            if (saveBtn) {
+                saveBtn.addEventListener('click', saveSettings);
+            }
+            
             tg.ready();
         };
     </script>
