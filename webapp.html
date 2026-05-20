@@ -1,629 +1,490 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Living Tales Settings</title>
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <style>
-        :root {
-            --bg-dark: #0f0720;
-            --card-bg: rgba(76, 29, 149, 0.3);
-            --primary-gradient: linear-gradient(135deg, #a855f7 0%, #4c1d95 100%);
-            --accent-glow: #d8b4fe;
-            --text-main: #ffffff;
-            --text-secondary: #cbd5e1;
-            --safe-area-bottom: env(safe-area-inset-bottom, 20px);
-        }
-
-        * {
-            -webkit-tap-highlight-color: transparent;
-        }
-
-        body {
-            margin: 0;
-            padding: 0;
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-            background-color: var(--bg-dark);
-            color: var(--text-main);
-            overflow-x: hidden;
-        }
-
-        .stars-container {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: -1;
-            background: radial-gradient(ellipse at bottom, #1b2735 0%, #090a0f 100%);
-            overflow: hidden;
-            pointer-events: none;
-        }
-
-        .star {
-            position: absolute;
-            background: white;
-            border-radius: 50%;
-            opacity: 0.8;
-            animation: twinkle infinite ease-in-out;
-        }
-
-        @keyframes twinkle {
-            0%, 100% { opacity: 0.3; transform: scale(0.8); }
-            50% { opacity: 1; transform: scale(1.2); box-shadow: 0 0 4px #fff; }
-        }
-
-        .background-glow {
-            position: fixed;
-            top: -20%;
-            left: -20%;
-            width: 140%;
-            height: 140%;
-            background: radial-gradient(circle at center, rgba(168, 85, 247, 0.15) 0%, rgba(15, 7, 32, 0) 70%);
-            z-index: -1;
-            pointer-events: none;
-        }
-
-        /* LOADING SCREEN */
-        .loading-screen {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: var(--bg-dark);
-            z-index: 1000;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            gap: 20px;
-            transition: opacity 0.3s ease;
-        }
-        
-        .loading-spinner {
-            width: 50px;
-            height: 50px;
-            border: 3px solid rgba(168, 85, 247, 0.2);
-            border-top: 3px solid #a855f7;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-        }
-        
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-        
-        .loading-text {
-            color: var(--accent-glow);
-            font-size: 16px;
-            font-weight: 500;
-        }
-        
-        .loading-screen.hide {
-            opacity: 0;
-            pointer-events: none;
-        }
-
-        /* ОСНОВНОЙ КОНТЕЙНЕР — теперь с большим отступом снизу, чтобы кнопка не наезжала */
-        .container {
-            padding: 20px;
-            padding-bottom: calc(100px + var(--safe-area-bottom)); /* Увеличено с 100px до 100px + safe-area */
-            max-width: 600px;
-            margin: 0 auto;
-            position: relative;
-            z-index: 1;
-            opacity: 0;
-            transition: opacity 0.3s ease;
-            min-height: 100vh;
-            box-sizing: border-box;
-        }
-        
-        .container.visible {
-            opacity: 1;
-        }
-
-        h2 {
-            font-size: 18px;
-            font-weight: 600;
-            margin-bottom: 15px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            color: var(--accent-glow);
-            text-shadow: 0 0 10px rgba(168, 85, 247, 0.5);
-        }
-
-        .card {
-            background: var(--card-bg);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 24px;
-            padding: 20px;
-            margin-bottom: 20px;
-            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.3);
-        }
-
-        label {
-            display: block;
-            font-size: 14px;
-            color: var(--text-secondary);
-            margin-bottom: 10px;
-            margin-top: 15px;
-        }
-        
-        label:first-child {
-            margin-top: 0;
-        }
-
-        .chips-container {
-            display: flex;
-            flex-direction: row;
-            flex-wrap: nowrap;
-            gap: 8px;
-            overflow-x: auto;
-            padding-bottom: 5px;
-            -webkit-overflow-scrolling: touch;
-            scrollbar-width: none;
-        }
-        .chips-container::-webkit-scrollbar {
-            display: none;
-        }
-
-        .chip {
-            flex: 0 0 auto;
-            min-width: 65px;
-            padding: 10px 8px;
-            border-radius: 16px;
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            color: var(--text-secondary);
-            font-size: 12px;
-            font-weight: 500;
-            text-align: center;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            gap: 4px;
-            white-space: nowrap;
-        }
-        
-        .chip.active {
-            background: var(--primary-gradient);
-            color: white;
-            border-color: transparent;
-            box-shadow: 0 0 15px rgba(168, 85, 247, 0.4);
-        }
-        
-        .chip:active {
-            transform: scale(0.96);
-            background: rgba(168, 85, 247, 0.5);
-        }
-
-        .chip-icon {
-            font-size: 18px;
-        }
-
-        textarea {
-            width: 100%;
-            background: rgba(0, 0, 0, 0.3);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 16px;
-            padding: 15px;
-            color: white;
-            font-size: 15px;
-            font-family: inherit;
-            resize: none;
-            box-sizing: border-box;
-            outline: none;
-            min-height: 100px;
-        }
-
-        textarea:focus {
-            border-color: #a855f7;
-            box-shadow: 0 0 0 2px rgba(168, 85, 247, 0.2);
-        }
-
-        /* КНОПКА СОХРАНЕНИЯ — фиксированная, но с нормальными отступами */
-        .save-btn-container {
-            position: fixed;
-            bottom: calc(20px + var(--safe-area-bottom));
-            left: 20px;
-            right: 20px;
-            max-width: 560px;
-            margin: 0 auto;
-            z-index: 100;
-            pointer-events: none;
-        }
-
-        .main-btn {
-            width: 100%;
-            padding: 16px;
-            border-radius: 20px;
-            border: none;
-            background: var(--primary-gradient);
-            color: white;
-            font-size: 16px;
-            font-weight: bold;
-            cursor: pointer;
-            box-shadow: 0 4px 20px rgba(168, 85, 247, 0.5);
-            transition: transform 0.15s;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-            pointer-events: auto;
-        }
-
-        .main-btn:active {
-            transform: scale(0.97);
-        }
-
-        .main-btn.disabled {
-            opacity: 0.6;
-            pointer-events: none;
-        }
-
-        .icon-svg {
-            width: 24px;
-            height: 24px;
-            fill: currentColor;
-        }
-        
-        /* ДОПОЛНИТЕЛЬНЫЙ ОТСТУП ДЛЯ ПОСЛЕДНЕГО КАРДОЧКИ, ЧТОБЫ КНОПКА НЕ ПЕРЕКРЫВАЛА ТЕКСТ */
-        .card:last-child {
-            margin-bottom: 30px;
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>Living Tales Settings</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<style>
+:root {
+--bg-dark: #0f0720;
+--card-bg: rgba(76, 29, 149, 0.3);
+--primary-gradient: linear-gradient(135deg, #a855f7 0%, #4c1d95 100%);
+--accent-glow: #d8b4fe;
+--text-main: #ffffff;
+--text-secondary: #cbd5e1;
+--safe-area-bottom: env(safe-area-inset-bottom, 20px);
+}
+* {
+-webkit-tap-highlight-color: transparent;
+}
+body {
+margin: 0;
+padding: 0;
+font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+background-color: var(--bg-dark);
+color: var(--text-main);
+overflow-x: hidden;
+overflow-y: hidden; /* 🔧 FIX: блокируем скролл body (Samsung валится на 100vh+fixed) */
+}
+.stars-container {
+position: fixed;
+top: 0;
+left: 0;
+width: 100%;
+height: 100%;
+z-index: -1;
+background: radial-gradient(ellipse at bottom, #1b2735 0%, #090a0f 100%);
+overflow: hidden;
+pointer-events: none;
+}
+.star {
+position: absolute;
+background: white;
+border-radius: 50%;
+opacity: 0.8;
+animation: twinkle infinite ease-in-out;
+}
+@keyframes twinkle {
+0%, 100% { opacity: 0.3; transform: scale(0.8); }
+50% { opacity: 1; transform: scale(1.2); box-shadow: 0 0 4px #fff; }
+}
+.background-glow {
+position: fixed;
+top: -20%;
+left: -20%;
+width: 140%;
+height: 140%;
+background: radial-gradient(circle at center, rgba(168, 85, 247, 0.15) 0%, rgba(15, 7, 32, 0) 70%);
+z-index: -1;
+pointer-events: none;
+}
+/* LOADING SCREEN */
+.loading-screen {
+position: fixed;
+top: 0;
+left: 0;
+width: 100%;
+height: 100%;
+background: var(--bg-dark);
+z-index: 1000;
+display: flex;
+flex-direction: column;
+align-items: center;
+justify-content: center;
+gap: 20px;
+transition: opacity 0.3s ease;
+}
+.loading-spinner {
+width: 50px;
+height: 50px;
+border: 3px solid rgba(168, 85, 247, 0.2);
+border-top: 3px solid #a855f7;
+border-radius: 50%;
+animation: spin 1s linear infinite;
+}
+@keyframes spin {
+0% { transform: rotate(0deg); }
+100% { transform: rotate(360deg); }
+}
+.loading-text {
+color: var(--accent-glow);
+font-size: 16px;
+font-weight: 500;
+}
+.loading-screen.hide {
+opacity: 0;
+pointer-events: none;
+}
+.container {
+padding: 20px;
+padding-bottom: calc(100px + var(--safe-area-bottom));
+max-width: 600px;
+margin: 0 auto;
+position: relative;
+z-index: 1;
+opacity: 0;
+transition: opacity 0.3s ease;
+min-height: 100dvh; /* 🔧 FIX: динамическая высота для мобильных браузеров */
+min-height: 100vh;
+box-sizing: border-box;
+overflow-y: auto;   /* 🔧 FIX: скролл перенесён в контейнер */
+-webkit-overflow-scrolling: touch;
+}
+.container.visible {
+opacity: 1;
+}
+h2 {
+font-size: 18px;
+font-weight: 600;
+margin-bottom: 15px;
+display: flex;
+align-items: center;
+gap: 10px;
+color: var(--accent-glow);
+text-shadow: 0 0 10px rgba(168, 85, 247, 0.5);
+}
+.card {
+background: var(--card-bg);
+backdrop-filter: blur(12px);
+-webkit-backdrop-filter: blur(12px);
+border: 1px solid rgba(255, 255, 255, 0.1);
+border-radius: 24px;
+padding: 20px;
+margin-bottom: 20px;
+box-shadow: 0 4px 30px rgba(0, 0, 0, 0.3);
+}
+label {
+display: block;
+font-size: 14px;
+color: var(--text-secondary);
+margin-bottom: 10px;
+margin-top: 15px;
+}
+label:first-child {
+margin-top: 0;
+}
+.chips-container {
+display: flex;
+flex-direction: row;
+flex-wrap: nowrap;
+gap: 8px;
+overflow-x: auto;
+padding-bottom: 5px;
+-webkit-overflow-scrolling: touch;
+scrollbar-width: none;
+}
+.chips-container::-webkit-scrollbar {
+display: none;
+}
+.chip {
+flex: 0 0 auto;
+min-width: 65px;
+padding: 10px 8px;
+border-radius: 16px;
+background: rgba(255, 255, 255, 0.05);
+border: 1px solid rgba(255, 255, 255, 0.1);
+color: var(--text-secondary);
+font-size: 12px;
+font-weight: 500;
+text-align: center;
+cursor: pointer;
+transition: all 0.2s ease;
+display: flex;
+flex-direction: column;
+align-items: center;
+justify-content: center;
+gap: 4px;
+white-space: nowrap;
+}
+.chip.active {
+background: var(--primary-gradient);
+color: white;
+border-color: transparent;
+box-shadow: 0 0 15px rgba(168, 85, 247, 0.4);
+}
+.chip:active {
+transform: scale(0.96);
+background: rgba(168, 85, 247, 0.5);
+}
+.chip-icon {
+font-size: 18px;
+}
+textarea {
+width: 100%;
+background: rgba(0, 0, 0, 0.3);
+border: 1px solid rgba(255, 255, 255, 0.1);
+border-radius: 16px;
+padding: 15px;
+color: white;
+font-size: 15px;
+font-family: inherit;
+resize: none;
+box-sizing: border-box;
+outline: none;
+min-height: 100px;
+}
+textarea:focus {
+border-color: #a855f7;
+box-shadow: 0 0 0 2px rgba(168, 85, 247, 0.2);
+}
+.save-btn-container {
+position: fixed;
+bottom: calc(20px + var(--safe-area-bottom));
+left: 20px;
+right: 20px;
+max-width: 560px;
+margin: 0 auto;
+z-index: 100;
+pointer-events: none;
+}
+.main-btn {
+width: 100%;
+padding: 16px;
+border-radius: 20px;
+border: none;
+background: var(--primary-gradient);
+color: white;
+font-size: 16px;
+font-weight: bold;
+cursor: pointer;
+box-shadow: 0 4px 20px rgba(168, 85, 247, 0.5);
+transition: transform 0.15s;
+display: flex;
+align-items: center;
+justify-content: center;
+gap: 10px;
+pointer-events: auto;
+}
+.main-btn:active {
+transform: scale(0.97);
+}
+.main-btn.disabled {
+opacity: 0.6;
+pointer-events: none;
+}
+.icon-svg {
+width: 24px;
+height: 24px;
+fill: currentColor;
+}
+.card:last-child {
+margin-bottom: 30px;
+}
+</style>
 </head>
 <body>
-    <!-- LOADING SCREEN -->
-    <div class="loading-screen" id="loadingScreen">
-        <div class="loading-spinner"></div>
-        <div class="loading-text">Загрузка настроек...</div>
-    </div>
+<div class="loading-screen" id="loadingScreen">
+<div class="loading-spinner"></div>
+<div class="loading-text">Загрузка настроек...</div>
+</div>
+<div class="stars-container" id="stars"></div>
+<div class="background-glow"></div>
+<div class="container" id="mainContainer">
+<div class="card">
+<h2>🎭 Поведение персонажа</h2>
+<label>Инициатива в игре</label>
+<div class="chips-container" id="initiative-group">
+<div class="chip" data-val="passive"><span class="chip-icon">🌙</span>Пассивный</div>
+<div class="chip" data-val="balanced"><span class="chip-icon">⚖️</span>Баланс</div>
+<div class="chip" data-val="active"><span class="chip-icon">🔥</span>Активный</div>
+<div class="chip" data-val="dominant"><span class="chip-icon">👑</span>Доминант</div>
+</div>
+<label>Длина ответов</label>
+<div class="chips-container" id="length-group">
+<div class="chip" data-val="short"><span class="chip-icon">💬</span>Короткие</div>
+<div class="chip" data-val="medium"><span class="chip-icon">📝</span>Средние</div>
+<div class="chip" data-val="long"><span class="chip-icon">📜</span>Длинные</div>
+</div>
+</div>
+<div class="card">
+<h2>🌍 Мир и Сюжет</h2>
+<label>Сеттинг (Место действия)</label>
+<textarea id="setting-input" placeholder="Например: Киберпанк 2077, Неон, Дождь... или Фэнтези, Магия, Драконы..."></textarea>
+<label>Темп событий</label>
+<div class="chips-container" id="pacing-group">
+<div class="chip" data-val="slow"><span class="chip-icon">🐢</span>Спокойный</div>
+<div class="chip" data-val="normal"><span class="chip-icon">🚶</span>Нормальный</div>
+<div class="chip" data-val="fast"><span class="chip-icon">⚡</span>Экшен</div>
+</div>
+</div>
+<div class="card">
+<h2>⚙️ Дополнительно</h2>
+<label>Второстепенные персонажи (NPC)</label>
+<div class="chips-container" id="npc-group">
+<div class="chip" data-val="none"><span class="chip-icon">🚫</span>Запрещены</div>
+<div class="chip" data-val="allowed"><span class="chip-icon">👥</span>Разрешены</div>
+</div>
+</div>
+</div>
+<div class="save-btn-container">
+<button class="main-btn" id="saveBtn">💾 Сохранить настройки</button>
+</div>
+<script>
+const tg = window.Telegram.WebApp;
+// 🔧 FIX: Безопасная инициализация (убран position: fixed)
+try {
+    tg.ready();
+    tg.expand();
+    if (tg.enableClosingConfirmation) tg.enableClosingConfirmation();
+    if (tg.setBackgroundColor) tg.setBackgroundColor('#0f0720');
+    if (tg.setHeaderColor) tg.setHeaderColor('bg_color');
+    
+    document.documentElement.style.overflow = 'hidden';
+    document.body.style.overflow = 'hidden';
+} catch(e) {
+    console.warn('Telegram WebApp init error:', e);
+}
 
-    <div class="stars-container" id="stars"></div>
-    <div class="background-glow"></div>
+const STORAGE_KEY = 'living_tales_settings';
+let settings = {
+    initiative: 'balanced',
+    length: 'medium',
+    pacing: 'normal',
+    setting: '',
+    npc: 'none'
+};
 
-    <div class="container" id="mainContainer">
-        <div class="card">
-            <h2>🎭 Поведение персонажа</h2>
-            <label>Инициатива в игре</label>
-            <div class="chips-container" id="initiative-group">
-                <div class="chip" data-val="passive"><span class="chip-icon">🌙</span>Пассивный</div>
-                <div class="chip" data-val="balanced"><span class="chip-icon">⚖️</span>Баланс</div>
-                <div class="chip" data-val="active"><span class="chip-icon">🔥</span>Активный</div>
-                <div class="chip" data-val="dominant"><span class="chip-icon">👑</span>Доминант</div>
-            </div>
-            <label>Длина ответов</label>
-            <div class="chips-container" id="length-group">
-                <div class="chip" data-val="short"><span class="chip-icon">💬</span>Короткие</div>
-                <div class="chip" data-val="medium"><span class="chip-icon">📝</span>Средние</div>
-                <div class="chip" data-val="long"><span class="chip-icon">📜</span>Длинные</div>
-            </div>
-        </div>
-
-        <div class="card">
-            <h2>🌍 Мир и Сюжет</h2>
-            <label>Сеттинг (Место действия)</label>
-            <textarea id="setting-input" placeholder="Например: Киберпанк 2077, Неон, Дождь... или Фэнтези, Магия, Драконы..."></textarea>
-            <label>Темп событий</label>
-            <div class="chips-container" id="pacing-group">
-                <div class="chip" data-val="slow"><span class="chip-icon">🐢</span>Спокойный</div>
-                <div class="chip" data-val="normal"><span class="chip-icon">🚶</span>Нормальный</div>
-                <div class="chip" data-val="fast"><span class="chip-icon">⚡</span>Экшен</div>
-            </div>
-        </div>
-
-        <div class="card">
-            <h2>⚙️ Дополнительно</h2>
-            <label>Второстепенные персонажи (NPC)</label>
-            <div class="chips-container" id="npc-group">
-                <div class="chip" data-val="none"><span class="chip-icon">🚫</span>Запрещены</div>
-                <div class="chip" data-val="allowed"><span class="chip-icon">👥</span>Разрешены</div>
-            </div>
-        </div>
-    </div>
-
-    <div class="save-btn-container">
-        <button class="main-btn" id="saveBtn">💾 Сохранить настройки</button>
-    </div>
-
-    <script>
-        const tg = window.Telegram.WebApp;
-        
-        // === РАСШИРЕННАЯ ИНИЦИАЛИЗАЦИЯ ДЛЯ SAMSUNG ===
+function loadFromTelegram() {
+    return new Promise((resolve) => {
         try {
-            tg.expand();
-            tg.ready();
-            if (tg.enableClosingConfirmation) tg.enableClosingConfirmation();
-            
-            // Принудительно устанавливаем цвет фона (для Samsung)
-            if (tg.setBackgroundColor) tg.setBackgroundColor('#0f0720');
-            if (tg.setHeaderColor) tg.setHeaderColor('bg_color');
-            
-            // Отключаем вертикальную прокрутку body (фикс для Samsung)
-            document.body.style.overflow = 'hidden';
-            document.body.style.position = 'fixed';
-            document.body.style.width = '100%';
-            document.body.style.height = '100%';
-            
-            // Включаем скролл только внутри контейнера
-            const container = document.getElementById('mainContainer');
-            if (container) {
-                container.style.overflowY = 'auto';
-                container.style.height = '100vh';
-                container.style.position = 'relative';
-            }
-        } catch(e) {
-            console.warn('Telegram WebApp error:', e);
-        }
-        
-        const STORAGE_KEY = 'living_tales_settings';
-        
-        let settings = {
-            initiative: 'balanced',
-            length: 'medium',
-            pacing: 'normal',
-            setting: '',
-            npc: 'none'
-        };
-        
-        let isDataLoaded = false;
-        
-        // === ПОЛУЧЕНИЕ ДАННЫХ ОТ БОТА ===
-        function loadFromTelegram() {
-            return new Promise((resolve) => {
+            if (tg.initDataUnsafe && tg.initDataUnsafe.start_param) {
                 try {
-                    // Проверяем, есть ли initDataUnsafe (данные от бота)
-                    if (tg.initDataUnsafe && tg.initDataUnsafe.start_param) {
-                        try {
-                            const decoded = decodeURIComponent(tg.initDataUnsafe.start_param);
-                            const botData = JSON.parse(decoded);
-                            if (botData && typeof botData === 'object') {
-                                console.log('📥 Получены данные от бота:', botData);
-                                settings = { ...settings, ...botData };
-                                saveToLocal();
-                                resolve(true);
-                                return;
-                            }
-                        } catch(e) {
-                            console.warn('Не удалось распарсить start_param:', e);
-                        }
-                    }
-                    
-                    // Если нет данных от бота, пробуем localStorage
-                    const saved = localStorage.getItem(STORAGE_KEY);
-                    if (saved) {
-                        const parsed = JSON.parse(saved);
-                        settings = { ...settings, ...parsed };
-                        console.log('💾 Загружено из localStorage:', settings);
+                    const decoded = decodeURIComponent(tg.initDataUnsafe.start_param);
+                    const botData = JSON.parse(decoded);
+                    if (botData && typeof botData === 'object') {
+                        settings = { ...settings, ...botData };
+                        saveToLocal();
                         resolve(true);
                         return;
                     }
-                    
-                    console.log('⚠️ Нет данных, используем значения по умолчанию');
-                    resolve(true);
-                } catch(e) {
-                    console.error('Ошибка загрузки:', e);
-                    resolve(false);
-                }
-            });
-        }
-        
-        function saveToLocal() {
-            try {
-                localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
-                console.log('💾 Сохранено в localStorage');
-                return true;
-            } catch(e) {
-                console.error('Ошибка сохранения в localStorage:', e);
-                return false;
+                } catch(e) { console.warn('Не удалось распарсить start_param:', e); }
             }
-        }
-        
-        // Обновление интерфейса
-        function updateUI() {
-            // Инициатива
-            document.querySelectorAll('#initiative-group .chip').forEach(chip => {
-                if (chip.getAttribute('data-val') === settings.initiative) chip.classList.add('active');
-                else chip.classList.remove('active');
-            });
-            // Длина ответов
-            document.querySelectorAll('#length-group .chip').forEach(chip => {
-                if (chip.getAttribute('data-val') === settings.length) chip.classList.add('active');
-                else chip.classList.remove('active');
-            });
-            // Темп событий
-            document.querySelectorAll('#pacing-group .chip').forEach(chip => {
-                if (chip.getAttribute('data-val') === settings.pacing) chip.classList.add('active');
-                else chip.classList.remove('active');
-            });
-            // NPC
-            document.querySelectorAll('#npc-group .chip').forEach(chip => {
-                if (chip.getAttribute('data-val') === settings.npc) chip.classList.add('active');
-                else chip.classList.remove('active');
-            });
-            
-            // Текстовое поле (сеттинг)
-            const textarea = document.getElementById('setting-input');
-            if (textarea) {
-                textarea.value = settings.setting || '';
+            const saved = localStorage.getItem(STORAGE_KEY);
+            if (saved) {
+                settings = { ...settings, ...JSON.parse(saved) };
+                resolve(true);
+                return;
             }
+            resolve(true);
+        } catch(e) {
+            console.error('Ошибка загрузки:', e);
+            resolve(false);
         }
-        
-        // Настройка обработчиков кнопок (УЛУЧШЕНО ДЛЯ SAMSUNG)
-        function setupChips() {
-            const groups = ['initiative-group', 'length-group', 'pacing-group', 'npc-group'];
-            
-            groups.forEach(groupId => {
-                const group = document.getElementById(groupId);
-                if (!group) return;
-                
-                group.querySelectorAll('.chip').forEach(chip => {
-                    // Удаляем старые обработчики
-                    const oldHandler = chip._handler;
-                    if (oldHandler) chip.removeEventListener('click', oldHandler);
-                    if (oldHandler) chip.removeEventListener('touchstart', oldHandler);
-                    
-                    const handler = function(e) {
-                        // Предотвращаем всплытие
-                        e.stopPropagation();
-                        
-                        let key = '';
-                        if (groupId === 'initiative-group') key = 'initiative';
-                        else if (groupId === 'length-group') key = 'length';
-                        else if (groupId === 'pacing-group') key = 'pacing';
-                        else if (groupId === 'npc-group') key = 'npc';
-                        
-                        const val = this.getAttribute('data-val');
-                        if (key && val && settings[key] !== val) {
-                            settings[key] = val;
-                            saveToLocal();
-                            updateUI();
-                            
-                            // Вибрация (если доступна)
-                            try {
-                                if (tg.HapticFeedback) tg.HapticFeedback.selectionChanged();
-                            } catch(e) {}
-                        }
-                    };
-                    
-                    // Добавляем оба события для надёжности
-                    chip.addEventListener('click', handler);
-                    chip.addEventListener('touchstart', handler, { passive: false });
-                    chip._handler = handler;
-                });
-            });
-        }
-        
-        // Сохранение и отправка в бот
-        function saveAndClose() {
-            const textarea = document.getElementById('setting-input');
-            if (textarea) {
-                settings.setting = textarea.value.trim();
-            }
-            saveToLocal();
-            
-            const btn = document.getElementById('saveBtn');
-            const originalText = btn.innerHTML;
-            btn.innerHTML = '⏳ Отправка...';
-            btn.disabled = true;
-            btn.classList.add('disabled');
-            
-            try {
-                // Отправляем данные в бот
-                tg.sendData(JSON.stringify(settings));
-                
-                // Вибрация при успехе
-                try {
-                    if (tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
-                } catch(e) {}
-                
-                btn.innerHTML = '✅ Отправлено!';
-                btn.style.background = '#22c55e';
-                
-                // Закрываем через 500ms
-                setTimeout(() => {
-                    try {
-                        tg.close();
-                    } catch(e) {
-                        console.warn('Не удалось закрыть:', e);
-                    }
-                }, 500);
-            } catch(e) {
-                console.error('Ошибка отправки:', e);
-                btn.innerHTML = '❌ Ошибка!';
-                btn.style.background = '#ef4444';
-                setTimeout(() => {
-                    btn.innerHTML = originalText;
-                    btn.disabled = false;
-                    btn.classList.remove('disabled');
-                    btn.style.background = '';
-                }, 2000);
-            }
-        }
-        
-        // Генерация звёзд
-        function createStars() {
-            const box = document.getElementById('stars');
-            if (!box) return;
-            box.innerHTML = '';
-            for(let i = 0; i < 50; i++) {
-                const s = document.createElement('div');
-                s.className = 'star';
-                s.style.left = Math.random() * 100 + '%';
-                s.style.top = Math.random() * 100 + '%';
-                const size = Math.random() * 2 + 1;
-                s.style.width = size + 'px';
-                s.style.height = size + 'px';
-                s.style.animationDuration = (Math.random() * 3 + 2) + 's';
-                s.style.animationDelay = Math.random() * 5 + 's';
-                box.appendChild(s);
-            }
-        }
-        
-        // === ЗАПУСК С ЭКРАНОМ ЗАГРУЗКИ ===
-        async function init() {
-            console.log('🚀 Mini App инициализация...');
-            
-            // Показываем загрузку
-            const loadingScreen = document.getElementById('loadingScreen');
-            const mainContainer = document.getElementById('mainContainer');
-            
-            // Загружаем данные
-            await loadFromTelegram();
-            
-            // Создаём звёзды
-            createStars();
-            
-            // Настраиваем интерфейс
-            updateUI();
-            setupChips();
-            
-            // Настраиваем textarea
-            const textarea = document.getElementById('setting-input');
-            if (textarea) {
-                textarea.addEventListener('input', function() {
-                    settings.setting = this.value.trim();
-                    saveToLocal();
-                });
-            }
-            
-            // Настраиваем кнопку сохранения
-            const saveBtn = document.getElementById('saveBtn');
-            if (saveBtn) {
-                saveBtn.addEventListener('click', saveAndClose);
-                // Для Samsung — дополнительно touchstart
-                saveBtn.addEventListener('touchstart', function(e) {
-                    e.preventDefault();
-                    saveAndClose();
-                }, { passive: false });
-            }
-            
-            // Скрываем загрузку и показываем контент
-            setTimeout(() => {
-                loadingScreen.classList.add('hide');
-                mainContainer.classList.add('visible');
-                
-                // Убираем loading из DOM после анимации
-                setTimeout(() => {
-                    if (loadingScreen.parentNode) {
-                        loadingScreen.style.display = 'none';
-                    }
-                }, 300);
-            }, 300);
-        }
-        
-        // Запуск
-        window.onload = init;
-    </script>
+    });
+}
+
+function saveToLocal() {
+    try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
+        return true;
+    } catch(e) {
+        console.warn('⚠️ localStorage недоступен');
+        return false;
+    }
+}
+
+function updateUI() {
+    document.querySelectorAll('#initiative-group .chip').forEach(chip => chip.classList.toggle('active', chip.getAttribute('data-val') === settings.initiative));
+    document.querySelectorAll('#length-group .chip').forEach(chip => chip.classList.toggle('active', chip.getAttribute('data-val') === settings.length));
+    document.querySelectorAll('#pacing-group .chip').forEach(chip => chip.classList.toggle('active', chip.getAttribute('data-val') === settings.pacing));
+    document.querySelectorAll('#npc-group .chip').forEach(chip => chip.classList.toggle('active', chip.getAttribute('data-val') === settings.npc));
+    const textarea = document.getElementById('setting-input');
+    if (textarea) textarea.value = settings.setting || '';
+}
+
+// 🔧 FIX: Защита от дабл-клика на Samsung (debounce)
+let isProcessing = false;
+const safeClickHandler = function(e) {
+    if (isProcessing) return;
+    isProcessing = true;
+    setTimeout(() => isProcessing = false, 400);
+
+    let key = '';
+    if (this.closest('#initiative-group')) key = 'initiative';
+    else if (this.closest('#length-group')) key = 'length';
+    else if (this.closest('#pacing-group')) key = 'pacing';
+    else if (this.closest('#npc-group')) key = 'npc';
+
+    const val = this.getAttribute('data-val');
+    if (key && val && settings[key] !== val) {
+        settings[key] = val;
+        saveToLocal();
+        updateUI();
+        try { if (tg.HapticFeedback) tg.HapticFeedback.selectionChanged(); } catch(e){}
+    }
+};
+
+function setupChips() {
+    const groups = ['initiative-group', 'length-group', 'pacing-group', 'npc-group'];
+    groups.forEach(groupId => {
+        const group = document.getElementById(groupId);
+        if (!group) return;
+        group.querySelectorAll('.chip').forEach(chip => {
+            chip.removeEventListener('click', chip._handler);
+            chip.addEventListener('click', safeClickHandler); // Только click (Telegram сам нормализует тапы)
+            chip._handler = safeClickHandler;
+        });
+    });
+}
+
+function saveAndClose() {
+    const textarea = document.getElementById('setting-input');
+    if (textarea) settings.setting = textarea.value.trim();
+    saveToLocal();
+    
+    const btn = document.getElementById('saveBtn');
+    const originalText = btn.innerHTML;
+    btn.innerHTML = '⏳ Отправка...';
+    btn.disabled = true;
+    btn.classList.add('disabled');
+    
+    try {
+        tg.sendData(JSON.stringify(settings));
+        try { if (tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('success'); } catch(e) {}
+        btn.innerHTML = '✅ Отправлено!';
+        btn.style.background = '#22c55e';
+        setTimeout(() => { try { tg.close(); } catch(e) {} }, 500);
+    } catch(e) {
+        btn.innerHTML = '❌ Ошибка!';
+        btn.style.background = '#ef4444';
+        setTimeout(() => {
+            btn.innerHTML = originalText;
+            btn.disabled = false;
+            btn.classList.remove('disabled');
+            btn.style.background = '';
+        }, 2000);
+    }
+}
+
+function createStars() {
+    const box = document.getElementById('stars');
+    if (!box) return;
+    box.innerHTML = '';
+    for(let i = 0; i < 50; i++) {
+        const s = document.createElement('div');
+        s.className = 'star';
+        s.style.left = Math.random() * 100 + '%';
+        s.style.top = Math.random() * 100 + '%';
+        const size = Math.random() * 2 + 1;
+        s.style.width = size + 'px';
+        s.style.height = size + 'px';
+        s.style.animationDuration = (Math.random() * 3 + 2) + 's';
+        s.style.animationDelay = Math.random() * 5 + 's';
+        box.appendChild(s);
+    }
+}
+
+async function init() {
+    const loadingScreen = document.getElementById('loadingScreen');
+    const mainContainer = document.getElementById('mainContainer');
+    await loadFromTelegram();
+    createStars();
+    updateUI();
+    setupChips();
+    
+    const textarea = document.getElementById('setting-input');
+    if (textarea) textarea.addEventListener('input', function() { settings.setting = this.value.trim(); saveToLocal(); });
+    
+    const saveBtn = document.getElementById('saveBtn');
+    if (saveBtn) {
+        saveBtn.replaceWith(saveBtn.cloneNode(true));
+        document.getElementById('saveBtn').addEventListener('click', function(e) {
+            if (isProcessing) return;
+            isProcessing = true;
+            setTimeout(() => isProcessing = false, 1000);
+            saveAndClose();
+        });
+    }
+    
+    setTimeout(() => {
+        loadingScreen.classList.add('hide');
+        mainContainer.classList.add('visible');
+        setTimeout(() => { if (loadingScreen.parentNode) loadingScreen.style.display = 'none'; }, 300);
+    }, 300);
+}
+
+window.onload = init;
+</script>
 </body>
 </html>
