@@ -25,7 +25,7 @@ font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, A
 background-color: var(--bg-dark);
 color: var(--text-main);
 overflow-x: hidden;
-overflow-y: hidden; /* 🔧 FIX: блокируем скролл body (Samsung валится на 100vh+fixed) */
+overflow-y: hidden; /* 🔒 Блокируем скролл всей страницы */
 }
 .stars-container {
 position: fixed;
@@ -59,7 +59,6 @@ background: radial-gradient(circle at center, rgba(168, 85, 247, 0.15) 0%, rgba(
 z-index: -1;
 pointer-events: none;
 }
-/* LOADING SCREEN */
 .loading-screen {
 position: fixed;
 top: 0;
@@ -105,10 +104,10 @@ position: relative;
 z-index: 1;
 opacity: 0;
 transition: opacity 0.3s ease;
-min-height: 100dvh; /* 🔧 FIX: динамическая высота для мобильных браузеров */
+min-height: 100dvh; /* 📱 Динамическая высота (не режет контент на Samsung) */
 min-height: 100vh;
 box-sizing: border-box;
-overflow-y: auto;   /* 🔧 FIX: скролл перенесён в контейнер */
+overflow-y: auto;   /* 🔄 Скролл только внутри контейнера */
 -webkit-overflow-scrolling: touch;
 }
 .container.visible {
@@ -302,14 +301,15 @@ margin-bottom: 30px;
 </div>
 <script>
 const tg = window.Telegram.WebApp;
-// 🔧 FIX: Безопасная инициализация (убран position: fixed)
+// 🔧 ИНИЦИАЛИЗАЦИЯ (убрано ручное задание height: 100vh, которое ломало скролл)
 try {
-    tg.ready();
     tg.expand();
+    tg.ready();
     if (tg.enableClosingConfirmation) tg.enableClosingConfirmation();
     if (tg.setBackgroundColor) tg.setBackgroundColor('#0f0720');
     if (tg.setHeaderColor) tg.setHeaderColor('bg_color');
     
+    // Блокируем скролл body, чтобы не было двойного скролла на Samsung
     document.documentElement.style.overflow = 'hidden';
     document.body.style.overflow = 'hidden';
 } catch(e) {
@@ -342,9 +342,9 @@ function loadFromTelegram() {
             }
             const saved = localStorage.getItem(STORAGE_KEY);
             if (saved) {
-                settings = { ...settings, ...JSON.parse(saved) };
-                resolve(true);
-                return;
+                try {
+                    settings = { ...settings, ...JSON.parse(saved) };
+                } catch(e) { console.warn('localStorage parse error:', e); }
             }
             resolve(true);
         } catch(e) {
@@ -373,7 +373,7 @@ function updateUI() {
     if (textarea) textarea.value = settings.setting || '';
 }
 
-// 🔧 FIX: Защита от дабл-клика на Samsung (debounce)
+// 🔧 Защита от дабл-клика на Samsung (debounce)
 let isProcessing = false;
 const safeClickHandler = function(e) {
     if (isProcessing) return;
@@ -402,7 +402,7 @@ function setupChips() {
         if (!group) return;
         group.querySelectorAll('.chip').forEach(chip => {
             chip.removeEventListener('click', chip._handler);
-            chip.addEventListener('click', safeClickHandler); // Только click (Telegram сам нормализует тапы)
+            chip.addEventListener('click', safeClickHandler);
             chip._handler = safeClickHandler;
         });
     });
