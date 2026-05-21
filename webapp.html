@@ -151,19 +151,25 @@
             margin-top: 0;
         }
 
-        /* ИСПРАВЛЕННЫЙ КОНТЕЙНЕР ДЛЯ СКРОЛЛА */
+        /* Базовый контейнер — по умолчанию центрируем */
         .chips-container {
             display: flex;
             flex-direction: row;
             flex-wrap: nowrap;
-            gap: 8px;
+            gap: 10px;
             overflow-x: auto;
             overflow-y: hidden;
             padding-bottom: 5px;
             -webkit-overflow-scrolling: touch;
             scrollbar-width: thin;
+            justify-content: center;
+        }
+        
+        /* Контейнер для кнопок Инициативы — только этот отменяет центрирование и включает скролл */
+        .chips-container.scrollable {
             justify-content: flex-start;
         }
+        
         .chips-container::-webkit-scrollbar {
             height: 3px;
         }
@@ -176,16 +182,16 @@
             border-radius: 3px;
         }
 
-        /* УМЕНЬШЕННЫЕ КВАДРАТНЫЕ КНОПКИ */
+        /* КНОПКИ — чуть больше */
         .chip {
             flex: 0 0 auto;
-            min-width: 54px;
-            padding: 8px 5px;
-            border-radius: 14px;
+            min-width: 68px;
+            padding: 10px 8px;
+            border-radius: 16px;
             background: rgba(255, 255, 255, 0.05);
             border: 1px solid rgba(255, 255, 255, 0.1);
             color: var(--text-secondary);
-            font-size: 10px;
+            font-size: 12px;
             font-weight: 500;
             text-align: center;
             cursor: pointer;
@@ -194,7 +200,7 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            gap: 2px;
+            gap: 3px;
             white-space: nowrap;
         }
         
@@ -211,7 +217,7 @@
         }
 
         .chip-icon {
-            font-size: 14px;
+            font-size: 16px;
         }
 
         textarea {
@@ -279,7 +285,6 @@
     </style>
 </head>
 <body>
-    <!-- LOADING SCREEN -->
     <div class="loading-screen" id="loadingScreen">
         <div class="loading-spinner"></div>
         <div class="loading-text">Загрузка настроек...</div>
@@ -292,7 +297,8 @@
         <div class="card">
             <h2>🎭 Поведение персонажа</h2>
             <label>Инициатива в игре</label>
-            <div class="chips-container" id="initiative-group">
+            <!-- Добавлен класс scrollable для скролла влево-вправо -->
+            <div class="chips-container scrollable" id="initiative-group">
                 <div class="chip" data-val="passive"><span class="chip-icon">🌙</span>Пассивный</div>
                 <div class="chip" data-val="balanced"><span class="chip-icon">⚖️</span>Баланс</div>
                 <div class="chip" data-val="active"><span class="chip-icon">🔥</span>Активный</div>
