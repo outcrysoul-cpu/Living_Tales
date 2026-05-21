@@ -29,6 +29,7 @@
             overflow-x: hidden;
         }
 
+        /* СТАТИЧНОЕ ЗВЕЗДНОЕ НЕБО — БЕЗ АНИМАЦИИ */
         .stars-container {
             position: fixed;
             top: 0;
@@ -45,13 +46,7 @@
             position: absolute;
             background: white;
             border-radius: 50%;
-            opacity: 0.8;
-            animation: twinkle infinite ease-in-out;
-        }
-
-        @keyframes twinkle {
-            0%, 100% { opacity: 0.3; transform: scale(0.8); }
-            50% { opacity: 1; transform: scale(1.2); box-shadow: 0 0 4px #fff; }
+            opacity: 0.5;
         }
 
         .background-glow {
@@ -107,10 +102,10 @@
             pointer-events: none;
         }
 
-        /* ОСНОВНОЙ КОНТЕЙНЕР — теперь с большим отступом снизу, чтобы кнопка не наезжала */
+        /* ОСНОВНОЙ КОНТЕЙНЕР */
         .container {
-            padding: 20px;
-            padding-bottom: calc(100px + var(--safe-area-bottom)); /* Увеличено с 100px до 100px + safe-area */
+            padding: 16px;
+            padding-bottom: calc(100px + var(--safe-area-bottom));
             max-width: 600px;
             margin: 0 auto;
             position: relative;
@@ -126,12 +121,12 @@
         }
 
         h2 {
-            font-size: 18px;
+            font-size: 16px;
             font-weight: 600;
-            margin-bottom: 15px;
+            margin-bottom: 12px;
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 8px;
             color: var(--accent-glow);
             text-shadow: 0 0 10px rgba(168, 85, 247, 0.5);
         }
@@ -141,18 +136,18 @@
             backdrop-filter: blur(12px);
             -webkit-backdrop-filter: blur(12px);
             border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 24px;
-            padding: 20px;
-            margin-bottom: 20px;
+            border-radius: 20px;
+            padding: 16px;
+            margin-bottom: 16px;
             box-shadow: 0 4px 30px rgba(0, 0, 0, 0.3);
         }
 
         label {
             display: block;
-            font-size: 14px;
+            font-size: 13px;
             color: var(--text-secondary);
-            margin-bottom: 10px;
-            margin-top: 15px;
+            margin-bottom: 8px;
+            margin-top: 12px;
         }
         
         label:first-child {
@@ -173,15 +168,16 @@
             display: none;
         }
 
+        /* УМЕНЬШЕННЫЕ КВАДРАТНЫЕ КНОПКИ */
         .chip {
             flex: 0 0 auto;
-            min-width: 65px;
-            padding: 10px 8px;
-            border-radius: 16px;
+            min-width: 60px;
+            padding: 8px 6px;
+            border-radius: 14px;
             background: rgba(255, 255, 255, 0.05);
             border: 1px solid rgba(255, 255, 255, 0.1);
             color: var(--text-secondary);
-            font-size: 12px;
+            font-size: 11px;
             font-weight: 500;
             text-align: center;
             cursor: pointer;
@@ -190,7 +186,7 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            gap: 4px;
+            gap: 3px;
             white-space: nowrap;
         }
         
@@ -207,22 +203,22 @@
         }
 
         .chip-icon {
-            font-size: 18px;
+            font-size: 16px;
         }
 
         textarea {
             width: 100%;
             background: rgba(0, 0, 0, 0.3);
             border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 16px;
-            padding: 15px;
+            border-radius: 14px;
+            padding: 12px;
             color: white;
-            font-size: 15px;
+            font-size: 14px;
             font-family: inherit;
             resize: none;
             box-sizing: border-box;
             outline: none;
-            min-height: 100px;
+            min-height: 90px;
         }
 
         textarea:focus {
@@ -230,7 +226,7 @@
             box-shadow: 0 0 0 2px rgba(168, 85, 247, 0.2);
         }
 
-        /* КНОПКА СОХРАНЕНИЯ — фиксированная, но с нормальными отступами */
+        /* КНОПКА СОХРАНЕНИЯ */
         .save-btn-container {
             position: fixed;
             bottom: calc(20px + var(--safe-area-bottom));
@@ -244,12 +240,12 @@
 
         .main-btn {
             width: 100%;
-            padding: 16px;
-            border-radius: 20px;
+            padding: 14px;
+            border-radius: 18px;
             border: none;
             background: var(--primary-gradient);
             color: white;
-            font-size: 16px;
+            font-size: 15px;
             font-weight: bold;
             cursor: pointer;
             box-shadow: 0 4px 20px rgba(168, 85, 247, 0.5);
@@ -257,7 +253,7 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 10px;
+            gap: 8px;
             pointer-events: auto;
         }
 
@@ -270,13 +266,6 @@
             pointer-events: none;
         }
 
-        .icon-svg {
-            width: 24px;
-            height: 24px;
-            fill: currentColor;
-        }
-        
-        /* ДОПОЛНИТЕЛЬНЫЙ ОТСТУП ДЛЯ ПОСЛЕДНЕГО КАРДОЧКИ, ЧТОБЫ КНОПКА НЕ ПЕРЕКРЫВАЛА ТЕКСТ */
         .card:last-child {
             margin-bottom: 30px;
         }
@@ -339,28 +328,27 @@
     <script>
         const tg = window.Telegram.WebApp;
         
-        // === РАСШИРЕННАЯ ИНИЦИАЛИЗАЦИЯ ДЛЯ SAMSUNG ===
+        // === УЛУЧШЕННАЯ ИНИЦИАЛИЗАЦИЯ ДЛЯ ANDROID WEBVIEW ===
         try {
             tg.expand();
             tg.ready();
             if (tg.enableClosingConfirmation) tg.enableClosingConfirmation();
             
-            // Принудительно устанавливаем цвет фона (для Samsung)
             if (tg.setBackgroundColor) tg.setBackgroundColor('#0f0720');
             if (tg.setHeaderColor) tg.setHeaderColor('bg_color');
             
-            // Отключаем вертикальную прокрутку body (фикс для Samsung)
+            // Мягкая фиксация скролла для Android
             document.body.style.overflow = 'hidden';
             document.body.style.position = 'fixed';
             document.body.style.width = '100%';
             document.body.style.height = '100%';
             
-            // Включаем скролл только внутри контейнера
             const container = document.getElementById('mainContainer');
             if (container) {
                 container.style.overflowY = 'auto';
                 container.style.height = '100vh';
                 container.style.position = 'relative';
+                container.style.webkitOverflowScrolling = 'touch';
             }
         } catch(e) {
             console.warn('Telegram WebApp error:', e);
@@ -376,13 +364,30 @@
             npc: 'none'
         };
         
-        let isDataLoaded = false;
+        // === ГЕНЕРАЦИЯ СТАТИЧНЫХ ЗВЁЗД (250 ШТУК, БЕЗ АНИМАЦИИ) ===
+        function createStars() {
+            const box = document.getElementById('stars');
+            if (!box) return;
+            box.innerHTML = '';
+            const starCount = 250;
+            
+            for(let i = 0; i < starCount; i++) {
+                const s = document.createElement('div');
+                s.className = 'star';
+                s.style.left = Math.random() * 100 + '%';
+                s.style.top = Math.random() * 100 + '%';
+                const size = Math.random() * 2.5 + 0.5;
+                s.style.width = size + 'px';
+                s.style.height = size + 'px';
+                s.style.opacity = Math.random() * 0.6 + 0.2;
+                box.appendChild(s);
+            }
+        }
         
-        // === ПОЛУЧЕНИЕ ДАННЫХ ОТ БОТА ===
+        // === ЗАГРУЗКА ДАННЫХ ===
         function loadFromTelegram() {
             return new Promise((resolve) => {
                 try {
-                    // Проверяем, есть ли initDataUnsafe (данные от бота)
                     if (tg.initDataUnsafe && tg.initDataUnsafe.start_param) {
                         try {
                             const decoded = decodeURIComponent(tg.initDataUnsafe.start_param);
@@ -399,7 +404,6 @@
                         }
                     }
                     
-                    // Если нет данных от бота, пробуем localStorage
                     const saved = localStorage.getItem(STORAGE_KEY);
                     if (saved) {
                         const parsed = JSON.parse(saved);
@@ -421,7 +425,6 @@
         function saveToLocal() {
             try {
                 localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
-                console.log('💾 Сохранено в localStorage');
                 return true;
             } catch(e) {
                 console.error('Ошибка сохранения в localStorage:', e);
@@ -431,35 +434,30 @@
         
         // Обновление интерфейса
         function updateUI() {
-            // Инициатива
             document.querySelectorAll('#initiative-group .chip').forEach(chip => {
                 if (chip.getAttribute('data-val') === settings.initiative) chip.classList.add('active');
                 else chip.classList.remove('active');
             });
-            // Длина ответов
             document.querySelectorAll('#length-group .chip').forEach(chip => {
                 if (chip.getAttribute('data-val') === settings.length) chip.classList.add('active');
                 else chip.classList.remove('active');
             });
-            // Темп событий
             document.querySelectorAll('#pacing-group .chip').forEach(chip => {
                 if (chip.getAttribute('data-val') === settings.pacing) chip.classList.add('active');
                 else chip.classList.remove('active');
             });
-            // NPC
             document.querySelectorAll('#npc-group .chip').forEach(chip => {
                 if (chip.getAttribute('data-val') === settings.npc) chip.classList.add('active');
                 else chip.classList.remove('active');
             });
             
-            // Текстовое поле (сеттинг)
             const textarea = document.getElementById('setting-input');
             if (textarea) {
                 textarea.value = settings.setting || '';
             }
         }
         
-        // Настройка обработчиков кнопок (УЛУЧШЕНО ДЛЯ SAMSUNG)
+        // Настройка обработчиков кнопок
         function setupChips() {
             const groups = ['initiative-group', 'length-group', 'pacing-group', 'npc-group'];
             
@@ -468,13 +466,11 @@
                 if (!group) return;
                 
                 group.querySelectorAll('.chip').forEach(chip => {
-                    // Удаляем старые обработчики
                     const oldHandler = chip._handler;
                     if (oldHandler) chip.removeEventListener('click', oldHandler);
                     if (oldHandler) chip.removeEventListener('touchstart', oldHandler);
                     
                     const handler = function(e) {
-                        // Предотвращаем всплытие
                         e.stopPropagation();
                         
                         let key = '';
@@ -489,14 +485,12 @@
                             saveToLocal();
                             updateUI();
                             
-                            // Вибрация (если доступна)
                             try {
                                 if (tg.HapticFeedback) tg.HapticFeedback.selectionChanged();
                             } catch(e) {}
                         }
                     };
                     
-                    // Добавляем оба события для надёжности
                     chip.addEventListener('click', handler);
                     chip.addEventListener('touchstart', handler, { passive: false });
                     chip._handler = handler;
@@ -519,10 +513,8 @@
             btn.classList.add('disabled');
             
             try {
-                // Отправляем данные в бот
                 tg.sendData(JSON.stringify(settings));
                 
-                // Вибрация при успехе
                 try {
                     if (tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
                 } catch(e) {}
@@ -530,7 +522,6 @@
                 btn.innerHTML = '✅ Отправлено!';
                 btn.style.background = '#22c55e';
                 
-                // Закрываем через 500ms
                 setTimeout(() => {
                     try {
                         tg.close();
@@ -551,44 +542,18 @@
             }
         }
         
-        // Генерация звёзд
-        function createStars() {
-            const box = document.getElementById('stars');
-            if (!box) return;
-            box.innerHTML = '';
-            for(let i = 0; i < 50; i++) {
-                const s = document.createElement('div');
-                s.className = 'star';
-                s.style.left = Math.random() * 100 + '%';
-                s.style.top = Math.random() * 100 + '%';
-                const size = Math.random() * 2 + 1;
-                s.style.width = size + 'px';
-                s.style.height = size + 'px';
-                s.style.animationDuration = (Math.random() * 3 + 2) + 's';
-                s.style.animationDelay = Math.random() * 5 + 's';
-                box.appendChild(s);
-            }
-        }
-        
-        // === ЗАПУСК С ЭКРАНОМ ЗАГРУЗКИ ===
+        // === ЗАПУСК ===
         async function init() {
             console.log('🚀 Mini App инициализация...');
             
-            // Показываем загрузку
             const loadingScreen = document.getElementById('loadingScreen');
             const mainContainer = document.getElementById('mainContainer');
             
-            // Загружаем данные
-            await loadFromTelegram();
-            
-            // Создаём звёзды
             createStars();
-            
-            // Настраиваем интерфейс
+            await loadFromTelegram();
             updateUI();
             setupChips();
             
-            // Настраиваем textarea
             const textarea = document.getElementById('setting-input');
             if (textarea) {
                 textarea.addEventListener('input', function() {
@@ -597,23 +562,18 @@
                 });
             }
             
-            // Настраиваем кнопку сохранения
             const saveBtn = document.getElementById('saveBtn');
             if (saveBtn) {
                 saveBtn.addEventListener('click', saveAndClose);
-                // Для Samsung — дополнительно touchstart
                 saveBtn.addEventListener('touchstart', function(e) {
                     e.preventDefault();
                     saveAndClose();
                 }, { passive: false });
             }
             
-            // Скрываем загрузку и показываем контент
             setTimeout(() => {
                 loadingScreen.classList.add('hide');
                 mainContainer.classList.add('visible');
-                
-                // Убираем loading из DOM после анимации
                 setTimeout(() => {
                     if (loadingScreen.parentNode) {
                         loadingScreen.style.display = 'none';
@@ -622,7 +582,6 @@
             }, 300);
         }
         
-        // Запуск
         window.onload = init;
     </script>
 </body>
