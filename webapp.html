@@ -29,7 +29,6 @@
             overflow-x: hidden;
         }
 
-        /* СТАТИЧНОЕ ЗВЕЗДНОЕ НЕБО — БЕЗ АНИМАЦИИ */
         .stars-container {
             position: fixed;
             top: 0;
@@ -60,7 +59,6 @@
             pointer-events: none;
         }
 
-        /* LOADING SCREEN */
         .loading-screen {
             position: fixed;
             top: 0;
@@ -102,7 +100,6 @@
             pointer-events: none;
         }
 
-        /* ОСНОВНОЙ КОНТЕЙНЕР */
         .container {
             padding: 16px;
             padding-bottom: calc(100px + var(--safe-area-bottom));
@@ -154,31 +151,41 @@
             margin-top: 0;
         }
 
+        /* ИСПРАВЛЕННЫЙ КОНТЕЙНЕР ДЛЯ СКРОЛЛА */
         .chips-container {
             display: flex;
             flex-direction: row;
             flex-wrap: nowrap;
             gap: 8px;
             overflow-x: auto;
+            overflow-y: hidden;
             padding-bottom: 5px;
             -webkit-overflow-scrolling: touch;
-            scrollbar-width: none;
-            justify-content: center;
+            scrollbar-width: thin;
+            justify-content: flex-start;
         }
         .chips-container::-webkit-scrollbar {
-            display: none;
+            height: 3px;
+        }
+        .chips-container::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 3px;
+        }
+        .chips-container::-webkit-scrollbar-thumb {
+            background: var(--accent-glow);
+            border-radius: 3px;
         }
 
         /* УМЕНЬШЕННЫЕ КВАДРАТНЫЕ КНОПКИ */
         .chip {
             flex: 0 0 auto;
-            min-width: 60px;
-            padding: 8px 6px;
+            min-width: 54px;
+            padding: 8px 5px;
             border-radius: 14px;
             background: rgba(255, 255, 255, 0.05);
             border: 1px solid rgba(255, 255, 255, 0.1);
             color: var(--text-secondary);
-            font-size: 11px;
+            font-size: 10px;
             font-weight: 500;
             text-align: center;
             cursor: pointer;
@@ -187,7 +194,7 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            gap: 3px;
+            gap: 2px;
             white-space: nowrap;
         }
         
@@ -204,7 +211,7 @@
         }
 
         .chip-icon {
-            font-size: 16px;
+            font-size: 14px;
         }
 
         textarea {
@@ -227,7 +234,6 @@
             box-shadow: 0 0 0 2px rgba(168, 85, 247, 0.2);
         }
 
-        /* КНОПКА СОХРАНЕНИЯ */
         .save-btn-container {
             position: fixed;
             bottom: calc(20px + var(--safe-area-bottom));
@@ -329,7 +335,6 @@
     <script>
         const tg = window.Telegram.WebApp;
         
-        // === УЛУЧШЕННАЯ ИНИЦИАЛИЗАЦИЯ ДЛЯ ANDROID WEBVIEW ===
         try {
             tg.expand();
             tg.ready();
@@ -338,7 +343,6 @@
             if (tg.setBackgroundColor) tg.setBackgroundColor('#0f0720');
             if (tg.setHeaderColor) tg.setHeaderColor('bg_color');
             
-            // Мягкая фиксация скролла для Android
             document.body.style.overflow = 'hidden';
             document.body.style.position = 'fixed';
             document.body.style.width = '100%';
@@ -365,7 +369,6 @@
             npc: 'none'
         };
         
-        // === ГЕНЕРАЦИЯ СТАТИЧНЫХ ЗВЁЗД (250 ШТУК, БЕЗ АНИМАЦИИ) ===
         function createStars() {
             const box = document.getElementById('stars');
             if (!box) return;
@@ -385,7 +388,6 @@
             }
         }
         
-        // === ЗАГРУЗКА ДАННЫХ ===
         function loadFromTelegram() {
             return new Promise((resolve) => {
                 try {
@@ -433,7 +435,6 @@
             }
         }
         
-        // Обновление интерфейса
         function updateUI() {
             document.querySelectorAll('#initiative-group .chip').forEach(chip => {
                 if (chip.getAttribute('data-val') === settings.initiative) chip.classList.add('active');
@@ -458,7 +459,6 @@
             }
         }
         
-        // Настройка обработчиков кнопок
         function setupChips() {
             const groups = ['initiative-group', 'length-group', 'pacing-group', 'npc-group'];
             
@@ -499,7 +499,6 @@
             });
         }
         
-        // Сохранение и отправка в бот
         function saveAndClose() {
             const textarea = document.getElementById('setting-input');
             if (textarea) {
@@ -543,7 +542,6 @@
             }
         }
         
-        // === ЗАПУСК ===
         async function init() {
             console.log('🚀 Mini App инициализация...');
             
