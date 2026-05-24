@@ -393,6 +393,13 @@
                 <div class="chip" data-val="none"><span class="chip-icon">🚫</span>Запрещены</div>
                 <div class="chip" data-val="allowed"><span class="chip-icon">👥</span>Разрешены</div>
             </div>
+            <!-- 👇 НОВЫЙ ПЕРЕКЛЮЧАТЕЛЬ: РЕЖИМ ПИСЬМА -->
+            <label style="margin-top: 16px;">✍️ Режим письма</label>
+            <div class="chips-container" id="write-mode-group">
+                <div class="chip" data-val="self"><span class="chip-icon">🎭</span>Только за себя</div>
+                <div class="chip" data-val="all"><span class="chip-icon">👥</span>За всех</div>
+                <div class="chip" data-val="npc_only"><span class="chip-icon">👤</span>За себя + NPC</div>
+            </div>
         </div>
     </div>
 
@@ -434,7 +441,8 @@
             length: 'medium',
             pacing: 'normal',
             setting: '',
-            npc: 'none'
+            npc: 'none',
+            write_mode: 'self'  // 👈 НОВОЕ ПОЛЕ
         };
         
         function createStars() {
@@ -504,20 +512,29 @@
         }
         
         function updateUI() {
+            // Инициатива
             document.querySelectorAll('#initiative-group .chip').forEach(chip => {
                 if (chip.getAttribute('data-val') === settings.initiative) chip.classList.add('active');
                 else chip.classList.remove('active');
             });
+            // Длина ответов
             document.querySelectorAll('#length-group .chip').forEach(chip => {
                 if (chip.getAttribute('data-val') === settings.length) chip.classList.add('active');
                 else chip.classList.remove('active');
             });
+            // Темп событий
             document.querySelectorAll('#pacing-group .chip').forEach(chip => {
                 if (chip.getAttribute('data-val') === settings.pacing) chip.classList.add('active');
                 else chip.classList.remove('active');
             });
+            // NPC
             document.querySelectorAll('#npc-group .chip').forEach(chip => {
                 if (chip.getAttribute('data-val') === settings.npc) chip.classList.add('active');
+                else chip.classList.remove('active');
+            });
+            // 👇 РЕЖИМ ПИСЬМА
+            document.querySelectorAll('#write-mode-group .chip').forEach(chip => {
+                if (chip.getAttribute('data-val') === settings.write_mode) chip.classList.add('active');
                 else chip.classList.remove('active');
             });
             
@@ -528,7 +545,7 @@
         }
         
         function setupChips() {
-            const groups = ['initiative-group', 'length-group', 'pacing-group', 'npc-group'];
+            const groups = ['initiative-group', 'length-group', 'pacing-group', 'npc-group', 'write-mode-group'];
             
             groups.forEach(groupId => {
                 const group = document.getElementById(groupId);
@@ -547,6 +564,7 @@
                         else if (groupId === 'length-group') key = 'length';
                         else if (groupId === 'pacing-group') key = 'pacing';
                         else if (groupId === 'npc-group') key = 'npc';
+                        else if (groupId === 'write-mode-group') key = 'write_mode';
                         
                         const val = this.getAttribute('data-val');
                         if (key && val && settings[key] !== val) {
