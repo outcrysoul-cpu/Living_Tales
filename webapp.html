@@ -72,17 +72,24 @@
             font-family: 'Playfair Display', 'Times New Roman', serif;
             font-size: 34px;
             font-weight: 700;
+            /* Базовый стиль — работает везде */
+            color: #d8b4fe;
             background: linear-gradient(135deg, #f5e6d3 0%, #d8b4fe 50%, #a855f7 100%);
             background-size: 200% auto;
-            -webkit-background-clip: text;
-            background-clip: text;
-            color: transparent;
             animation: shimmer 3s ease infinite;
             letter-spacing: 2px;
             font-style: italic;
             display: inline-block;
             position: relative;
-            text-shadow: 0 0 20px rgba(168, 85, 247, 0.3);
+        }
+
+        /* Градиентный текст — только там где поддерживается */
+        @supports (-webkit-background-clip: text) or (background-clip: text) {
+            .title {
+                -webkit-background-clip: text;
+                background-clip: text;
+                color: transparent;
+            }
         }
         
         @keyframes shimmer {
@@ -166,7 +173,7 @@
             z-index: 1;
             opacity: 0;
             transition: opacity 0.3s ease;
-            min-height: 100vh;
+            min-height: 100%;
             box-sizing: border-box;
         }
         
@@ -186,6 +193,8 @@
         }
 
         .card {
+            /* Fallback для Samsung Internet < 17 и старых Android WebView */
+            background: rgba(50, 20, 100, 0.85);
             background: var(--card-bg);
             backdrop-filter: blur(12px);
             -webkit-backdrop-filter: blur(12px);
@@ -418,15 +427,19 @@
             if (tg.setBackgroundColor) tg.setBackgroundColor('#0f0720');
             if (tg.setHeaderColor) tg.setHeaderColor('bg_color');
             
-            document.body.style.overflow = 'hidden';
-            document.body.style.position = 'fixed';
-            document.body.style.width = '100%';
-            document.body.style.height = '100%';
-            
+            // Telegram expand() уже управляет высотой — не нужно фиксировать body
+            document.body.style.overflowX = 'hidden';
+
             const container = document.getElementById('mainContainer');
             if (container) {
                 container.style.overflowY = 'auto';
-                container.style.height = '100vh';
+                container.style.overflowX = 'hidden';
+                // 100dvh учитывает динамическую строку браузера на мобиле (Android Chrome)
+                // Fallback: 100vh для старых браузеров
+                container.style.height = '100dvh';
+                if (!CSS.supports('height', '100dvh')) {
+                    container.style.height = '100vh';
+                }
                 container.style.position = 'relative';
                 container.style.webkitOverflowScrolling = 'touch';
             }
@@ -448,20 +461,22 @@
         function createStars() {
             const box = document.getElementById('stars');
             if (!box) return;
-            box.innerHTML = '';
+            const fragment = document.createDocumentFragment();
             const starCount = 250;
-            
-            for(let i = 0; i < starCount; i++) {
+            for (let i = 0; i < starCount; i++) {
                 const s = document.createElement('div');
                 s.className = 'star';
-                s.style.left = Math.random() * 100 + '%';
-                s.style.top = Math.random() * 100 + '%';
-                const size = Math.random() * 2.5 + 0.5;
-                s.style.width = size + 'px';
-                s.style.height = size + 'px';
-                s.style.opacity = Math.random() * 0.6 + 0.2;
-                box.appendChild(s);
+                s.style.cssText = [
+                    'left:' + (Math.random() * 100) + '%',
+                    'top:' + (Math.random() * 100) + '%',
+                    'width:' + (Math.random() * 2.5 + 0.5) + 'px',
+                    'height:' + (Math.random() * 2.5 + 0.5) + 'px',
+                    'opacity:' + (Math.random() * 0.6 + 0.2)
+                ].join(';');
+                fragment.appendChild(s);
             }
+            box.innerHTML = '';
+            box.appendChild(fragment);
         }
         
         function loadFromTelegram() {
@@ -506,7 +521,9 @@
                 localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
                 return true;
             } catch(e) {
-                console.error('Ошибка сохранения в localStorage:', e);
+                // localStorage недоступен в некоторых сборках Telegram — это нормально,
+                // настройки хранятся в памяти до отправки через sendData
+                console.warn('localStorage недоступен, работаем в памяти:', e);
                 return false;
             }
         }
@@ -554,7 +571,6 @@
                 group.querySelectorAll('.chip').forEach(chip => {
                     const oldHandler = chip._handler;
                     if (oldHandler) chip.removeEventListener('click', oldHandler);
-                    if (oldHandler) chip.removeEventListener('touchstart', oldHandler);
                     
                     const handler = function(e) {
                         e.stopPropagation();
@@ -579,13 +595,16 @@
                     };
                     
                     chip.addEventListener('click', handler);
-                    chip.addEventListener('touchstart', handler, { passive: false });
                     chip._handler = handler;
                 });
             });
         }
         
+        let _isSending = false;
         function saveAndClose() {
+            if (_isSending) return;
+            _isSending = true;
+
             const textarea = document.getElementById('setting-input');
             if (textarea) {
                 settings.setting = textarea.value.trim();
@@ -624,6 +643,7 @@
                     btn.disabled = false;
                     btn.classList.remove('disabled');
                     btn.style.background = '';
+                    _isSending = false;
                 }, 2000);
             }
         }
@@ -642,18 +662,22 @@
             const textarea = document.getElementById('setting-input');
             if (textarea) {
                 textarea.addEventListener('input', function() {
-                    settings.setting = this.value.trim();
+                    // trim только при сохранении, не при вводе — иначе нельзя поставить пробел
+                    settings.setting = this.value;
                     saveToLocal();
+                });
+
+                // Android/Samsung: при открытии клавиатуры скроллим textarea в видимую зону
+                textarea.addEventListener('focus', function() {
+                    setTimeout(() => {
+                        this.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }, 350); // 350ms — после анимации клавиатуры
                 });
             }
             
             const saveBtn = document.getElementById('saveBtn');
             if (saveBtn) {
                 saveBtn.addEventListener('click', saveAndClose);
-                saveBtn.addEventListener('touchstart', function(e) {
-                    e.preventDefault();
-                    saveAndClose();
-                }, { passive: false });
             }
             
             setTimeout(() => {
@@ -667,7 +691,12 @@
             }, 300);
         }
         
-        window.onload = init;
+        // DOMContentLoaded надёжнее window.onload — не ждёт шрифты и внешние ресурсы
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', init);
+        } else {
+            init(); // DOM уже готов
+        }
     </script>
 </body>
 </html>
