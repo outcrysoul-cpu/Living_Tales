@@ -409,6 +409,13 @@
                 <div class="chip" data-val="all"><span class="chip-icon">👥</span>За всех</div>
                 <div class="chip" data-val="npc_only"><span class="chip-icon">👤</span>За себя + NPC</div>
             </div>
+
+            <!-- ЛИЦО ПОВЕСТВОВАНИЯ -->
+            <label style="margin-top: 16px;">📖 Лицо повествования</label>
+            <div class="chips-container" id="person-mode-group">
+                <div class="chip" data-val="third"><span class="chip-icon">📖</span>От 3-го лица</div>
+                <div class="chip" data-val="first"><span class="chip-icon">🗣</span>От 1-го лица</div>
+            </div>
         </div>
     </div>
 
@@ -417,7 +424,20 @@
     </div>
 
     <script>
-        const tg = window.Telegram.WebApp;
+        // Защита от случаев когда SDK не загружен (тест в браузере, медленная сеть)
+        const tg = (window.Telegram && window.Telegram.WebApp) ? window.Telegram.WebApp : {
+            expand: () => {},
+            ready: () => {},
+            close: () => {},
+            sendData: (d) => { console.log("sendData (mock):", d); },
+            showAlert: (msg) => { alert(msg); },
+            HapticFeedback: { selectionChanged: () => {}, notificationOccurred: () => {} },
+            enableClosingConfirmation: null,
+            setBackgroundColor: null,
+            setHeaderColor: null,
+            themeParams: {},
+            colorScheme: "dark"
+        };
         
         try {
             tg.expand();
