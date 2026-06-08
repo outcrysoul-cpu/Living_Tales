@@ -273,6 +273,13 @@
             border-color: transparent;
             box-shadow: 0 0 15px rgba(168, 85, 247, 0.4);
         }
+        /* Режим письма — текст в 2 строки, размер как у остальных */
+        .chip-wrap {
+            white-space: normal;
+            min-width: 60px;
+            max-width: 80px;
+            line-height: 1.2;
+        }
         
         .chip:active {
             transform: scale(0.96);
@@ -402,19 +409,19 @@
                 <div class="chip" data-val="none"><span class="chip-icon">🚫</span>Запрещены</div>
                 <div class="chip" data-val="allowed"><span class="chip-icon">👥</span>Разрешены</div>
             </div>
-            <!-- 👇 НОВЫЙ ПЕРЕКЛЮЧАТЕЛЬ: РЕЖИМ ПИСЬМА -->
-            <label style="margin-top: 16px;">✍️ Режим письма</label>
-            <div class="chips-container" id="write-mode-group">
-                <div class="chip" data-val="self"><span class="chip-icon">🎭</span>Только за себя</div>
-                <div class="chip" data-val="all"><span class="chip-icon">👥</span>За всех</div>
-                <div class="chip" data-val="npc_only"><span class="chip-icon">👤</span>За себя + NPC</div>
-            </div>
-
             <!-- ЛИЦО ПОВЕСТВОВАНИЯ -->
             <label style="margin-top: 16px;">📖 Лицо повествования</label>
             <div class="chips-container" id="person-mode-group">
                 <div class="chip" data-val="third"><span class="chip-icon">📖</span>От 3-го лица</div>
                 <div class="chip" data-val="first"><span class="chip-icon">🗣</span>От 1-го лица</div>
+            </div>
+
+            <!-- РЕЖИМ ПИСЬМА -->
+            <label style="margin-top: 16px;">✍️ Режим письма</label>
+            <div class="chips-container" id="write-mode-group">
+                <div class="chip chip-wrap" data-val="self"><span class="chip-icon">🎭</span>Только<br>за себя</div>
+                <div class="chip chip-wrap" data-val="all"><span class="chip-icon">👥</span>За всех</div>
+                <div class="chip chip-wrap" data-val="npc_only"><span class="chip-icon">👤</span>За себя<br>+ NPC</div>
             </div>
         </div>
     </div>
