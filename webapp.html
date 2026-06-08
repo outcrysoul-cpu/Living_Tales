@@ -406,6 +406,13 @@
             <label style="margin-top: 16px;">✍️ Режим письма</label>
             <div class="chips-container" id="write-mode-group">
                 <div class="chip" data-val="self"><span class="chip-icon">🎭</span>Только за себя</div>
+
+            <!-- ЛИЦО ПОВЕСТВОВАНИЯ -->
+            <label style="margin-top: 16px;">📖 Лицо повествования</label>
+            <div class="chips-container" id="person-mode-group">
+                <div class="chip" data-val="third"><span class="chip-icon">📖</span>От 3-го лица</div>
+                <div class="chip" data-val="first"><span class="chip-icon">🗣</span>От 1-го лица</div>
+            </div>
                 <div class="chip" data-val="all"><span class="chip-icon">👥</span>За всех</div>
                 <div class="chip" data-val="npc_only"><span class="chip-icon">👤</span>За себя + NPC</div>
             </div>
@@ -455,7 +462,8 @@
             pacing: 'normal',
             setting: '',
             npc: 'none',
-            write_mode: 'self'  // 👈 НОВОЕ ПОЛЕ
+            write_mode: 'self',
+            person_mode: 'third'  // лицо повествования
         };
         
         function createStars() {
@@ -552,6 +560,9 @@
             // 👇 РЕЖИМ ПИСЬМА
             document.querySelectorAll('#write-mode-group .chip').forEach(chip => {
                 if (chip.getAttribute('data-val') === settings.write_mode) chip.classList.add('active');
+        document.querySelectorAll('#person-mode-group .chip').forEach(chip => {
+          if (chip.getAttribute('data-val') === settings.person_mode) chip.classList.add('active');
+        });
                 else chip.classList.remove('active');
             });
             
@@ -562,7 +573,7 @@
         }
         
         function setupChips() {
-            const groups = ['initiative-group', 'length-group', 'pacing-group', 'npc-group', 'write-mode-group'];
+            const groups = ['initiative-group', 'length-group', 'pacing-group', 'npc-group', 'write-mode-group', 'person-mode-group'];
             
             groups.forEach(groupId => {
                 const group = document.getElementById(groupId);
@@ -581,6 +592,7 @@
                         else if (groupId === 'pacing-group') key = 'pacing';
                         else if (groupId === 'npc-group') key = 'npc';
                         else if (groupId === 'write-mode-group') key = 'write_mode';
+            else if (groupId === 'person-mode-group') key = 'person_mode';
                         
                         const val = this.getAttribute('data-val');
                         if (key && val && settings[key] !== val) {
