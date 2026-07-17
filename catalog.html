@@ -15,17 +15,34 @@
             --text-main: #ffffff;
             --text-secondary: #cbd5e1;
             --text-muted: #94a3b8;
-            --safe-area-bottom: env(safe-area-inset-bottom, 20px);
+            --safe-area-bottom: max(env(safe-area-inset-bottom, 0px), var(--tg-safe-area-inset-bottom, 0px));
+            --safe-area-top: max(env(safe-area-inset-top, 0px), var(--tg-content-safe-area-inset-top, 0px));
             --nav-h: calc(64px + var(--safe-area-bottom));
+            /* Реальная высота окна Telegram — выставляется из JS (viewportStableHeight).
+               Фолбэк 100dvh для обычного браузера, 100vh — для старых движков. */
+            --app-height: 100vh;
+            color-scheme: dark;
         }
         * { -webkit-tap-highlight-color: transparent; box-sizing: border-box; }
+        html {
+            height: 100%;
+            /* Samsung Internet / Chrome на Android умеют самовольно увеличивать шрифт —
+               это ломало фиксированную сетку карточек и нижнюю навигацию. */
+            -webkit-text-size-adjust: 100%; text-size-adjust: 100%;
+        }
         body {
             margin: 0; padding: 0;
+            min-height: 100%;
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-            background-color: var(--bg-dark); color: var(--text-main); overflow-x: hidden;
+            background-color: var(--bg-dark); color: var(--text-main);
+            overflow-x: hidden;
+            /* Гасит «резинку»/pull-to-refresh, из-за которого на Android
+               проглядывал фон и мог закрываться мини-апп. */
+            overscroll-behavior-y: none;
         }
+        @supports (height: 100dvh) { :root { --app-height: 100dvh; } }
         .stars-container {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1;
+            position: fixed; top: 0; left: 0; width: 100%; height: var(--app-height, 100%); z-index: -1;
             background: radial-gradient(ellipse at bottom, #1b2735 0%, #090a0f 100%);
             overflow: hidden; pointer-events: none;
         }
@@ -61,21 +78,31 @@
         @keyframes spin { to { transform: rotate(360deg); } }
         .loading-text { color: var(--accent-glow); font-size: 16px; font-weight: 500; }
         .loading-screen.hide { opacity: 0; pointer-events: none; }
-        .app { max-width: 600px; margin: 0 auto; position: relative; z-index: 1; padding: 14px 14px calc(var(--nav-h) + 20px); opacity: 0; transition: opacity 0.3s ease; min-height: 100vh; }
+        .app { max-width: 600px; margin: 0 auto; position: relative; z-index: 1; padding: calc(14px + var(--safe-area-top)) 14px calc(var(--nav-h) + 20px); opacity: 0; transition: opacity 0.3s ease; min-height: var(--app-height, 100vh); }
         .app.visible { opacity: 1; }
         .topbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
 
         /* ===== Поиск ===== */
-        .search-wrap { position: relative; margin-bottom: 14px; }
-        .search-wrap .s-icon { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); font-size: 16px; opacity: 0.7; pointer-events: none; }
-        .search-input {
-            width: 100%; box-sizing: border-box;
+        /* Поиск: флекс-«таблетка». Иконка и поле — соседние элементы одной строки,
+           не накладываются друг на друга ни на телефоне, ни на ПК. */
+        .search-wrap {
+            display: flex; align-items: center; gap: 8px; margin-bottom: 14px;
             background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.12);
-            border-radius: 16px; padding: 13px 40px 13px 42px; color: #fff; font-size: 14px;
+            border-radius: 16px; padding: 0 12px;
+        }
+        .search-wrap:focus-within { border-color: #a855f7; box-shadow: 0 0 0 2px rgba(168,85,247,0.2); }
+        .search-wrap .s-icon { flex: 0 0 auto; font-size: 15px; line-height: 1; opacity: 0.7; pointer-events: none; }
+        .search-input {
+            flex: 1; min-width: 0;
+            background: transparent; border: none;
+            padding: 13px 0; color: #fff; font-size: 14px;
             font-family: inherit; outline: none;
         }
-        .search-input:focus { border-color: #a855f7; box-shadow: 0 0 0 2px rgba(168,85,247,0.2); }
-        .search-clear { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); background: rgba(255,255,255,0.1); border: none; color: #fff; width: 22px; height: 22px; border-radius: 50%; cursor: pointer; font-size: 13px; display: none; align-items: center; justify-content: center; }
+        .search-clear {
+            flex: 0 0 auto; background: rgba(255,255,255,0.1); border: none; color: #fff;
+            width: 22px; height: 22px; border-radius: 50%; cursor: pointer; font-size: 13px;
+            display: none; align-items: center; justify-content: center;
+        }
         .search-clear.show { display: flex; }
 
         .filters { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 6px; -webkit-overflow-scrolling: touch; scrollbar-width: none; margin-bottom: 16px; }
@@ -95,6 +122,23 @@
         .nsfw-banner .nb-text { font-size: 12px; color: var(--text-secondary); line-height: 1.45; margin-top: 6px; }
 
         .grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+        /* ===== Адаптив под разные экраны ===== */
+        /* Узкие телефоны (iPhone SE, компактные Android) — плотнее, без тесноты. */
+        @media (max-width: 360px) {
+            .app { padding-left: 10px; padding-right: 10px; }
+            .grid { gap: 10px; }
+            .card-name { font-size: 14px; }
+            .page-title { font-size: 26px; }
+        }
+        /* Широкие экраны (большие Samsung, раскладные, планшеты) — 3 колонки,
+           чтобы карточки не растягивались в пустоту. */
+        @media (min-width: 500px) {
+            .grid { grid-template-columns: repeat(3, 1fr); }
+        }
+        /* Альбомная ориентация / низкая высота — уменьшаем вертикальные отступы. */
+        @media (max-height: 480px) {
+            .card-img { aspect-ratio: 1 / 1; }
+        }
         .char-card { background: var(--card-bg); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.1); border-radius: 18px; overflow: hidden; cursor: pointer; transition: transform 0.15s ease; display: flex; flex-direction: column; }
         .char-card:active { transform: scale(0.97); }
         .card-img { width: 100%; aspect-ratio: 3/4; position: relative; display: flex; align-items: center; justify-content: center; font-size: 54px; overflow: hidden; }
@@ -138,7 +182,7 @@
         .empty-hint { text-align: center; color: var(--text-muted); font-size: 13px; padding: 22px 10px; }
         .overlay { position: fixed; inset: 0; z-index: 200; background: rgba(5,2,15,0.6); backdrop-filter: blur(3px); display: none; opacity: 0; transition: opacity 0.25s ease; }
         .overlay.open { display: block; opacity: 1; }
-        .sheet { position: absolute; left: 0; right: 0; bottom: 0; max-height: 92vh; overflow-y: auto; background: #160b2e; border-radius: 24px 24px 0 0; border-top: 1px solid rgba(255,255,255,0.1); padding: 8px 18px calc(24px + var(--safe-area-bottom)); transform: translateY(100%); transition: transform 0.3s ease; -webkit-overflow-scrolling: touch; }
+        .sheet { position: absolute; left: 0; right: 0; bottom: 0; max-height: calc(var(--app-height, 100vh) - 32px); overflow-y: auto; background: #160b2e; border-radius: 24px 24px 0 0; border-top: 1px solid rgba(255,255,255,0.1); padding: 8px 18px calc(24px + var(--safe-area-bottom)); transform: translateY(100%); transition: transform 0.3s ease; -webkit-overflow-scrolling: touch; }
         .overlay.open .sheet { transform: translateY(0); }
         .sheet-grip { width: 40px; height: 4px; border-radius: 4px; background: rgba(255,255,255,0.25); margin: 8px auto 14px; }
         .sheet-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
@@ -394,6 +438,31 @@
             tg.expand(); tg.ready();
             if (tg.setBackgroundColor) tg.setBackgroundColor('#0f0720');
             if (tg.setHeaderColor) tg.setHeaderColor('bg_color');
+        } catch(e) {}
+
+        /* ===== Кросс-девайсная синхронизация высоты окна =====
+           100vh на телефонах врёт (шапка Telegram, адресная строка, клавиатура).
+           Берём реальную высоту у Telegram (viewportStableHeight) и кладём в CSS-переменную.
+           Работает одинаково на iPhone, Android и Samsung. */
+        function syncViewport() {
+            var h = (tg && tg.viewportStableHeight) ? tg.viewportStableHeight
+                  : (tg && tg.viewportHeight) ? tg.viewportHeight
+                  : window.innerHeight;
+            if (h && h > 0) {
+                document.documentElement.style.setProperty('--app-height', h + 'px');
+            }
+        }
+        try {
+            syncViewport();
+            if (tg && tg.onEvent) {
+                tg.onEvent('viewportChanged', syncViewport);
+                tg.onEvent('safeAreaChanged', syncViewport);
+                tg.onEvent('contentSafeAreaChanged', syncViewport);
+            }
+            window.addEventListener('resize', syncViewport);
+            window.addEventListener('orientationchange', function(){ setTimeout(syncViewport, 250); });
+            // Чтобы свайп вниз по каталогу не закрывал мини-апп на новых клиентах.
+            if (tg && tg.disableVerticalSwipes) tg.disableVerticalSwipes();
         } catch(e) {}
         function haptic(t){ try{ if(tg.HapticFeedback){ t==='sel'?tg.HapticFeedback.selectionChanged():tg.HapticFeedback.impactOccurred('light'); } }catch(e){} }
 
