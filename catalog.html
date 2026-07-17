@@ -420,7 +420,7 @@
         /* Текущий пользователь (демо). В реале — из initDataUnsafe.user */
         const ME = { name: 'Ты', id: 'you' };
 
-        const CHARACTERS = [
+        let CHARACTERS = [   /* демо-фолбэк; переопределяется данными из ?d= */
             { id:1, name:'Дамиан Вэйл', emoji:'🥀', short:'В объятьях Умбры. Загадочный и опасно притягательный.',
               full:'Дамиан Вэйл — наследник древнего рода, чьё имя произносят шёпотом. Холодный, расчётливый, но за бронёй сарказма прячется тот, кто слишком долго был один. Он замечает в тебе то, что другие не видят.',
               appearance:'Высокий, худощавый, платиновые волосы, ледяные серые глаза. Всегда в тёмном.',
@@ -749,7 +749,33 @@
             } catch(e){}
             return 'catalog';
         }
-        function init() {
+        async function init() {
+            // Реальные данные от бота приходят в ?d= (см. build_catalog_url).
+            // Если параметра нет — остаётся демо-фолбэк выше.
+            try {
+                const p = new URLSearchParams(location.search).get('d');
+                if (p) {
+                    const d = JSON.parse(decodeURIComponent(p));
+                    if (Array.isArray(d.characters) && d.characters.length) {
+                        CHARACTERS = d.characters.map((c, i) => ({
+                            id: c.id != null ? c.id : i + 1,
+                            name: c.name || '', emoji: c.emoji || '🎭',
+                            short: c.short || '', full: c.full || '',
+                            appearance: c.appearance || '', personality: c.personality || '',
+                            category: c.category || 'romance', tags: c.tags || [],
+                            likes: c.likes || 0, chats: c.chats || 0,
+                            public: true, author: c.author || { name: 'LT', id: 'lt' }
+                        }));
+                    }
+                    if (Array.isArray(d.personas)) {
+                        PERSONAS = d.personas.map(p => ({
+                            id: p.id, name: p.name, age: p.age,
+                            about: p.about, isDefault: !!p.isDefault
+                        }));
+                    }
+                }
+            } catch (e) { console.error('catalog data parse failed', e); }
+
             createStars(); renderFilters(); renderCatalog(); renderPersonas();
             ['cf-name:cf-name-cnt','cf-appearance:cf-appearance-cnt','cf-personality:cf-personality-cnt','cf-quirks:cf-quirks-cnt','cf-kinks:cf-kinks-cnt','cf-story:cf-story-cnt','cf-short:cf-short-cnt','cf-full:cf-full-cnt','pf-about:pf-about-cnt']
                 .forEach(pair => { const [a,b]=pair.split(':'); bindCounter(a,b); });
