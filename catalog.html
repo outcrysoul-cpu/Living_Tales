@@ -1,0 +1,774 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Living Tales — Каталог</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400;1,500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-dark: #0f0720;
+            --card-bg: rgba(76, 29, 149, 0.3);
+            --primary-gradient: linear-gradient(135deg, #a855f7 0%, #4c1d95 100%);
+            --accent-glow: #d8b4fe;
+            --text-main: #ffffff;
+            --text-secondary: #cbd5e1;
+            --text-muted: #94a3b8;
+            --safe-area-bottom: env(safe-area-inset-bottom, 20px);
+            --nav-h: calc(64px + var(--safe-area-bottom));
+        }
+        * { -webkit-tap-highlight-color: transparent; box-sizing: border-box; }
+        body {
+            margin: 0; padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-dark); color: var(--text-main); overflow-x: hidden;
+        }
+        .stars-container {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1;
+            background: radial-gradient(ellipse at bottom, #1b2735 0%, #090a0f 100%);
+            overflow: hidden; pointer-events: none;
+        }
+        .star { position: absolute; background: white; border-radius: 50%; opacity: 0.5; }
+        .background-glow {
+            position: fixed; top: -20%; left: -20%; width: 140%; height: 140%;
+            background: radial-gradient(circle at center, rgba(168, 85, 247, 0.15) 0%, rgba(15, 7, 32, 0) 70%);
+            z-index: -1; pointer-events: none;
+        }
+        .brand-wrap { display: inline-flex; align-items: center; gap: 4px; }
+        .brand {
+            font-family: 'Playfair Display', 'Times New Roman', serif;
+            font-size: 22px; font-weight: 700; color: #d8b4fe;
+            background: linear-gradient(135deg, #f5e6d3 0%, #d8b4fe 50%, #a855f7 100%);
+            background-size: 200% auto; animation: shimmer 3s ease infinite;
+            letter-spacing: 1px; font-style: italic; display: inline-block;
+        }
+        @supports (-webkit-background-clip: text) or (background-clip: text) {
+            .brand { -webkit-background-clip: text; background-clip: text; color: transparent; }
+        }
+        .book-icon {
+            font-size: 20px; filter: drop-shadow(0 0 3px rgba(168,85,247,0.4));
+            color: #d8b4fe; line-height: 1;
+        }
+        @keyframes shimmer { 0%{background-position:0% center;} 50%{background-position:100% center;} 100%{background-position:0% center;} }
+        .page-title { font-family: 'Playfair Display', serif; font-size: 30px; font-weight: 700; font-style: italic; color: #fff; letter-spacing: 0.5px; margin: 0; }
+        .page-sub { font-size: 13px; color: var(--text-muted); margin-top: 4px; font-style: italic; }
+        .loading-screen {
+            position: fixed; inset: 0; background: var(--bg-dark); z-index: 1000; display: flex; flex-direction: column;
+            align-items: center; justify-content: center; gap: 20px; transition: opacity 0.3s ease;
+        }
+        .loading-spinner { width: 50px; height: 50px; border: 3px solid rgba(168,85,247,0.2); border-top: 3px solid #a855f7; border-radius: 50%; animation: spin 1s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .loading-text { color: var(--accent-glow); font-size: 16px; font-weight: 500; }
+        .loading-screen.hide { opacity: 0; pointer-events: none; }
+        .app { max-width: 600px; margin: 0 auto; position: relative; z-index: 1; padding: 14px 14px calc(var(--nav-h) + 20px); opacity: 0; transition: opacity 0.3s ease; min-height: 100vh; }
+        .app.visible { opacity: 1; }
+        .topbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+
+        /* ===== Поиск ===== */
+        .search-wrap { position: relative; margin-bottom: 14px; }
+        .search-wrap .s-icon { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); font-size: 16px; opacity: 0.7; pointer-events: none; }
+        .search-input {
+            width: 100%; box-sizing: border-box;
+            background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.12);
+            border-radius: 16px; padding: 13px 40px 13px 42px; color: #fff; font-size: 14px;
+            font-family: inherit; outline: none;
+        }
+        .search-input:focus { border-color: #a855f7; box-shadow: 0 0 0 2px rgba(168,85,247,0.2); }
+        .search-clear { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); background: rgba(255,255,255,0.1); border: none; color: #fff; width: 22px; height: 22px; border-radius: 50%; cursor: pointer; font-size: 13px; display: none; align-items: center; justify-content: center; }
+        .search-clear.show { display: flex; }
+
+        .filters { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 6px; -webkit-overflow-scrolling: touch; scrollbar-width: none; margin-bottom: 16px; }
+        .filters::-webkit-scrollbar { display: none; }
+        .filter-chip { flex: 0 0 auto; padding: 9px 16px; border-radius: 16px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: var(--text-secondary); font-size: 13px; font-weight: 600; cursor: pointer; white-space: nowrap; transition: all 0.2s ease; display: flex; align-items: center; gap: 6px; }
+        .filter-chip.active { background: var(--primary-gradient); color: #fff; border-color: transparent; box-shadow: 0 0 14px rgba(168,85,247,0.4); }
+        .filter-chip:active { transform: scale(0.96); }
+
+        /* ===== Дисклеймер 21+ ===== */
+        .nsfw-banner {
+            display: none; margin-bottom: 16px; padding: 14px 16px;
+            background: rgba(190,18,60,0.12); border: 1px solid rgba(244,63,94,0.4);
+            border-radius: 16px;
+        }
+        .nsfw-banner.show { display: block; }
+        .nsfw-banner .nb-title { font-size: 14px; font-weight: 700; color: #fda4af; display: flex; align-items: center; gap: 6px; }
+        .nsfw-banner .nb-text { font-size: 12px; color: var(--text-secondary); line-height: 1.45; margin-top: 6px; }
+
+        .grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+        .char-card { background: var(--card-bg); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.1); border-radius: 18px; overflow: hidden; cursor: pointer; transition: transform 0.15s ease; display: flex; flex-direction: column; }
+        .char-card:active { transform: scale(0.97); }
+        .card-img { width: 100%; aspect-ratio: 3/4; position: relative; display: flex; align-items: center; justify-content: center; font-size: 54px; overflow: hidden; }
+        .card-badge { position: absolute; top: 8px; left: 8px; background: rgba(0,0,0,0.55); backdrop-filter: blur(4px); color: #e9d5ff; font-size: 10px; font-weight: 600; padding: 3px 8px; border-radius: 10px; display: flex; align-items: center; gap: 3px; }
+        .card-body { padding: 10px 11px 12px; display: flex; flex-direction: column; gap: 5px; flex: 1; }
+        .card-name { font-size: 15px; font-weight: 700; color: #fff; line-height: 1.15; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .card-desc { font-size: 12px; color: var(--text-muted); line-height: 1.3; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; min-height: 31px; }
+        .card-meta { display: flex; align-items: center; justify-content: space-between; margin-top: 2px; }
+        .card-likes { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; font-weight: 600; color: #f472b6; background: none; border: none; padding: 4px 2px; cursor: pointer; font-family: inherit; -webkit-tap-highlight-color: transparent; }
+        .card-likes .heart { font-size: 13px; line-height: 1; filter: grayscale(1) opacity(0.65); transition: transform 0.15s ease, filter 0.15s ease; }
+        .card-likes.liked .heart { filter: none; }
+        .card-likes:active .heart { transform: scale(1.35); }
+        @keyframes heartPop { 0%{transform:scale(1);} 40%{transform:scale(1.45);} 100%{transform:scale(1);} }
+        .card-likes .heart.pop { animation: heartPop 0.32s ease; }
+        .card-author { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--text-muted); max-width: 60%; }
+        .author-ava { width: 18px; height: 18px; border-radius: 50%; flex: 0 0 auto; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 700; color: #fff; background: var(--primary-gradient); }
+        .card-author span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .fab { position: fixed; right: 16px; bottom: calc(var(--nav-h) + 12px); z-index: 90; padding: 13px 20px; border: none; border-radius: 30px; background: var(--primary-gradient); color: #fff; font-size: 14px; font-weight: 700; cursor: pointer; box-shadow: 0 6px 24px rgba(168,85,247,0.55); display: flex; align-items: center; gap: 7px; transition: transform 0.15s ease; }
+        .fab:active { transform: scale(0.95); }
+        .bottom-nav { position: fixed; left: 0; right: 0; bottom: 0; z-index: 95; height: var(--nav-h); padding-bottom: var(--safe-area-bottom); background: rgba(15,7,32,0.92); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border-top: 1px solid rgba(255,255,255,0.08); display: flex; align-items: stretch; }
+        .nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; color: var(--text-muted); font-size: 11px; font-weight: 600; cursor: pointer; transition: color 0.2s ease; }
+        .nav-item .nav-ic { font-size: 20px; }
+        .nav-item.active { color: var(--accent-glow); }
+        .nav-item.active .nav-ic { filter: drop-shadow(0 0 8px rgba(168,85,247,0.7)); }
+        .view { display: none; }
+        .view.active { display: block; }
+        .persona-card { background: var(--card-bg); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.1); border-radius: 18px; padding: 14px 16px; margin-bottom: 12px; display: flex; align-items: center; gap: 14px; cursor: pointer; transition: transform 0.15s ease; }
+        .persona-card:active { transform: scale(0.98); }
+        .persona-ava { width: 48px; height: 48px; border-radius: 50%; flex: 0 0 auto; display: flex; align-items: center; justify-content: center; font-size: 20px; font-weight: 700; color: #fff; background: var(--primary-gradient); }
+        .persona-info { flex: 1; min-width: 0; }
+        .persona-del { flex: 0 0 auto; width: 36px; height: 36px; border-radius: 50%; border: none; background: rgba(244,63,94,0.12); color: #fb7185; font-size: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: background 0.2s ease; }
+        .persona-del:active { background: rgba(244,63,94,0.28); }
+        .btn-danger { background: rgba(244,63,94,0.12); color: #fb7185; border: 1px solid rgba(244,63,94,0.35); }
+        .btn-danger:active { background: rgba(244,63,94,0.22); }
+        .persona-name { font-size: 16px; font-weight: 700; color: #fff; }
+        .persona-meta { font-size: 12px; color: var(--text-muted); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .persona-default-badge { font-size: 10px; font-weight: 600; color: #a855f7; border: 1px solid rgba(168,85,247,0.5); border-radius: 8px; padding: 2px 7px; margin-top: 4px; display: inline-block; }
+        .add-persona { width: 100%; padding: 16px; border-radius: 18px; border: 1.5px dashed rgba(168,85,247,0.5); background: rgba(168,85,247,0.06); color: var(--accent-glow); font-size: 15px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: background 0.2s ease; }
+        .add-persona:active { background: rgba(168,85,247,0.15); }
+        .section-label { font-size: 13px; color: var(--text-muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; margin: 4px 0 12px; }
+        .empty-hint { text-align: center; color: var(--text-muted); font-size: 13px; padding: 22px 10px; }
+        .overlay { position: fixed; inset: 0; z-index: 200; background: rgba(5,2,15,0.6); backdrop-filter: blur(3px); display: none; opacity: 0; transition: opacity 0.25s ease; }
+        .overlay.open { display: block; opacity: 1; }
+        .sheet { position: absolute; left: 0; right: 0; bottom: 0; max-height: 92vh; overflow-y: auto; background: #160b2e; border-radius: 24px 24px 0 0; border-top: 1px solid rgba(255,255,255,0.1); padding: 8px 18px calc(24px + var(--safe-area-bottom)); transform: translateY(100%); transition: transform 0.3s ease; -webkit-overflow-scrolling: touch; }
+        .overlay.open .sheet { transform: translateY(0); }
+        .sheet-grip { width: 40px; height: 4px; border-radius: 4px; background: rgba(255,255,255,0.25); margin: 8px auto 14px; }
+        .sheet-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+        .sheet-title { font-size: 20px; font-weight: 700; display: flex; align-items: center; gap: 8px; }
+        .sheet-close { width: 34px; height: 34px; border-radius: 50%; border: none; background: rgba(255,255,255,0.08); color: #fff; font-size: 18px; cursor: pointer; display: flex; align-items: center; justify-content: center; flex: 0 0 auto; }
+        .detail-hero { width: 100%; aspect-ratio: 16/10; border-radius: 18px; overflow: hidden; display: flex; align-items: center; justify-content: center; font-size: 70px; margin-bottom: 14px; position: relative; }
+        .detail-name { font-size: 24px; font-weight: 700; margin-bottom: 2px; }
+        .detail-tagline { font-size: 14px; color: var(--text-muted); font-style: italic; margin-bottom: 12px; }
+        .detail-author-row { display: flex; align-items: center; gap: 8px; margin-bottom: 14px; padding: 10px 12px; background: rgba(255,255,255,0.04); border-radius: 14px; border: 1px solid rgba(255,255,255,0.08); }
+        .detail-author-row .author-ava { width: 30px; height: 30px; font-size: 13px; }
+        .detail-author-name { font-size: 13px; color: var(--text-secondary); }
+        .detail-author-label { font-size: 11px; color: var(--text-muted); }
+        .detail-stats { display: flex; gap: 10px; margin-bottom: 16px; }
+        .stat-pill { flex: 1; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 14px; padding: 10px; text-align: center; }
+        .stat-num { font-size: 18px; font-weight: 700; color: #fff; }
+        .stat-lbl { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+        .stat-pill.like-pill { cursor: pointer; transition: border-color 0.15s ease, background 0.15s ease; }
+        .stat-pill.like-pill:active { transform: scale(0.98); }
+        .stat-pill.like-pill.liked { background: rgba(244,114,182,0.12); border-color: rgba(244,114,182,0.45); }
+        .stat-pill.like-pill .stat-num .heart.pop { animation: heartPop 0.32s ease; display: inline-block; }
+        .detail-block-title { font-size: 13px; color: var(--accent-glow); font-weight: 600; margin: 16px 0 8px; text-shadow: 0 0 10px rgba(168,85,247,0.4); }
+        .detail-text { font-size: 14px; line-height: 1.55; color: var(--text-secondary); white-space: pre-wrap; }
+        .tag-row { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 8px; }
+        .tag { font-size: 12px; color: #e9d5ff; background: rgba(168,85,247,0.15); border: 1px solid rgba(168,85,247,0.3); border-radius: 12px; padding: 5px 11px; }
+        label { display: block; font-size: 14px; color: #fff; font-weight: 600; margin: 16px 0 4px; }
+        label .req { color: #a855f7; }
+        label .hint { display: block; font-size: 12px; color: var(--text-muted); font-weight: 400; margin-top: 2px; }
+        input[type="text"], input[type="number"], textarea, select { width: 100%; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.12); border-radius: 14px; padding: 13px; color: #fff; font-size: 14px; font-family: inherit; outline: none; box-sizing: border-box; }
+        textarea { resize: none; min-height: 90px; line-height: 1.4; }
+        textarea.tall { min-height: 120px; }
+        input:focus, textarea:focus, select:focus { border-color: #a855f7; box-shadow: 0 0 0 2px rgba(168,85,247,0.2); }
+        select { appearance: none; -webkit-appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%23cbd5e1' viewBox='0 0 16 16'%3E%3Cpath d='M4 6l4 4 4-4'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 14px center; }
+        .char-counter { text-align: right; font-size: 11px; color: var(--text-muted); margin-top: 4px; }
+        .upload-box { border: 1.5px dashed rgba(168,85,247,0.5); border-radius: 16px; background: rgba(168,85,247,0.05); padding: 26px 14px; text-align: center; cursor: pointer; transition: background 0.2s ease; }
+        .upload-box:active { background: rgba(168,85,247,0.12); }
+        .upload-icon { font-size: 34px; }
+        .upload-title { font-size: 14px; font-weight: 600; color: #fff; margin-top: 8px; }
+        .upload-hint { font-size: 12px; color: var(--text-muted); margin-top: 4px; }
+        .toggle-row { display: flex; align-items: center; justify-content: space-between; padding: 14px; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 14px; margin-top: 16px; }
+        .toggle-text .t-title { font-size: 15px; font-weight: 600; }
+        .toggle-text .t-sub { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+        .switch { position: relative; width: 48px; height: 28px; flex: 0 0 auto; }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider { position: absolute; inset: 0; cursor: pointer; background: rgba(255,255,255,0.15); border-radius: 28px; transition: 0.2s; }
+        .slider:before { content: ""; position: absolute; height: 22px; width: 22px; left: 3px; top: 3px; background: #fff; border-radius: 50%; transition: 0.2s; }
+        .switch input:checked + .slider { background: var(--primary-gradient); }
+        .switch input:checked + .slider:before { transform: translateX(20px); }
+        .form-actions { display: flex; gap: 12px; margin-top: 24px; }
+        .btn { flex: 1; padding: 15px; border-radius: 16px; border: none; font-size: 15px; font-weight: 700; cursor: pointer; transition: transform 0.15s ease; display: flex; align-items: center; justify-content: center; gap: 7px; }
+        .btn:active { transform: scale(0.97); }
+        .btn-ghost { background: rgba(255,255,255,0.07); color: #fff; }
+        .btn-primary { background: var(--primary-gradient); color: #fff; box-shadow: 0 4px 18px rgba(168,85,247,0.5); }
+        .btn-full { width: 100%; }
+        .btn.disabled { opacity: 0.5; pointer-events: none; }
+    </style>
+</head>
+<body>
+    <div class="loading-screen" id="loadingScreen">
+        <div class="loading-spinner"></div>
+        <div class="loading-text">Загрузка каталога...</div>
+    </div>
+    <div class="stars-container" id="stars"></div>
+    <div class="background-glow"></div>
+
+    <div class="app" id="app">
+        <!-- ===== КАТАЛОГ ===== -->
+        <div class="view active" id="view-catalog">
+            <div class="topbar">
+                <div>
+                    <h1 class="page-title">Персонажи</h1>
+                    <div class="page-sub">Выбери и начни историю</div>
+                </div>
+                <div class="brand-wrap"><span class="brand">Living&nbsp;Tales</span><span class="book-icon">📖</span></div>
+            </div>
+
+            <div class="search-wrap">
+                <span class="s-icon">🔍</span>
+                <input type="text" class="search-input" id="searchInput" placeholder="Поиск по имени, описанию, тегам...">
+                <button class="search-clear" id="searchClear" onclick="clearSearch()">✕</button>
+            </div>
+
+            <div class="filters" id="filters"></div>
+
+            <div class="nsfw-banner" id="nsfwBanner">
+                <div class="nb-title">🔞 Контент 21+</div>
+                <div class="nb-text">Персонажи в этом разделе могут содержать жёсткие сцены, насилие и материалы сексуального характера (NSFW). Продолжая, ты подтверждаешь, что тебе есть 21 год и ты осознанно хочешь видеть такой контент.</div>
+            </div>
+
+            <div class="grid" id="grid"></div>
+        </div>
+
+        <!-- ===== ЛИЧНОСТИ ===== -->
+        <!-- ===== МОИ ПЕРСОНАЖИ ===== -->
+        <div class="view" id="view-mychars">
+            <div class="topbar">
+                <div>
+                    <h1 class="page-title">Мои персонажи</h1>
+                    <div class="page-sub">Созданные тобой герои</div>
+                </div>
+                <div class="brand-wrap"><span class="brand">Living&nbsp;Tales</span><span class="book-icon">📖</span></div>
+            </div>
+            <div class="section-label">Всего <span id="myCharCount">0</span></div>
+            <div class="grid" id="myGrid"></div>
+            <button class="add-persona" style="margin-top:14px" onclick="openCharForm()">＋ Создать персонажа</button>
+            <div class="empty-hint">Публичные персонажи видны всем в каталоге, приватные — только тебе. Приватного можно удалить или позже опубликовать.</div>
+        </div>
+
+        <div class="view" id="view-personas">
+            <div class="topbar">
+                <div>
+                    <h1 class="page-title">Личности</h1>
+                    <div class="page-sub">Твои герои для любых чатов</div>
+                </div>
+                <div class="brand-wrap"><span class="brand">Living&nbsp;Tales</span><span class="book-icon">📖</span></div>
+            </div>
+            <div class="section-label">Мои личности <span id="personaCount">0</span></div>
+            <div id="personaList"></div>
+            <button class="add-persona" onclick="openPersonaForm()">＋ Создать личность</button>
+            <div class="empty-hint">Личность — это ты в истории. Опиши героя один раз и подключай к любому персонажу: своему или из каталога.</div>
+        </div>
+    </div>
+
+    <button class="fab" id="fab" onclick="openCharForm()">✨ Создать персонажа</button>
+
+    <nav class="bottom-nav">
+        <div class="nav-item active" id="nav-catalog" onclick="switchView('catalog')"><span class="nav-ic">🎭</span>Каталог</div>
+        <div class="nav-item" id="nav-mychars" onclick="switchView('mychars')"><span class="nav-ic">🗂️</span>Мои</div>
+        <div class="nav-item" id="nav-personas" onclick="switchView('personas')"><span class="nav-ic">👤</span>Личности</div>
+    </nav>
+
+    <!-- Детали персонажа -->
+    <div class="overlay" id="detailOverlay">
+        <div class="sheet">
+            <div class="sheet-grip"></div>
+            <div class="sheet-head">
+                <div class="sheet-title" id="detailHeadName">Персонаж</div>
+                <button class="sheet-close" onclick="closeOverlay('detailOverlay')">✕</button>
+            </div>
+            <div id="detailContent"></div>
+        </div>
+    </div>
+
+    <!-- Создать персонажа -->
+    <div class="overlay" id="charFormOverlay">
+        <div class="sheet">
+            <div class="sheet-grip"></div>
+            <div class="sheet-head">
+                <div class="sheet-title">✨ Создать персонажа</div>
+                <button class="sheet-close" onclick="closeOverlay('charFormOverlay')">✕</button>
+            </div>
+
+            <label>Имя <span class="req">*</span></label>
+            <input type="text" id="cf-name" placeholder="Например, Дамиан Вэйл" maxlength="50">
+            <div class="char-counter"><span id="cf-name-cnt">0</span>/50</div>
+
+            <label>Внешность<span class="hint">Как выглядит персонаж</span></label>
+            <textarea id="cf-appearance" placeholder="Рост, телосложение, черты лица, стиль..." maxlength="500"></textarea>
+            <div class="char-counter"><span id="cf-appearance-cnt">0</span>/500</div>
+
+            <label>Характер<span class="hint">Темперамент, манера речи, привычки</span></label>
+            <textarea id="cf-personality" placeholder="Какой он в общении, как реагирует..." maxlength="500"></textarea>
+            <div class="char-counter"><span id="cf-personality-cnt">0</span>/500</div>
+
+            <label>Особенности<span class="hint">Что выделяет персонажа: сила, дар, тайна</span></label>
+            <textarea id="cf-quirks" placeholder="Уникальные черты, способности, странности..." maxlength="500"></textarea>
+            <div class="char-counter"><span id="cf-quirks-cnt">0</span>/500</div>
+
+            <label>Кинки<span class="hint">Предпочтения в 18+ сценах (необязательно)</span></label>
+            <textarea id="cf-kinks" placeholder="Через запятую или свободным текстом..." maxlength="300"></textarea>
+            <div class="char-counter"><span id="cf-kinks-cnt">0</span>/300</div>
+
+            <label>История<span class="hint">Предыстория, мир, отношения с тобой</span></label>
+            <textarea id="cf-story" class="tall" placeholder="Откуда персонаж, что с ним происходило..." maxlength="700"></textarea>
+            <div class="char-counter"><span id="cf-story-cnt">0</span>/700</div>
+
+            <label>Краткое описание <span class="req">*</span><span class="hint">1–2 предложения для карточки в каталоге</span></label>
+            <textarea id="cf-short" placeholder="Властный гонщик, для которого правила не писаны" maxlength="160"></textarea>
+            <div class="char-counter"><span id="cf-short-cnt">0</span>/160</div>
+
+            <label>Полное описание<span class="hint">Что видно при открытии карточки</span></label>
+            <textarea id="cf-full" class="tall" placeholder="Подробное описание для страницы персонажа..." maxlength="500"></textarea>
+            <div class="char-counter"><span id="cf-full-cnt">0</span>/500</div>
+
+            <label>Изображение</label>
+            <div class="upload-box" onclick="tg.showAlert && tg.showAlert('Загрузка фото откроется в боте')">
+                <div class="upload-icon">🖼️</div>
+                <div class="upload-title">Нажмите для загрузки</div>
+                <div class="upload-hint">JPEG, PNG, WebP — до 15 МБ</div>
+            </div>
+
+            <label>Категория</label>
+            <select id="cf-category"></select>
+
+            <label>Теги<span class="hint">Через запятую, необязательно</span></label>
+            <input type="text" id="cf-tags" placeholder="романтика, загадочность">
+
+            <div class="toggle-row">
+                <div class="toggle-text">
+                    <div class="t-title">Опубликовать в каталоге</div>
+                    <div class="t-sub">После модерации персонаж станет доступен всем. Выкл — приватный, виден только тебе.</div>
+                </div>
+                <label class="switch"><input type="checkbox" id="cf-public" checked><span class="slider"></span></label>
+            </div>
+
+            <div class="form-actions">
+                <button class="btn btn-ghost" onclick="closeOverlay('charFormOverlay')">Отмена</button>
+                <button class="btn btn-primary" id="cf-submit" onclick="submitChar()">✅ Готово</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Создать личность -->
+    <div class="overlay" id="personaFormOverlay">
+        <div class="sheet">
+            <div class="sheet-grip"></div>
+            <div class="sheet-head">
+                <div class="sheet-title">👤 Новая личность</div>
+                <button class="sheet-close" onclick="closeOverlay('personaFormOverlay')">✕</button>
+            </div>
+
+            <label>Имя <span class="req">*</span></label>
+            <input type="text" id="pf-name" placeholder="Например, Алиса" maxlength="40">
+
+            <label>Возраст <span class="hint">необязательно</span></label>
+            <input type="number" id="pf-age" placeholder="18" min="18" max="120">
+
+            <label>О герое <span class="req">*</span><span class="hint">Внешность, характер, предыстория, что персонажу стоит знать о тебе (до 600 символов)</span></label>
+            <textarea id="pf-about" class="tall" placeholder="Опиши своего героя как можно подробнее..." style="min-height:170px" maxlength="600"></textarea>
+            <div class="char-counter"><span id="pf-about-cnt">0</span>/600</div>
+
+            <div class="toggle-row">
+                <div class="toggle-text">
+                    <div class="t-title">По умолчанию для новых чатов</div>
+                    <div class="t-sub">Эта личность будет подставляться автоматически</div>
+                </div>
+                <label class="switch"><input type="checkbox" id="pf-default"><span class="slider"></span></label>
+            </div>
+
+            <button class="btn btn-primary btn-full" id="pf-submit" style="margin-top:24px" onclick="submitPersona()">💾 Сохранить</button>
+        </div>
+    </div>
+
+    <script>
+        const tg = (window.Telegram && window.Telegram.WebApp) ? window.Telegram.WebApp : {
+            expand: () => {}, ready: () => {}, close: () => {},
+            sendData: (d) => { console.log("sendData (mock):", d); },
+            showAlert: (m) => { alert(m); },
+            HapticFeedback: { selectionChanged: () => {}, notificationOccurred: () => {}, impactOccurred: () => {} },
+            initDataUnsafe: {}, themeParams: {}, colorScheme: "dark",
+            setBackgroundColor: null, setHeaderColor: null, enableClosingConfirmation: null
+        };
+        try {
+            tg.expand(); tg.ready();
+            if (tg.setBackgroundColor) tg.setBackgroundColor('#0f0720');
+            if (tg.setHeaderColor) tg.setHeaderColor('bg_color');
+        } catch(e) {}
+        function haptic(t){ try{ if(tg.HapticFeedback){ t==='sel'?tg.HapticFeedback.selectionChanged():tg.HapticFeedback.impactOccurred('light'); } }catch(e){} }
+
+        /* Категории (переименованы, с прокруткой). nsfw:true -> показывает дисклеймер 21+ */
+        const CATEGORIES = [
+            { id: 'all',       label: 'Все',          icon: '⭐' },
+            { id: 'romance',   label: 'Романтика',    icon: '💕' },
+            { id: 'adventure', label: 'Авантюра',     icon: '🗡️' },
+            { id: 'dark',      label: 'Запретное',    icon: '🩸', nsfw: true },
+            { id: 'fantasy',   label: 'Фэнтези',      icon: '🐉' },
+            { id: 'mystery',   label: 'Мистика',      icon: '🔮' },
+            { id: 'academy',   label: 'Академия',     icon: '🎓' },
+            { id: 'scifi',     label: 'Иные миры',    icon: '🌌' }
+        ];
+
+        const GRADIENTS = [
+            'linear-gradient(160deg,#7c3aed,#db2777)','linear-gradient(160deg,#2563eb,#7c3aed)',
+            'linear-gradient(160deg,#db2777,#f59e0b)','linear-gradient(160deg,#059669,#2563eb)',
+            'linear-gradient(160deg,#4c1d95,#0ea5e9)','linear-gradient(160deg,#be123c,#4c1d95)'
+        ];
+        function grad(i){ return GRADIENTS[i % GRADIENTS.length]; }
+        function initials(name){ return (name||'?').trim().charAt(0).toUpperCase(); }
+
+        /* Текущий пользователь (демо). В реале — из initDataUnsafe.user */
+        const ME = { name: 'Ты', id: 'you' };
+
+        const CHARACTERS = [
+            { id:1, name:'Дамиан Вэйл', emoji:'🥀', short:'В объятьях Умбры. Загадочный и опасно притягательный.',
+              full:'Дамиан Вэйл — наследник древнего рода, чьё имя произносят шёпотом. Холодный, расчётливый, но за бронёй сарказма прячется тот, кто слишком долго был один. Он замечает в тебе то, что другие не видят.',
+              appearance:'Высокий, худощавый, платиновые волосы, ледяные серые глаза. Всегда в тёмном.',
+              personality:'Немногословен, ироничен, наблюдателен. Открывается медленно.',
+              category:'dark', tags:['мистика','романтика','интриги'], likes:463, chats:128, public:true, author:{name:'Алекс', id:'nnyyy0'} },
+            { id:2, name:'Каэль Ромеро', emoji:'🏎️', short:'Властный гонщик, для которого правила не писаны.',
+              full:'Каэль живёт на скорости 300 км/ч и презирает всё медленное. На трассе он король, вне её — человек, который боится остановиться и почувствовать. Ты — первая, ради кого он готов сбавить ход.',
+              personality:'Дерзкий, самоуверенный, азартный. Флиртует напористо.',
+              category:'adventure', tags:['драйв','романтика','город'], likes:320, chats:94, public:true, author:{name:'Марина', id:'marina_k'} },
+            { id:3, name:'Тео Крайн', emoji:'🕶️', short:'Чокнутый гений с IQ 160. Безумный, блестящий, непредсказуемый.',
+              full:'Тео решает уравнения на салфетках и людей — на раз. Гениальный, но нестабильный. Играет в игры, где ставка — рассудок. С тобой он впервые не уверен в исходе, и это его пугает и заводит.',
+              personality:'Эксцентричный, говорит парадоксами, обожает провокации.',
+              category:'dark', tags:['психология','триллер','интриги'], likes:316, chats:77, public:true, author:{name:'Алекс', id:'nnyyy0'} },
+            { id:4, name:'Эрик Хальден', emoji:'⚔️', short:'Комендант сектора C. Дисциплина, шрамы и запретное влечение.',
+              full:'Эрик держит границу на замке и себя — в узде. Годы службы выковали из него сталь, но твоё появление даёт трещину в его безупречной броне. Устав запрещает то, чего он хочет больше всего.',
+              personality:'Строгий, честный, сдержанный. Говорит по делу.',
+              category:'scifi', tags:['военный','драма','романтика'], likes:283, chats:61, public:true, author:{name:'Дэн', id:'dan_writes'} },
+            { id:5, name:'Юрэй', emoji:'🎴', short:'Ёкай из старого храма, что помнит тебя из прошлой жизни.',
+              full:'Юрэй существует между мирами уже тысячу лет. Лисий дух с золотыми глазами, играющий с судьбами смертных. Но твоя душа кажется ему знакомой — будто вы уже встречались, когда цвела совсем другая сакура.',
+              personality:'Загадочный, поэтичный, играет словами. Мудрость и лукавство.',
+              category:'fantasy', tags:['ёкаи','япония','мистика'], likes:198, chats:40, public:true, author:{name:'Юки', id:'yuki_tales'} },
+            { id:6, name:'Профессор Локк', emoji:'📖', short:'Преподаватель, чьи лекции опаснее любого экзамена.',
+              full:'Доктор Вейн ведёт курс о вещах, которым не учат официально. Строгий, ироничный, требовательный. Он видит в тебе потенциал — и это внимание одновременно честь и испытание.',
+              personality:'Умный, требовательный, говорит выверенно, с лёгкой иронией.',
+              category:'academy', tags:['академия','драма','интриги'], likes:174, chats:33, public:true, author:{name:'Алекс', id:'nnyyy0'} },
+            /* Приватные — созданы текущим юзером, не в общем каталоге */
+            { id:7, name:'Сэйдж (черновик)', emoji:'📝', short:'Мой приватный персонаж, ещё не в каталоге.',
+              full:'Набросок персонажа, которого я пока не публиковал. Дорабатываю характер и историю.',
+              appearance:'Тёмные волосы, зелёные глаза, спортивное телосложение.',
+              personality:'Спокойный, ироничный, себе на уме.',
+              category:'romance', tags:['черновик'], likes:0, chats:2, public:false, author:ME },
+            { id:8, name:'Морок', emoji:'🌒', short:'Только для меня. Тёмная история без цензуры.',
+              full:'Личный персонаж для приватных сюжетов. В общий каталог не выкладывал.',
+              personality:'Опасный, притягательный, не признаёт правил.',
+              category:'dark', tags:['приватное'], likes:0, chats:5, public:false, author:ME }
+        ];
+
+        let PERSONAS = [
+            { id:1, name:'Алиса', age:21, about:'Студентка академии, любопытная и упрямая. Внешне сдержанна, но за этим — жажда приключений и тайна, которую тщательно скрывает.', isDefault:true }
+        ];
+
+        let activeFilter = 'all';
+        const LIKED = new Set(); // id персонажей, которым юзер поставил лайк (в реале — из бэка)
+        let searchQuery = '';
+
+        function currentCategory(){ return CATEGORIES.find(c => c.id === activeFilter); }
+
+        function renderFilters() {
+            const box = document.getElementById('filters'); box.innerHTML = '';
+            CATEGORIES.forEach(c => {
+                const el = document.createElement('div');
+                el.className = 'filter-chip' + (c.id === activeFilter ? ' active' : '');
+                el.innerHTML = `<span>${c.icon}</span>${c.label}`;
+                el.onclick = () => { activeFilter = c.id; haptic('sel'); renderFilters(); renderCatalog(); };
+                box.appendChild(el);
+            });
+        }
+
+        function renderCatalog() {
+            // дисклеймер 21+
+            const cat = currentCategory();
+            document.getElementById('nsfwBanner').classList.toggle('show', !!(cat && cat.nsfw));
+            renderGrid();
+        }
+
+        function charCardEl(c) {
+            const card = document.createElement('div');
+            card.className = 'char-card'; card.onclick = () => openDetail(c.id);
+            card.innerHTML = `
+                <div class="card-img" style="background:${grad(c.id)}">
+                    <span>${c.emoji || initials(c.name)}</span>
+                    ${c.public ? '' : '<div class="card-badge">🔒 Приватный</div>'}
+                </div>
+                <div class="card-body">
+                    <div class="card-name">${esc(c.name)}</div>
+                    <div class="card-desc">${esc(c.short)}</div>
+                    <div class="card-meta">
+                        <button class="card-likes ${LIKED.has(c.id)?'liked':''}" data-id="${c.id}" onclick="toggleLike(event, ${c.id})"><span class="heart">❤️</span><span data-like="${c.id}">${c.likes}</span></button>
+                        <div class="card-author"><div class="author-ava">${initials(c.author.name)}</div><span>${esc(c.author.name)}</span></div>
+                    </div>
+                </div>`;
+            return card;
+        }
+
+        function renderGrid() {
+            const grid = document.getElementById('grid'); grid.innerHTML = '';
+            const q = searchQuery.trim().toLowerCase();
+            let list = CHARACTERS.filter(c => {
+                if (activeFilter === 'all') return c.public;
+                return c.public && c.category === activeFilter;
+            });
+            if (q) list = list.filter(c => (c.name + ' ' + (c.short||'') + ' ' + (c.tags||[]).join(' ')).toLowerCase().includes(q));
+
+            if (!list.length) {
+                grid.innerHTML = `<div class="empty-hint" style="grid-column:1/-1">${q ? 'Ничего не найдено. Попробуй другой запрос.' : 'Здесь пока пусто.'}</div>`;
+                return;
+            }
+            list.forEach(c => grid.appendChild(charCardEl(c)));
+        }
+
+        /* Мои персонажи: все созданные мной (приватные + опубликованные), без категорий */
+        function renderMyChars() {
+            const grid = document.getElementById('myGrid'); grid.innerHTML = '';
+            const list = CHARACTERS.filter(c => c.author && c.author.id === ME.id)
+                                   .sort((a,b) => (a.public === b.public) ? 0 : (a.public ? 1 : -1));
+            document.getElementById('myCharCount').textContent = list.length;
+            if (!list.length) {
+                grid.innerHTML = '<div class="empty-hint" style="grid-column:1/-1">У тебя пока нет персонажей. Создай первого ✨</div>';
+                return;
+            }
+            list.forEach(c => grid.appendChild(charCardEl(c)));
+        }
+
+        function section(title, text){ return text ? `<div class="detail-block-title">${title}</div><div class="detail-text">${esc(text)}</div>` : ''; }
+
+        function openDetail(id) {
+            const c = CHARACTERS.find(x => x.id === id); if (!c) return;
+            document.getElementById('detailHeadName').textContent = c.name;
+            const tags = (c.tags || []).map(t => `<span class="tag">#${esc(t)}</span>`).join('');
+            const isMinePrivate = !c.public && c.author && c.author.id === ME.id;
+            const publishBlock = isMinePrivate ? `
+                <div class="toggle-row">
+                    <div class="toggle-text">
+                        <div class="t-title">Опубликовать в каталоге</div>
+                        <div class="t-sub">Включи, чтобы отправить персонажа на модерацию и открыть его всем</div>
+                    </div>
+                    <label class="switch"><input type="checkbox" id="detailPublish" ${c.pendingPublish?'checked':''} onchange="togglePublish(${c.id}, this.checked)"><span class="slider"></span></label>
+                </div>` : '';
+
+            document.getElementById('detailContent').innerHTML = `
+                <div class="detail-hero" style="background:${grad(c.id)}"><span>${c.emoji || initials(c.name)}</span>${c.public ? '' : '<div class="card-badge">🔒 Приватный</div>'}</div>
+                <div class="detail-name">${esc(c.name)}</div>
+                <div class="detail-tagline">${esc(c.short)}</div>
+                <div class="detail-author-row">
+                    <div class="author-ava">${initials(c.author.name)}</div>
+                    <div><div class="detail-author-label">Автор персонажа</div><div class="detail-author-name">${esc(c.author.name)} · @${esc(c.author.id)}</div></div>
+                </div>
+                <div class="detail-stats">
+                    <div class="stat-pill like-pill ${LIKED.has(c.id)?'liked':''}" data-id="${c.id}" onclick="toggleLike(event, ${c.id})"><div class="stat-num"><span class="heart">❤️</span> <span data-like="${c.id}">${c.likes}</span></div><div class="stat-lbl">${LIKED.has(c.id)?'Тебе нравится':'Лайков'}</div></div>
+                    <div class="stat-pill"><div class="stat-num">💬 ${c.chats}</div><div class="stat-lbl">Активных чатов</div></div>
+                </div>
+                ${section('📜 Описание', c.full)}
+                ${section('👤 Внешность', c.appearance)}
+                ${section('🎭 Характер', c.personality)}
+                ${section('✨ Особенности', c.quirks)}
+                ${section('📖 История', c.story)}
+                ${tags ? `<div class="detail-block-title">🏷️ Теги</div><div class="tag-row">${tags}</div>` : ''}
+                ${publishBlock}
+                ${isMinePrivate
+                    ? `<div class="form-actions" style="margin-top:22px">
+                           <button class="btn btn-danger" onclick="deleteCharacter(${c.id})">🗑 Удалить</button>
+                           <button class="btn btn-primary" onclick="selectChar(${c.id})">✅ Выбрать</button>
+                       </div>`
+                    : `<button class="btn btn-primary btn-full" style="margin-top:22px" onclick="selectChar(${c.id})">✅ Выбрать</button>`}`;
+            openOverlay('detailOverlay');
+        }
+
+        function togglePublish(id, checked) {
+            const c = CHARACTERS.find(x => x.id === id); if (!c) return;
+            c.pendingPublish = checked;
+            haptic('sel');
+            tg.sendData(JSON.stringify({ action: 'publish_character', character_id: id, publish: checked }));
+            if (checked && tg.showAlert) tg.showAlert('Персонаж отправлен на модерацию 📤');
+        }
+
+        function selectChar(id) {
+            const c = CHARACTERS.find(x => x.id === id); haptic('imp');
+            tg.sendData(JSON.stringify({ action: 'select_character', character_id: id, character_name: c ? c.name : '' }));
+            try { tg.close(); } catch(e){}
+        }
+        function toggleLike(e, id) {
+            if (e) e.stopPropagation();
+            const c = CHARACTERS.find(x => x.id === id); if (!c) return;
+            const wasLiked = LIKED.has(id);
+            if (wasLiked) { LIKED.delete(id); c.likes = Math.max(0, c.likes - 1); }
+            else { LIKED.add(id); c.likes += 1; }
+            haptic('imp');
+            tg.sendData(JSON.stringify({ action: 'like_character', character_id: id, liked: !wasLiked }));
+
+            // обновляем счётчики везде, где показан этот персонаж
+            document.querySelectorAll(`[data-like="${id}"]`).forEach(el => { el.textContent = c.likes; });
+            document.querySelectorAll(`.card-likes[data-id="${id}"], .like-pill[data-id="${id}"]`).forEach(el => el.classList.toggle('liked', !wasLiked));
+            const lbl = document.querySelector(`.like-pill[data-id="${id}"] .stat-lbl`);
+            if (lbl) lbl.textContent = wasLiked ? 'Лайков' : 'Тебе нравится';
+            // анимация сердца
+            document.querySelectorAll(`.card-likes[data-id="${id}"] .heart, .like-pill[data-id="${id}"] .heart`).forEach(h => { h.classList.remove('pop'); void h.offsetWidth; h.classList.add('pop'); });
+        }
+        function deleteCharacter(id) {
+            const idx = CHARACTERS.findIndex(x => x.id === id); if (idx === -1) return;
+            const c = CHARACTERS[idx];
+            const go = () => {
+                CHARACTERS.splice(idx, 1);
+                tg.sendData(JSON.stringify({ action: 'delete_character', character_id: id }));
+                haptic('imp'); closeOverlay('detailOverlay'); renderCatalog(); renderMyChars();
+            };
+            if (tg.showConfirm) {
+                tg.showConfirm(`Удалить персонажа «${c.name}»? Это действие нельзя отменить.`, ok => { if (ok) go(); });
+            } else if (confirm(`Удалить персонажа «${c.name}»?`)) { go(); }
+        }
+
+        /* ===== Личности ===== */
+        function renderPersonas() {
+            document.getElementById('personaCount').textContent = PERSONAS.length;
+            const box = document.getElementById('personaList'); box.innerHTML = '';
+            PERSONAS.forEach(p => {
+                const el = document.createElement('div'); el.className = 'persona-card';
+                el.onclick = (e) => { if (e.target.closest('.persona-del')) return; openPersonaForm(p.id); };
+                const ageTxt = p.age ? `${p.age} лет · ` : '';
+                el.innerHTML = `
+                    <div class="persona-ava">${initials(p.name)}</div>
+                    <div class="persona-info">
+                        <div class="persona-name">${esc(p.name)}</div>
+                        <div class="persona-meta">${ageTxt}${esc((p.about||'').slice(0,50))}${(p.about||'').length>50?'…':''}</div>
+                        ${p.isDefault ? '<div class="persona-default-badge">По умолчанию</div>' : ''}
+                    </div>
+                    <button class="persona-del" onclick="deletePersona(${p.id})" aria-label="Удалить">🗑</button>`;
+                box.appendChild(el);
+            });
+        }
+        let editingPersonaId = null;
+        function openPersonaForm(id) {
+            editingPersonaId = id || null;
+            const p = id ? PERSONAS.find(x => x.id === id) : null;
+            document.getElementById('pf-name').value = p ? p.name : '';
+            document.getElementById('pf-age').value = p && p.age ? p.age : '';
+            document.getElementById('pf-about').value = p ? p.about : '';
+            document.getElementById('pf-default').checked = p ? !!p.isDefault : false;
+            document.getElementById('pf-about-cnt').textContent = p ? (p.about||'').length : 0;
+            openOverlay('personaFormOverlay');
+        }
+        function submitPersona() {
+            const name = document.getElementById('pf-name').value.trim();
+            const about = document.getElementById('pf-about').value.trim();
+            if (!name) { tg.showAlert('Укажи имя личности'); return; }
+            if (!about) { tg.showAlert('Опиши своего героя'); return; }
+            const data = { id: editingPersonaId || Date.now(), name, age: parseInt(document.getElementById('pf-age').value) || null, about, isDefault: document.getElementById('pf-default').checked };
+            if (editingPersonaId) PERSONAS = PERSONAS.map(p => p.id === editingPersonaId ? data : p);
+            else PERSONAS.push(data);
+            if (data.isDefault) PERSONAS = PERSONAS.map(p => ({...p, isDefault: p.id === data.id}));
+            tg.sendData(JSON.stringify({ action: 'save_persona', persona: data }));
+            haptic('imp'); renderPersonas(); closeOverlay('personaFormOverlay');
+        }
+        function deletePersona(id) {
+            const p = PERSONAS.find(x => x.id === id); if (!p) return;
+            const go = () => {
+                PERSONAS = PERSONAS.filter(x => x.id !== id);
+                tg.sendData(JSON.stringify({ action: 'delete_persona', persona_id: id }));
+                haptic('imp'); renderPersonas();
+            };
+            if (tg.showConfirm) {
+                tg.showConfirm(`Удалить личность «${p.name}»? Это действие нельзя отменить.`, ok => { if (ok) go(); });
+            } else if (confirm(`Удалить личность «${p.name}»?`)) { go(); }
+        }
+
+        /* ===== Форма персонажа ===== */
+        function openCharForm() {
+            const sel = document.getElementById('cf-category');
+            if (!sel.options.length) {
+                CATEGORIES.filter(c => c.id !== 'all' && c.id !== 'private').forEach(c => {
+                    const o = document.createElement('option'); o.value = c.id; o.textContent = `${c.icon} ${c.label}`; sel.appendChild(o);
+                });
+            }
+            openOverlay('charFormOverlay');
+        }
+        function submitChar() {
+            const name = document.getElementById('cf-name').value.trim();
+            const short = document.getElementById('cf-short').value.trim();
+            if (!name) { tg.showAlert('Укажи имя персонажа'); return; }
+            if (!short) { tg.showAlert('Добавь краткое описание для карточки'); return; }
+            const ch = {
+                name,
+                appearance: document.getElementById('cf-appearance').value.trim(),
+                personality: document.getElementById('cf-personality').value.trim(),
+                quirks: document.getElementById('cf-quirks').value.trim(),
+                kinks: document.getElementById('cf-kinks').value.trim(),
+                story: document.getElementById('cf-story').value.trim(),
+                short,
+                full: document.getElementById('cf-full').value.trim(),
+                category: document.getElementById('cf-category').value,
+                tags: document.getElementById('cf-tags').value.split(',').map(t => t.trim()).filter(Boolean),
+                is_public: document.getElementById('cf-public').checked
+            };
+            tg.sendData(JSON.stringify({ action: 'submit_character', character: ch })); haptic('imp');
+
+            // демо: сразу показать в «Мои персонажи» (и в каталоге, если публичный)
+            CHARACTERS.push({
+                id: Date.now(), name: ch.name, emoji: '🎭', short: ch.short, full: ch.full,
+                appearance: ch.appearance, personality: ch.personality, quirks: ch.quirks, story: ch.story,
+                category: ch.category, tags: ch.tags, likes: 0, chats: 0,
+                public: ch.is_public, author: ME
+            });
+            renderCatalog(); renderMyChars();
+
+            tg.showAlert && tg.showAlert(ch.is_public ? 'Персонаж отправлен на модерацию 📤' : 'Приватный персонаж создан 🔒');
+            closeOverlay('charFormOverlay');
+        }
+
+        /* ===== Навигация / оверлеи ===== */
+        function switchView(name) {
+            document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+            document.getElementById('view-' + name).classList.add('active');
+            document.getElementById('nav-catalog').classList.toggle('active', name === 'catalog');
+            document.getElementById('nav-mychars').classList.toggle('active', name === 'mychars');
+            document.getElementById('nav-personas').classList.toggle('active', name === 'personas');
+            document.getElementById('fab').style.display = (name === 'catalog') ? 'flex' : 'none';
+            if (name === 'mychars') renderMyChars();
+            window.scrollTo(0, 0); haptic('sel');
+        }
+        function openOverlay(id) { document.getElementById(id).classList.add('open'); document.body.style.overflow = 'hidden'; }
+        function closeOverlay(id) { document.getElementById(id).classList.remove('open'); document.body.style.overflow = ''; }
+        document.querySelectorAll('.overlay').forEach(ov => ov.addEventListener('click', e => { if (e.target === ov) closeOverlay(ov.id); }));
+
+        /* ===== Поиск ===== */
+        function clearSearch(){ searchQuery=''; const i=document.getElementById('searchInput'); i.value=''; document.getElementById('searchClear').classList.remove('show'); renderGrid(); i.focus(); }
+
+        /* ===== Утилиты ===== */
+        function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m])); }
+        function bindCounter(inputId, cntId){ const el=document.getElementById(inputId), cnt=document.getElementById(cntId); if(el&&cnt){ el.addEventListener('input', () => cnt.textContent = el.value.length); } }
+        function createStars(){ const c=document.getElementById('stars'); for(let i=0;i<50;i++){ const s=document.createElement('div'); s.className='star'; const sz=Math.random()*2+1; s.style.width=s.style.height=sz+'px'; s.style.left=Math.random()*100+'%'; s.style.top=Math.random()*100+'%'; s.style.opacity=Math.random()*0.5+0.2; c.appendChild(s);} }
+        function initialView() {
+            try {
+                const url = new URLSearchParams(location.search); let v = url.get('view');
+                const sp = tg.initDataUnsafe && tg.initDataUnsafe.start_param;
+                if (!v && sp) v = sp;
+                if (v === 'personas' || v === 'persona' || v === 'personalities' || v === 'lichnosti') return 'personas';
+            } catch(e){}
+            return 'catalog';
+        }
+        function init() {
+            createStars(); renderFilters(); renderCatalog(); renderPersonas();
+            ['cf-name:cf-name-cnt','cf-appearance:cf-appearance-cnt','cf-personality:cf-personality-cnt','cf-quirks:cf-quirks-cnt','cf-kinks:cf-kinks-cnt','cf-story:cf-story-cnt','cf-short:cf-short-cnt','cf-full:cf-full-cnt','pf-about:pf-about-cnt']
+                .forEach(pair => { const [a,b]=pair.split(':'); bindCounter(a,b); });
+
+            const si = document.getElementById('searchInput');
+            si.addEventListener('input', function(){
+                searchQuery = this.value;
+                document.getElementById('searchClear').classList.toggle('show', this.value.length>0);
+                renderGrid();
+            });
+
+            switchView(initialView());
+            setTimeout(() => {
+                document.getElementById('loadingScreen').classList.add('hide');
+                document.getElementById('app').classList.add('visible');
+                setTimeout(() => { document.getElementById('loadingScreen').style.display='none'; }, 300);
+            }, 300);
+        }
+        if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init); else init();
+    </script>
+</body>
+</html>
