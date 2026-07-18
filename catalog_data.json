@@ -1,3 +1,17 @@
 {
- "characters": []
+ "characters": [
+  {
+   "id": 317,
+   "name": "Теси",
+   "short": "Тест",
+   "full": "Теси — Тест",
+   "personality": "Тест",
+   "appearance": "Тест",
+   "quirks": "Тест",
+   "official": true,
+   "image": "",
+   "tone": "dark",
+   "has_heroine": true
+  }
+ ]
 }
