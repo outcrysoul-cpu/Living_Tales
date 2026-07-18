@@ -177,6 +177,9 @@
         .persona-meta { font-size: 12px; color: var(--text-muted); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         /* Бейдж «Оригинальный персонаж» — официальные герои Living Tales */
         .card-official { position: absolute; top: 8px; right: 8px; background: linear-gradient(135deg,#f59e0b,#d97706); color:#1a1005; font-size: 10px; font-weight: 800; padding: 3px 8px; border-radius: 10px; display: flex; align-items: center; gap: 3px; box-shadow: 0 2px 8px rgba(245,158,11,0.4); }
+        /* Пометка о происхождении истории персонажа */
+        .story-note { font-size: 12px; line-height: 1.45; color: #c4b5fd; background: rgba(168,85,247,0.10); border: 1px solid rgba(168,85,247,0.30); border-radius: 10px; padding: 8px 10px; margin-bottom: 8px; }
+        .story-note.empty { color: var(--text-secondary); background: rgba(255,255,255,0.05); border-color: rgba(255,255,255,0.14); }
         .persona-default-badge { font-size: 10px; font-weight: 600; color: #a855f7; border: 1px solid rgba(168,85,247,0.5); border-radius: 8px; padding: 2px 7px; margin-top: 4px; display: inline-block; }
         .add-persona { width: 100%; padding: 16px; border-radius: 18px; border: 1.5px dashed rgba(168,85,247,0.5); background: rgba(168,85,247,0.06); color: var(--accent-glow); font-size: 15px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: background 0.2s ease; }
         .add-persona:active { background: rgba(168,85,247,0.15); }
@@ -340,13 +343,13 @@
             <input type="text" id="cf-name" placeholder="Имя персонажа" maxlength="50">
             <div class="char-counter"><span id="cf-name-cnt">0</span>/50</div>
 
-            <label>Внешность<span class="hint">Как выглядит персонаж</span></label>
-            <textarea id="cf-appearance" placeholder="Рост, телосложение, черты лица, стиль..." maxlength="500"></textarea>
-            <div class="char-counter"><span id="cf-appearance-cnt">0</span>/500</div>
-
             <label>Характер<span class="hint">Темперамент, манера речи, привычки</span></label>
             <textarea id="cf-personality" placeholder="Какой он в общении, как реагирует..." maxlength="500"></textarea>
             <div class="char-counter"><span id="cf-personality-cnt">0</span>/500</div>
+
+            <label>Внешность<span class="hint">Как выглядит персонаж</span></label>
+            <textarea id="cf-appearance" placeholder="Рост, телосложение, черты лица, стиль..." maxlength="500"></textarea>
+            <div class="char-counter"><span id="cf-appearance-cnt">0</span>/500</div>
 
             <label>Особенности<span class="hint">Что выделяет персонажа: сила, дар, тайна</span></label>
             <textarea id="cf-quirks" placeholder="Уникальные черты, способности, странности..." maxlength="500"></textarea>
@@ -356,8 +359,8 @@
             <textarea id="cf-kinks" placeholder="Через запятую или свободным текстом..." maxlength="300"></textarea>
             <div class="char-counter"><span id="cf-kinks-cnt">0</span>/300</div>
 
-            <label>История<span class="hint">Предыстория, мир, отношения с тобой</span></label>
-            <textarea id="cf-story" class="tall" placeholder="Откуда персонаж, что с ним происходило..." maxlength="700"></textarea>
+            <label>История<span class="hint">Предыстория и мир персонажа. Необязательно: если оставить пустым, каждый игрок напишет свою историю сам — в боте, кнопка «📜 История»</span></label>
+            <textarea id="cf-story" class="tall" placeholder="Откуда персонаж, что с ним происходило... Оставь пустым, если хочешь, чтобы игрок придумал сам." maxlength="700"></textarea>
             <div class="char-counter"><span id="cf-story-cnt">0</span>/700</div>
 
             <label>Краткое описание <span class="req">*</span><span class="hint">1–2 предложения для карточки в каталоге</span></label>
@@ -505,30 +508,6 @@
 
         let PERSONAS = [];     /* заполняется данными из ?d= (присылает бот) */
 
-        /* ===== Очередь действий =====
-           tg.sendData() ЗАКРЫВАЕТ мини-апп (так устроен Telegram), поэтому
-           удаления и лайки копим здесь и отправляем одной пачкой, когда
-           пользователь нажмёт «Сохранить изменения». */
-        const PENDING = [];
-        function queueAction(obj) {
-            PENDING.push(obj);
-            updateMainButton();
-        }
-        function updateMainButton() {
-            if (!tg.MainButton) return;
-            if (PENDING.length) {
-                tg.MainButton.setText(`💾 Сохранить изменения (${PENDING.length})`);
-                tg.MainButton.show();
-            } else {
-                tg.MainButton.hide();
-            }
-        }
-        function flushPending() {
-            if (!PENDING.length) return;
-            tg.sendData(JSON.stringify({ action: 'batch', items: PENDING }));
-            PENDING.length = 0;   // приложение закроется после отправки
-        }
-
         let activeFilter = 'all';
         const LIKED = new Set(); // id персонажей, которым юзер поставил лайк (в реале — из бэка)
         let searchQuery = '';
@@ -603,6 +582,20 @@
 
         function section(title, text){ return text ? `<div class="detail-block-title">${title}</div><div class="detail-text">${esc(text)}</div>` : ''; }
 
+        /* Блок «История».
+           Если у персонажа есть история по замыслу автора — показываем её
+           с пометкой, что она предустановлена и её можно изменить.
+           Если истории нет — подсказываем, где игрок заполнит её сам. */
+        function storyBlock(c) {
+            if (c.story && c.story.trim()) {
+                return `<div class="detail-block-title">📖 История</div>
+                        <div class="story-note">✓ История предустановлена автором. Ты можешь изменить или дополнить её в боте — кнопка «📜 История».</div>
+                        <div class="detail-text">${esc(c.story)}</div>`;
+            }
+            return `<div class="detail-block-title">📖 История</div>
+                    <div class="story-note empty">✏️ У этого персонажа нет заданной истории — придумай её сам. После выбора персонажа открой в боте «📜 История» и опиши предысторию и мир. Свою героиню задай в разделе «👩‍🦰 Героиня».</div>`;
+        }
+
         function openDetail(id) {
             const c = CHARACTERS.find(x => x.id === id); if (!c) return;
             document.getElementById('detailHeadName').textContent = c.name;
@@ -630,10 +623,10 @@
                     <div class="stat-pill"><div class="stat-num">💬 ${c.chats}</div><div class="stat-lbl">Активных чатов</div></div>
                 </div>
                 ${section('📜 Описание', c.full)}
-                ${section('👤 Внешность', c.appearance)}
                 ${section('🎭 Характер', c.personality)}
+                ${section('👤 Внешность', c.appearance)}
                 ${section('✨ Особенности', c.quirks)}
-                ${section('📖 История', c.story)}
+                ${storyBlock(c)}
                 ${tags ? `<div class="detail-block-title">🏷️ Теги</div><div class="tag-row">${tags}</div>` : ''}
                 ${publishBlock}
                 ${(isMinePrivate || IS_ADMIN)
@@ -649,7 +642,7 @@
             const c = CHARACTERS.find(x => x.id === id); if (!c) return;
             c.pendingPublish = checked;
             haptic('sel');
-            queueAction({ action: 'publish_character', character_id: id, publish: checked });
+            tg.sendData(JSON.stringify({ action: 'publish_character', character_id: id, publish: checked }));
             if (checked && tg.showAlert) tg.showAlert('Персонаж отправлен на модерацию 📤');
         }
 
@@ -665,7 +658,7 @@
             if (wasLiked) { LIKED.delete(id); c.likes = Math.max(0, c.likes - 1); }
             else { LIKED.add(id); c.likes += 1; }
             haptic('imp');
-            queueAction({ action: 'like_character', character_id: id, liked: !wasLiked });
+            tg.sendData(JSON.stringify({ action: 'like_character', character_id: id, liked: !wasLiked }));
 
             // обновляем счётчики везде, где показан этот персонаж
             document.querySelectorAll(`[data-like="${id}"]`).forEach(el => { el.textContent = c.likes; });
@@ -680,8 +673,7 @@
             const c = CHARACTERS[idx];
             const go = () => {
                 CHARACTERS.splice(idx, 1);
-                // В очередь, а не sendData — иначе Telegram закроет мини-апп.
-                queueAction({ action: 'delete_character', character_id: id });
+                tg.sendData(JSON.stringify({ action: 'delete_character', character_id: id }));
                 haptic('imp'); closeOverlay('detailOverlay'); renderCatalog(); renderMyChars();
             };
             // Для чужого/публичного персонажа удаление доступно только модератору —
@@ -741,7 +733,7 @@
             const p = PERSONAS.find(x => x.id === id); if (!p) return;
             const go = () => {
                 PERSONAS = PERSONAS.filter(x => x.id !== id);
-                queueAction({ action: 'delete_persona', persona_id: id });
+                tg.sendData(JSON.stringify({ action: 'delete_persona', persona_id: id }));
                 haptic('imp'); renderPersonas();
             };
             if (tg.showConfirm) {
@@ -853,9 +845,7 @@
                             official: !!(c.o || c.official),
                             tags: c.tags || [],
                             likes: c.likes || 0, chats: c.chats || 0,
-                            // u = публичный (общий каталог), m = мой персонаж
-                            public: !!c.u,
-                            author: c.m ? ME : (c.author || { name: 'LT', id: 'lt' })
+                            public: true, author: c.author || { name: 'LT', id: 'lt' }
                         }));
                     }
                     const psrc = d.p || d.personas;
@@ -872,13 +862,6 @@
             } catch (e) { console.error('catalog data parse failed', e); }
 
             applyAdminUI();
-            // Кнопка отправки накопленных изменений (удаления/лайки).
-            try {
-                if (tg.MainButton) {
-                    tg.MainButton.onClick(flushPending);
-                    tg.MainButton.hide();
-                }
-            } catch (e) {}
             createStars(); renderFilters(); renderCatalog(); renderPersonas();
             ['cf-name:cf-name-cnt','cf-appearance:cf-appearance-cnt','cf-personality:cf-personality-cnt','cf-quirks:cf-quirks-cnt','cf-kinks:cf-kinks-cnt','cf-story:cf-story-cnt','cf-short:cf-short-cnt','cf-full:cf-full-cnt','pf-about:pf-about-cnt']
                 .forEach(pair => { const [a,b]=pair.split(':'); bindCounter(a,b); });
