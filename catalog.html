@@ -378,6 +378,10 @@
             <textarea id="cf-story" class="tall" placeholder="Откуда персонаж, что с ним происходило... Оставь пустым, если хочешь, чтобы игрок придумал сам." maxlength="700"></textarea>
             <div class="char-counter"><span id="cf-story-cnt">0</span>/700</div>
 
+            <label>Героиня<span class="hint">Кем играет собеседница рядом с этим персонажем. Необязательно: оставь пустым — игрок опишет себя сам</span></label>
+            <textarea id="cf-heroine" class="tall" placeholder="Кто она, как связана с персонажем, её роль в истории... Оставь пустым, если героиню придумает игрок." maxlength="700"></textarea>
+            <div class="char-counter"><span id="cf-heroine-cnt">0</span>/700</div>
+
             <label>Краткое описание <span class="req">*</span><span class="hint">1–2 предложения — видно на плитке каталога</span></label>
             <textarea id="cf-short" placeholder="Властный гонщик, для которого правила не писаны" maxlength="160"></textarea>
             <div class="char-counter"><span id="cf-short-cnt">0</span>/160</div>
@@ -657,6 +661,17 @@
            Если у персонажа есть история по замыслу автора — показываем её
            с пометкой, что она предустановлена и её можно изменить.
            Если истории нет — подсказываем, где игрок заполнит её сам. */
+        /* Блок «Героиня»: если автор задал её — говорим, что она предустановлена
+           и её можно изменить; если нет — подсказываем, где задать свою. */
+        function heroineBlock(c) {
+            if (c.has_heroine) {
+                return `<div class="detail-block-title">👩‍🦰 Героиня</div>
+                        <div class="story-note">✓ Для этого персонажа героиня предустановлена автором. Ты можешь оставить её или заменить своей — в боте, кнопка «👩‍🦰 Героиня».</div>`;
+            }
+            return `<div class="detail-block-title">👩‍🦰 Героиня</div>
+                    <div class="story-note empty">✏️ Героиня не задана — опиши её сама. После выбора персонажа открой в боте «👩‍🦰 Героиня».</div>`;
+        }
+
         function storyBlock(c) {
             if (c.story && c.story.trim()) {
                 return `<div class="detail-block-title">📖 История</div>
@@ -694,11 +709,7 @@
                     <div class="stat-pill"><div class="stat-num">💬 ${c.chats}</div><div class="stat-lbl">Активных чатов</div></div>
                 </div>
                 ${section('📜 Описание', c.full)}
-                ${c.tone ? `<div class="detail-block-title">🎚️ Тон</div><div class="detail-text">${esc(TONE_LABELS[c.tone] || TONE_LABELS.gray)}</div>` : ''}
-                ${section('🎭 Характер', c.personality)}
-                ${section('👤 Внешность', c.appearance)}
-                ${section('✨ Особенности', c.quirks)}
-                ${storyBlock(c)}
+                ${heroineBlock(c)}
                 ${tags ? `<div class="detail-block-title">🏷️ Теги</div><div class="tag-row">${tags}</div>` : ''}
                 ${publishBlock}
                 ${(isMinePrivate || IS_ADMIN)
@@ -857,6 +868,7 @@
                 quirks: document.getElementById('cf-quirks').value.trim(),
                 kinks: document.getElementById('cf-kinks').value.trim(),
                 story: document.getElementById('cf-story').value.trim(),
+                heroine: document.getElementById('cf-heroine').value.trim(),
                 short,
                 full: document.getElementById('cf-full').value.trim(),
                 tone: (document.querySelector('input[name="cf-tone"]:checked') || {}).value || 'gray',
@@ -970,6 +982,7 @@
                         c.quirks      = extra.quirks      || c.quirks;
                         c.image       = extra.image       || '';
                         c.tone        = extra.tone        || c.tone;
+                        c.has_heroine = !!extra.has_heroine;
                         if (extra.official) c.official = true;
                     });
                 }
@@ -981,7 +994,7 @@
                 if (tg.MainButton) { tg.MainButton.onClick(flushPending); tg.MainButton.hide(); }
             } catch (e) {}
             createStars(); renderFilters(); renderCatalog(); renderPersonas();
-            ['cf-name:cf-name-cnt','cf-appearance:cf-appearance-cnt','cf-personality:cf-personality-cnt','cf-quirks:cf-quirks-cnt','cf-kinks:cf-kinks-cnt','cf-story:cf-story-cnt','cf-short:cf-short-cnt','cf-full:cf-full-cnt','pf-about:pf-about-cnt']
+            ['cf-name:cf-name-cnt','cf-appearance:cf-appearance-cnt','cf-personality:cf-personality-cnt','cf-quirks:cf-quirks-cnt','cf-kinks:cf-kinks-cnt','cf-story:cf-story-cnt','cf-heroine:cf-heroine-cnt','cf-short:cf-short-cnt','cf-full:cf-full-cnt','pf-about:pf-about-cnt']
                 .forEach(pair => { const [a,b]=pair.split(':'); bindCounter(a,b); });
 
             const si = document.getElementById('searchInput');
