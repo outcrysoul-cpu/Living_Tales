@@ -178,6 +178,8 @@
         /* Бейдж «Оригинальный персонаж» — официальные герои Living Tales */
         .card-official { position: absolute; top: 8px; right: 8px; background: linear-gradient(135deg,#f59e0b,#d97706); color:#1a1005; font-size: 10px; font-weight: 800; padding: 3px 8px; border-radius: 10px; display: flex; align-items: center; gap: 3px; box-shadow: 0 2px 8px rgba(245,158,11,0.4); }
         /* Пометка о происхождении истории персонажа */
+        .admin-sheet { border: 1px dashed rgba(168,85,247,0.45); border-radius: 14px; padding: 10px 12px; margin: 12px 0; background: rgba(168,85,247,0.06); }
+        .admin-sheet-head { font-size: 11px; font-weight: 700; letter-spacing: .3px; text-transform: uppercase; color: #c4b5fd; margin-bottom: 8px; }
         .story-note { font-size: 12px; line-height: 1.45; color: #c4b5fd; background: rgba(168,85,247,0.10); border: 1px solid rgba(168,85,247,0.30); border-radius: 10px; padding: 8px 10px; margin-bottom: 8px; }
         .story-note.empty { color: var(--text-secondary); background: rgba(255,255,255,0.05); border-color: rgba(255,255,255,0.14); }
         .persona-default-badge { font-size: 10px; font-weight: 600; color: #a855f7; border: 1px solid rgba(168,85,247,0.5); border-radius: 8px; padding: 2px 7px; margin-top: 4px; display: inline-block; }
@@ -193,7 +195,7 @@
         .sheet-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
         .sheet-title { font-size: 20px; font-weight: 700; display: flex; align-items: center; gap: 8px; }
         .sheet-close { width: 34px; height: 34px; border-radius: 50%; border: none; background: rgba(255,255,255,0.08); color: #fff; font-size: 18px; cursor: pointer; display: flex; align-items: center; justify-content: center; flex: 0 0 auto; }
-        .detail-hero { width: 100%; aspect-ratio: 16/10; border-radius: 18px; overflow: hidden; display: flex; align-items: center; justify-content: center; font-size: 70px; margin-bottom: 14px; position: relative; }
+        .detail-hero { width: 100%; aspect-ratio: 4/5; max-height: 62vh; border-radius: 18px; overflow: hidden; display: flex; align-items: center; justify-content: center; font-size: 70px; margin-bottom: 14px; position: relative; background-size: cover; }
         .detail-name { font-size: 24px; font-weight: 700; margin-bottom: 2px; }
         .detail-tagline { font-size: 14px; color: var(--text-muted); font-style: italic; margin-bottom: 12px; }
         .detail-author-row { display: flex; align-items: center; gap: 8px; margin-bottom: 14px; padding: 10px 12px; background: rgba(255,255,255,0.04); border-radius: 14px; border: 1px solid rgba(255,255,255,0.08); }
@@ -226,7 +228,14 @@
         .upload-icon { font-size: 34px; }
         .upload-title { font-size: 14px; font-weight: 600; color: #fff; margin-top: 8px; }
         .upload-hint { font-size: 12px; color: var(--text-muted); margin-top: 4px; }
-        .card-photo, .hero-photo { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+                /* На плитке — заполняем (cover), в карточке — показываем ЦЕЛИКОМ (contain),
+           а размытая копия под ней закрывает поля по бокам. */
+        .card-photo { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+        .hero-photo { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; z-index: 1; }
+        .hero-blur { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; filter: blur(24px) brightness(0.6); transform: scale(1.15); }
+        .public-warn { font-size: 11.5px; line-height: 1.45; color: #fbbf24; background: rgba(251,191,36,0.10); border: 1px solid rgba(251,191,36,0.32); border-radius: 12px; padding: 10px 12px; margin-top: -4px; }
+        .public-warn b { color: #fcd34d; }
+
         /* Выбор тона персонажа */
         .tone-row { display: flex; flex-direction: column; gap: 8px; }
         .tone-opt { display: block; cursor: pointer; }
@@ -350,7 +359,7 @@
         <div class="sheet">
             <div class="sheet-grip"></div>
             <div class="sheet-head">
-                <div class="sheet-title">✨ Создать персонажа</div>
+                <div class="sheet-title" id="charFormTitle">✨ Создать персонажа</div>
                 <button class="sheet-close" onclick="closeOverlay('charFormOverlay')">✕</button>
             </div>
 
@@ -436,6 +445,20 @@
                 </div>
                 <label class="switch"><input type="checkbox" id="cf-public" checked onchange="updateImageHint()"><span class="slider"></span></label>
             </div>
+            <div class="toggle-row" id="cf-author-row">
+                <div class="toggle-text">
+                    <div class="t-title">👤 Указать меня автором</div>
+                    <div class="t-sub">В карточке появится твой ник из Telegram. Ник подставляет бот — вписать чужой нельзя.</div>
+                </div>
+                <label class="switch"><input type="checkbox" id="cf-author"><span class="slider"></span></label>
+            </div>
+
+            <div class="public-warn" id="cf-public-warn">
+                🌍 <b>Публичный персонаж виден всем в интернете.</b> Имя, описания, теги и изображение
+                размещаются на общедоступной странице и открываются по прямой ссылке даже без Telegram.
+                Твой профиль и переписка не публикуются — автор персонажа не указывается.<br>
+                Не добавляй личные данные и фото реальных людей без их согласия.
+            </div>
 
             <!-- Только для мастера/админов: пометка официального персонажа Living Tales -->
             <div class="toggle-row" id="cf-official-row" style="display:none">
@@ -448,7 +471,7 @@
 
             <div class="form-actions">
                 <button class="btn btn-ghost" onclick="closeOverlay('charFormOverlay')">Отмена</button>
-                <button class="btn btn-primary" id="cf-submit" onclick="submitChar()">✅ Готово</button>
+                <button class="btn btn-primary" id="charFormSubmit" onclick="submitChar()">✅ Готово</button>
             </div>
         </div>
     </div>
@@ -661,8 +684,30 @@
            Если у персонажа есть история по замыслу автора — показываем её
            с пометкой, что она предустановлена и её можно изменить.
            Если истории нет — подсказываем, где игрок заполнит её сам. */
-        /* Блок «Героиня»: если автор задал её — говорим, что она предустановлена
-           и её можно изменить; если нет — подсказываем, где задать свою. */
+        /* Блок «Героиня»: предустановлена автором или задаётся игроком. */
+        /* Полная анкета персонажа.
+           Обычный игрок видит только описание — витрина должна быть чистой.
+           Админам (для модерации) и автору (для правки) показываем всё. */
+        function fullSheet(c, isMine) {
+            if (!IS_ADMIN && !isMine) return '';
+            const rows = [
+                ['🎭 Характер', c.personality],
+                ['👤 Внешность', c.appearance],
+                ['✨ Особенности', c.quirks],
+                ['💫 Предпочтения', c.kinks],
+                ['📖 История', c.story],
+                ['👩‍🦰 Героиня (пресет)', c.heroine]
+            ].filter(r => r[1] && String(r[1]).trim());
+            if (!rows.length) return `<div class="admin-sheet"><div class="admin-sheet-head">${IS_ADMIN ? '🛡 Анкета (видно модераторам)' : '✏️ Твоя анкета'}</div><div class="story-note empty">Поля анкеты не заполнены.</div></div>`;
+            const body = rows.map(r =>
+                `<div class="detail-block-title">${r[0]}</div><div class="detail-text">${esc(r[1])}</div>`
+            ).join('');
+            return `<div class="admin-sheet">
+                        <div class="admin-sheet-head">${IS_ADMIN && !isMine ? '🛡 Полная анкета — видно только модераторам' : '✏️ Твоя анкета — видно только тебе'}</div>
+                        ${body}
+                    </div>`;
+        }
+
         function heroineBlock(c) {
             if (c.has_heroine) {
                 return `<div class="detail-block-title">👩‍🦰 Героиня</div>
@@ -687,17 +732,19 @@
             document.getElementById('detailHeadName').textContent = c.name;
             const tags = (c.tags || []).map(t => `<span class="tag">#${esc(t)}</span>`).join('');
             const isMinePrivate = !c.public && c.author && c.author.id === ME.id;
+            const isMine = !!(c.author && c.author.id === ME.id);
             const publishBlock = isMinePrivate ? `
                 <div class="toggle-row">
                     <div class="toggle-text">
                         <div class="t-title">Опубликовать в каталоге</div>
-                        <div class="t-sub">Включи, чтобы отправить персонажа на модерацию и открыть его всем</div>
+                        <div class="t-sub">Включи, чтобы отправить персонажа на модерацию и открыть его всем.
+                        🌍 Данные персонажа станут видны всем в интернете (автор не указывается).</div>
                     </div>
                     <label class="switch"><input type="checkbox" id="detailPublish" ${c.pendingPublish?'checked':''} onchange="togglePublish(${c.id}, this.checked)"><span class="slider"></span></label>
                 </div>` : '';
 
             document.getElementById('detailContent').innerHTML = `
-                <div class="detail-hero" style="background:${grad(c.id)}">${c.image ? `<img class="hero-photo" src="${esc(c.image)}" alt="">` : `<span>${c.emoji || initials(c.name)}</span>`}${c.public ? '' : '<div class="card-badge">🔒 Приватный</div>'}${c.official ? '<div class="card-official">⭐ Оригинальный персонаж</div>' : ''}</div>
+                <div class="detail-hero" style="background:${grad(c.id)}">${c.image ? `<img class="hero-blur" src="${esc(c.image)}" alt=""><img class="hero-photo" src="${esc(c.image)}" alt="">` : `<span>${c.emoji || initials(c.name)}</span>`}${c.public ? '' : '<div class="card-badge">🔒 Приватный</div>'}${c.official ? '<div class="card-official">⭐ Оригинальный персонаж</div>' : ''}</div>
                 <div class="detail-name">${esc(c.name)}</div>
                 <div class="detail-tagline">${esc(c.short)}</div>
                 <div class="detail-author-row">
@@ -709,15 +756,17 @@
                     <div class="stat-pill"><div class="stat-num">💬 ${c.chats}</div><div class="stat-lbl">Активных чатов</div></div>
                 </div>
                 ${section('📜 Описание', c.full)}
+                ${fullSheet(c, isMine)}
                 ${heroineBlock(c)}
                 ${tags ? `<div class="detail-block-title">🏷️ Теги</div><div class="tag-row">${tags}</div>` : ''}
                 ${publishBlock}
+                ${isMine ? `<button class="btn btn-ghost btn-full" style="margin-top:16px" onclick="editChar(${c.id})">✏️ Редактировать персонажа</button>` : ''}
                 ${(isMinePrivate || IS_ADMIN)
-                    ? `<div class="form-actions" style="margin-top:22px">
+                    ? `<div class="form-actions" style="margin-top:12px">
                            <button class="btn btn-danger" onclick="deleteCharacter(${c.id})">🗑 Удалить${(!isMinePrivate && IS_ADMIN) ? ' (модератор)' : ''}</button>
                            <button class="btn btn-primary" onclick="selectChar(${c.id})">✅ Выбрать</button>
                        </div>`
-                    : `<button class="btn btn-primary btn-full" style="margin-top:22px" onclick="selectChar(${c.id})">✅ Выбрать</button>`}`;
+                    : `<button class="btn btn-primary btn-full" style="margin-top:12px" onclick="selectChar(${c.id})">✅ Выбрать</button>`}`;
             openOverlay('detailOverlay');
         }
 
@@ -832,6 +881,7 @@
                     const o = document.createElement('option'); o.value = c.id; o.textContent = `${c.icon} ${c.label}`; sel.appendChild(o);
                 });
             }
+            resetCharForm();   // всегда открываем чистую форму создания
             openOverlay('charFormOverlay');
         }
         /* Показывает админскую опцию «Оригинальный персонаж» при открытии формы. */
@@ -847,6 +897,8 @@
             const hint = document.getElementById('cf-upload-hint');
             const box = document.getElementById('cf-upload-box');
             if (!pub || !hint || !box) return;
+            const warn = document.getElementById('cf-public-warn');
+            if (warn) warn.style.display = pub.checked ? 'block' : 'none';
             if (pub.checked) {
                 hint.textContent = 'После сохранения бот попросит прислать изображение сообщением в чат';
                 box.style.opacity = '1';
@@ -854,6 +906,71 @@
                 hint.textContent = 'Только для публичных персонажей. Включи «Опубликовать в каталоге» — и бот запросит фото. Можно опубликовать и позже.';
                 box.style.opacity = '0.55';
             }
+        }
+
+        /* ===== Редактирование своего персонажа =====
+           Открывает форму создания, заполненную данными персонажа.
+           При сохранении уходит action 'update_character' с его id. */
+        let EDITING_ID = null;
+
+        function editChar(id) {
+            const c = CHARACTERS.find(x => x.id === id);
+            if (!c) return;
+            EDITING_ID = id;
+            const set = (el, val) => { const e = document.getElementById(el); if (e) e.value = val || ''; };
+            set('cf-name', c.name);
+            set('cf-short', c.short);
+            set('cf-full', c.full);
+            set('cf-appearance', c.appearance);
+            set('cf-personality', c.personality);
+            set('cf-quirks', c.quirks);
+            set('cf-kinks', c.kinks);
+            set('cf-story', c.story);
+            set('cf-heroine', c.heroine);
+            set('cf-tags', (c.tags || []).join(', '));
+            const cat = document.getElementById('cf-category');
+            if (cat) cat.value = c.category || 'romance';
+            const tone = document.querySelector(`input[name="cf-tone"][value="${c.tone || 'gray'}"]`);
+            if (tone) tone.checked = true;
+            const pub = document.getElementById('cf-public');
+            if (pub) pub.checked = !!c.public;
+            const auth = document.getElementById('cf-author');
+            if (auth) auth.checked = !!c.show_author;
+
+            const title = document.getElementById('charFormTitle');
+            if (title) title.textContent = 'Редактировать персонажа';
+            const btn = document.getElementById('charFormSubmit');
+            if (btn) btn.textContent = '💾 Сохранить изменения';
+            updateImageHint();
+            refreshCounters();
+            closeOverlay('detailOverlay');
+            openOverlay('charFormOverlay');
+        }
+
+        /* Сброс формы в режим создания. */
+        function resetCharForm() {
+            EDITING_ID = null;
+            ['cf-name','cf-short','cf-full','cf-appearance','cf-personality',
+             'cf-quirks','cf-kinks','cf-story','cf-heroine','cf-tags'].forEach(id => {
+                const e = document.getElementById(id); if (e) e.value = '';
+            });
+            const g = document.querySelector('input[name="cf-tone"][value="gray"]');
+            if (g) g.checked = true;
+            const pub = document.getElementById('cf-public'); if (pub) pub.checked = true;
+            const auth = document.getElementById('cf-author'); if (auth) auth.checked = false;
+            const off = document.getElementById('cf-official'); if (off) off.checked = false;
+            const title = document.getElementById('charFormTitle');
+            if (title) title.textContent = 'Новый персонаж';
+            const btn = document.getElementById('charFormSubmit');
+            if (btn) btn.textContent = '✨ Создать персонажа';
+            updateImageHint();
+            refreshCounters();
+        }
+
+        function refreshCounters() {
+            document.querySelectorAll('textarea[maxlength], input[maxlength]').forEach(el => {
+                el.dispatchEvent(new Event('input'));
+            });
         }
 
         function submitChar() {
@@ -875,8 +992,18 @@
                 category: document.getElementById('cf-category').value,
                 tags: document.getElementById('cf-tags').value.split(',').map(t => t.trim()).filter(Boolean),
                 is_public: document.getElementById('cf-public').checked,
-                official: IS_ADMIN && document.getElementById('cf-official').checked
+                official: IS_ADMIN && document.getElementById('cf-official').checked,
+                show_author: document.getElementById('cf-author').checked
             };
+            if (EDITING_ID) {
+                ch.id = EDITING_ID;
+                tg.sendData(JSON.stringify({ action: 'update_character', character: ch }));
+                haptic('imp');
+                tg.showAlert && tg.showAlert('Изменения сохранены ✏️');
+                closeOverlay('charFormOverlay');
+                EDITING_ID = null;
+                return;
+            }
             tg.sendData(JSON.stringify({ action: 'submit_character', character: ch })); haptic('imp');
 
             // демо: сразу показать в «Мои персонажи» (и в каталоге, если публичный)
@@ -983,6 +1110,12 @@
                         c.image       = extra.image       || '';
                         c.tone        = extra.tone        || c.tone;
                         c.has_heroine = !!extra.has_heroine;
+                        // Поля анкеты бот отдаёт только админам — обычным
+                        // пользователям они в файле не приходят.
+                        if (extra.kinks   !== undefined) c.kinks   = extra.kinks;
+                        if (extra.story   !== undefined) c.story   = extra.story;
+                        if (extra.heroine !== undefined) c.heroine = extra.heroine;
+                        if (extra.author  !== undefined) c.show_author = extra.author;
                         if (extra.official) c.official = true;
                     });
                 }
