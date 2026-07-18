@@ -111,7 +111,7 @@
         .filter-chip.active { background: var(--primary-gradient); color: #fff; border-color: transparent; box-shadow: 0 0 14px rgba(168,85,247,0.4); }
         .filter-chip:active { transform: scale(0.96); }
 
-        /* ===== Дисклеймер 21+ ===== */
+        /* ===== Дисклеймер 18+ ===== */
         .nsfw-banner {
             display: none; margin-bottom: 16px; padding: 14px 16px;
             background: rgba(190,18,60,0.12); border: 1px solid rgba(244,63,94,0.4);
@@ -267,8 +267,8 @@
             <div class="filters" id="filters"></div>
 
             <div class="nsfw-banner" id="nsfwBanner">
-                <div class="nb-title">🔞 Контент 21+</div>
-                <div class="nb-text">Персонажи в этом разделе могут содержать жёсткие сцены, насилие и материалы сексуального характера (NSFW). Продолжая, ты подтверждаешь, что тебе есть 21 год и ты осознанно хочешь видеть такой контент.</div>
+                <div class="nb-title">🔞 Контент 18+</div>
+                <div class="nb-text">Сервис содержит художественные материалы для взрослых: романтические и эротические истории 18+. Продолжая, ты подтверждаешь, что тебе исполнилось 18 лет, и принимаешь Пользовательское соглашение и Оферту.</div>
             </div>
 
             <div class="grid" id="grid"></div>
@@ -466,7 +466,7 @@
         } catch(e) {}
         function haptic(t){ try{ if(tg.HapticFeedback){ t==='sel'?tg.HapticFeedback.selectionChanged():tg.HapticFeedback.impactOccurred('light'); } }catch(e){} }
 
-        /* Категории (переименованы, с прокруткой). nsfw:true -> показывает дисклеймер 21+ */
+        /* Категории (переименованы, с прокруткой). Дисклеймер 18+ показывается во всех разделах */
         const CATEGORIES = [
             { id: 'all',       label: 'Все',          icon: '⭐' },
             { id: 'romance',   label: 'Романтика',    icon: '💕' },
@@ -549,9 +549,8 @@
         }
 
         function renderCatalog() {
-            // дисклеймер 21+
-            const cat = currentCategory();
-            document.getElementById('nsfwBanner').classList.toggle('show', !!(cat && cat.nsfw));
+            // дисклеймер 18+ — показываем во всех категориях
+            document.getElementById('nsfwBanner').classList.add('show');
             renderGrid();
         }
 
