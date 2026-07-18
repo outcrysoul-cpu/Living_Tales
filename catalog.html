@@ -111,7 +111,7 @@
         .filter-chip.active { background: var(--primary-gradient); color: #fff; border-color: transparent; box-shadow: 0 0 14px rgba(168,85,247,0.4); }
         .filter-chip:active { transform: scale(0.96); }
 
-        /* ===== Дисклеймер 18+ ===== */
+        /* ===== Дисклеймер 21+ ===== */
         .nsfw-banner {
             display: none; margin-bottom: 16px; padding: 14px 16px;
             background: rgba(190,18,60,0.12); border: 1px solid rgba(244,63,94,0.4);
@@ -175,6 +175,8 @@
         .btn-danger:active { background: rgba(244,63,94,0.22); }
         .persona-name { font-size: 16px; font-weight: 700; color: #fff; }
         .persona-meta { font-size: 12px; color: var(--text-muted); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        /* Бейдж «Оригинальный персонаж» — официальные герои Living Tales */
+        .card-official { position: absolute; top: 8px; right: 8px; background: linear-gradient(135deg,#f59e0b,#d97706); color:#1a1005; font-size: 10px; font-weight: 800; padding: 3px 8px; border-radius: 10px; display: flex; align-items: center; gap: 3px; box-shadow: 0 2px 8px rgba(245,158,11,0.4); }
         .persona-default-badge { font-size: 10px; font-weight: 600; color: #a855f7; border: 1px solid rgba(168,85,247,0.5); border-radius: 8px; padding: 2px 7px; margin-top: 4px; display: inline-block; }
         .add-persona { width: 100%; padding: 16px; border-radius: 18px; border: 1.5px dashed rgba(168,85,247,0.5); background: rgba(168,85,247,0.06); color: var(--accent-glow); font-size: 15px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: background 0.2s ease; }
         .add-persona:active { background: rgba(168,85,247,0.15); }
@@ -267,8 +269,8 @@
             <div class="filters" id="filters"></div>
 
             <div class="nsfw-banner" id="nsfwBanner">
-                <div class="nb-title">🔞 Контент 18+</div>
-                <div class="nb-text">Сервис содержит художественные материалы для взрослых: романтические и эротические истории 18+. Продолжая, ты подтверждаешь, что тебе исполнилось 18 лет, и принимаешь Пользовательское соглашение и Оферту.</div>
+                <div class="nb-title">🔞 Контент 21+</div>
+                <div class="nb-text">Персонажи в этом разделе могут содержать жёсткие сцены, насилие и материалы сексуального характера (NSFW). Продолжая, ты подтверждаешь, что тебе есть 21 год и ты осознанно хочешь видеть такой контент.</div>
             </div>
 
             <div class="grid" id="grid"></div>
@@ -387,6 +389,15 @@
                 <label class="switch"><input type="checkbox" id="cf-public" checked><span class="slider"></span></label>
             </div>
 
+            <!-- Только для мастера/админов: пометка официального персонажа Living Tales -->
+            <div class="toggle-row" id="cf-official-row" style="display:none">
+                <div class="toggle-text">
+                    <div class="t-title">⭐ Оригинальный персонаж</div>
+                    <div class="t-sub">Официальный герой Living Tales. Получает золотой бейдж в каталоге. Доступно только администрации.</div>
+                </div>
+                <label class="switch"><input type="checkbox" id="cf-official"><span class="slider"></span></label>
+            </div>
+
             <div class="form-actions">
                 <button class="btn btn-ghost" onclick="closeOverlay('charFormOverlay')">Отмена</button>
                 <button class="btn btn-primary" id="cf-submit" onclick="submitChar()">✅ Готово</button>
@@ -466,7 +477,7 @@
         } catch(e) {}
         function haptic(t){ try{ if(tg.HapticFeedback){ t==='sel'?tg.HapticFeedback.selectionChanged():tg.HapticFeedback.impactOccurred('light'); } }catch(e){} }
 
-        /* Категории (переименованы, с прокруткой). Дисклеймер 18+ показывается во всех разделах */
+        /* Категории (переименованы, с прокруткой). nsfw:true -> показывает дисклеймер 21+ */
         const CATEGORIES = [
             { id: 'all',       label: 'Все',          icon: '⭐' },
             { id: 'romance',   label: 'Романтика',    icon: '💕' },
@@ -489,6 +500,7 @@
         /* Текущий пользователь (демо). В реале — из initDataUnsafe.user */
         const ME = { name: 'Ты', id: 'you' };
 
+        let IS_ADMIN = false;   /* из ?a=1 — только для UI, права проверяет бот */
         let CHARACTERS = [   /* демо-фолбэк; переопределяется данными из ?d= */
             { id:1, name:'Дамиан Вэйл', emoji:'🥀', short:'В объятьях Умбры. Загадочный и опасно притягательный.',
               full:'Дамиан Вэйл — наследник древнего рода, чьё имя произносят шёпотом. Холодный, расчётливый, но за бронёй сарказма прячется тот, кто слишком долго был один. Он замечает в тебе то, что другие не видят.',
@@ -549,8 +561,9 @@
         }
 
         function renderCatalog() {
-            // дисклеймер 18+ — показываем во всех категориях
-            document.getElementById('nsfwBanner').classList.add('show');
+            // дисклеймер 21+
+            const cat = currentCategory();
+            document.getElementById('nsfwBanner').classList.toggle('show', !!(cat && cat.nsfw));
             renderGrid();
         }
 
@@ -561,6 +574,7 @@
                 <div class="card-img" style="background:${grad(c.id)}">
                     <span>${c.emoji || initials(c.name)}</span>
                     ${c.public ? '' : '<div class="card-badge">🔒 Приватный</div>'}
+                    ${c.official ? '<div class="card-official">⭐ Оригинал</div>' : ''}
                 </div>
                 <div class="card-body">
                     <div class="card-name">${esc(c.name)}</div>
@@ -619,7 +633,7 @@
                 </div>` : '';
 
             document.getElementById('detailContent').innerHTML = `
-                <div class="detail-hero" style="background:${grad(c.id)}"><span>${c.emoji || initials(c.name)}</span>${c.public ? '' : '<div class="card-badge">🔒 Приватный</div>'}</div>
+                <div class="detail-hero" style="background:${grad(c.id)}"><span>${c.emoji || initials(c.name)}</span>${c.public ? '' : '<div class="card-badge">🔒 Приватный</div>'}${c.official ? '<div class="card-official">⭐ Оригинальный персонаж</div>' : ''}</div>
                 <div class="detail-name">${esc(c.name)}</div>
                 <div class="detail-tagline">${esc(c.short)}</div>
                 <div class="detail-author-row">
@@ -753,6 +767,12 @@
             }
             openOverlay('charFormOverlay');
         }
+        /* Показывает админскую опцию «Оригинальный персонаж» при открытии формы. */
+        function applyAdminUI() {
+            const row = document.getElementById('cf-official-row');
+            if (row) row.style.display = IS_ADMIN ? 'flex' : 'none';
+        }
+
         function submitChar() {
             const name = document.getElementById('cf-name').value.trim();
             const short = document.getElementById('cf-short').value.trim();
@@ -769,7 +789,8 @@
                 full: document.getElementById('cf-full').value.trim(),
                 category: document.getElementById('cf-category').value,
                 tags: document.getElementById('cf-tags').value.split(',').map(t => t.trim()).filter(Boolean),
-                is_public: document.getElementById('cf-public').checked
+                is_public: document.getElementById('cf-public').checked,
+                official: IS_ADMIN && document.getElementById('cf-official').checked
             };
             tg.sendData(JSON.stringify({ action: 'submit_character', character: ch })); haptic('imp');
 
@@ -778,7 +799,7 @@
                 id: Date.now(), name: ch.name, emoji: '🎭', short: ch.short, full: ch.full,
                 appearance: ch.appearance, personality: ch.personality, quirks: ch.quirks, story: ch.story,
                 category: ch.category, tags: ch.tags, likes: 0, chats: 0,
-                public: ch.is_public, author: ME
+                public: ch.is_public, official: !!ch.official, author: ME
             });
             renderCatalog(); renderMyChars();
 
@@ -821,22 +842,26 @@
             // Реальные данные от бота приходят в ?d= (см. build_catalog_url).
             // Если параметра нет — остаётся демо-фолбэк выше.
             try {
-                const p = new URLSearchParams(location.search).get('d');
+                const params = new URLSearchParams(location.search);
+                IS_ADMIN = params.get('a') === '1';
+                const p = params.get('d');
                 if (p) {
                     const d = JSON.parse(decodeURIComponent(p));
-                    // Короткие ключи от бота: i=id, n=name, e=emoji, c=category
+                    // Бот шлёт короткие ключи (i,n,e,c,o), чтобы ссылка не была длинной.
+                    // Длинные имена поддерживаем для обратной совместимости.
                     const src = d.c || d.characters;
                     if (Array.isArray(src) && src.length) {
                         CHARACTERS = src.map((c, i) => ({
                             id: c.i != null ? c.i : (c.id != null ? c.id : i + 1),
                             name: c.n || c.name || '',
                             emoji: c.e || c.emoji || '🎭',
-                            short: c.short || '',
-                            full: c.full || '',
+                            short: c.short || '', full: c.full || '',
+                            appearance: c.appearance || '', personality: c.personality || '',
                             category: c.c || c.category || 'romance',
+                            official: !!(c.o || c.official),
                             tags: c.tags || [],
-                            likes: c.likes || 0, chats: 0, public: true,
-                            author: { name: 'LT', id: 'lt' }
+                            likes: c.likes || 0, chats: c.chats || 0,
+                            public: true, author: c.author || { name: 'LT', id: 'lt' }
                         }));
                     }
                     const psrc = d.p || d.personas;
@@ -852,6 +877,7 @@
                 }
             } catch (e) { console.error('catalog data parse failed', e); }
 
+            applyAdminUI();
             createStars(); renderFilters(); renderCatalog(); renderPersonas();
             ['cf-name:cf-name-cnt','cf-appearance:cf-appearance-cnt','cf-personality:cf-personality-cnt','cf-quirks:cf-quirks-cnt','cf-kinks:cf-kinks-cnt','cf-story:cf-story-cnt','cf-short:cf-short-cnt','cf-full:cf-full-cnt','pf-about:pf-about-cnt']
                 .forEach(pair => { const [a,b]=pair.split(':'); bindCounter(a,b); });
