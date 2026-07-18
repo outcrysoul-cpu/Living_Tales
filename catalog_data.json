@@ -1,6 +1,19 @@
 {
  "characters": [
   {
+   "id": 318,
+   "name": "Лар",
+   "short": "Ни когда не спрашивает, берет",
+   "full": "Лар — Ни когда не спрашивает, берет",
+   "personality": "Пиздец",
+   "appearance": "Красив как черт.",
+   "quirks": "",
+   "official": false,
+   "image": "",
+   "tone": "dark",
+   "has_heroine": false
+  },
+  {
    "id": 317,
    "name": "Теси",
    "short": "Тест",
