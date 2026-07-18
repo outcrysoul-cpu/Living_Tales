@@ -337,7 +337,7 @@
             </div>
 
             <label>Имя <span class="req">*</span></label>
-            <input type="text" id="cf-name" placeholder="Например, Дамиан Вэйл" maxlength="50">
+            <input type="text" id="cf-name" placeholder="Имя персонажа" maxlength="50">
             <div class="char-counter"><span id="cf-name-cnt">0</span>/50</div>
 
             <label>Внешность<span class="hint">Как выглядит персонаж</span></label>
@@ -415,7 +415,7 @@
             </div>
 
             <label>Имя <span class="req">*</span></label>
-            <input type="text" id="pf-name" placeholder="Например, Алиса" maxlength="40">
+            <input type="text" id="pf-name" placeholder="Имя героини" maxlength="40">
 
             <label>Возраст <span class="hint">необязательно</span></label>
             <input type="number" id="pf-age" placeholder="18" min="18" max="120">
@@ -501,47 +501,9 @@
         const ME = { name: 'Ты', id: 'you' };
 
         let IS_ADMIN = false;   /* из ?a=1 — только для UI, права проверяет бот */
-        let CHARACTERS = [   /* демо-фолбэк; переопределяется данными из ?d= */
-            { id:1, name:'Дамиан Вэйл', emoji:'🥀', short:'В объятьях Умбры. Загадочный и опасно притягательный.',
-              full:'Дамиан Вэйл — наследник древнего рода, чьё имя произносят шёпотом. Холодный, расчётливый, но за бронёй сарказма прячется тот, кто слишком долго был один. Он замечает в тебе то, что другие не видят.',
-              appearance:'Высокий, худощавый, платиновые волосы, ледяные серые глаза. Всегда в тёмном.',
-              personality:'Немногословен, ироничен, наблюдателен. Открывается медленно.',
-              category:'dark', tags:['мистика','романтика','интриги'], likes:463, chats:128, public:true, author:{name:'Алекс', id:'nnyyy0'} },
-            { id:2, name:'Каэль Ромеро', emoji:'🏎️', short:'Властный гонщик, для которого правила не писаны.',
-              full:'Каэль живёт на скорости 300 км/ч и презирает всё медленное. На трассе он король, вне её — человек, который боится остановиться и почувствовать. Ты — первая, ради кого он готов сбавить ход.',
-              personality:'Дерзкий, самоуверенный, азартный. Флиртует напористо.',
-              category:'adventure', tags:['драйв','романтика','город'], likes:320, chats:94, public:true, author:{name:'Марина', id:'marina_k'} },
-            { id:3, name:'Тео Крайн', emoji:'🕶️', short:'Чокнутый гений с IQ 160. Безумный, блестящий, непредсказуемый.',
-              full:'Тео решает уравнения на салфетках и людей — на раз. Гениальный, но нестабильный. Играет в игры, где ставка — рассудок. С тобой он впервые не уверен в исходе, и это его пугает и заводит.',
-              personality:'Эксцентричный, говорит парадоксами, обожает провокации.',
-              category:'dark', tags:['психология','триллер','интриги'], likes:316, chats:77, public:true, author:{name:'Алекс', id:'nnyyy0'} },
-            { id:4, name:'Эрик Хальден', emoji:'⚔️', short:'Комендант сектора C. Дисциплина, шрамы и запретное влечение.',
-              full:'Эрик держит границу на замке и себя — в узде. Годы службы выковали из него сталь, но твоё появление даёт трещину в его безупречной броне. Устав запрещает то, чего он хочет больше всего.',
-              personality:'Строгий, честный, сдержанный. Говорит по делу.',
-              category:'scifi', tags:['военный','драма','романтика'], likes:283, chats:61, public:true, author:{name:'Дэн', id:'dan_writes'} },
-            { id:5, name:'Юрэй', emoji:'🎴', short:'Ёкай из старого храма, что помнит тебя из прошлой жизни.',
-              full:'Юрэй существует между мирами уже тысячу лет. Лисий дух с золотыми глазами, играющий с судьбами смертных. Но твоя душа кажется ему знакомой — будто вы уже встречались, когда цвела совсем другая сакура.',
-              personality:'Загадочный, поэтичный, играет словами. Мудрость и лукавство.',
-              category:'fantasy', tags:['ёкаи','япония','мистика'], likes:198, chats:40, public:true, author:{name:'Юки', id:'yuki_tales'} },
-            { id:6, name:'Профессор Локк', emoji:'📖', short:'Преподаватель, чьи лекции опаснее любого экзамена.',
-              full:'Доктор Вейн ведёт курс о вещах, которым не учат официально. Строгий, ироничный, требовательный. Он видит в тебе потенциал — и это внимание одновременно честь и испытание.',
-              personality:'Умный, требовательный, говорит выверенно, с лёгкой иронией.',
-              category:'academy', tags:['академия','драма','интриги'], likes:174, chats:33, public:true, author:{name:'Алекс', id:'nnyyy0'} },
-            /* Приватные — созданы текущим юзером, не в общем каталоге */
-            { id:7, name:'Сэйдж (черновик)', emoji:'📝', short:'Мой приватный персонаж, ещё не в каталоге.',
-              full:'Набросок персонажа, которого я пока не публиковал. Дорабатываю характер и историю.',
-              appearance:'Тёмные волосы, зелёные глаза, спортивное телосложение.',
-              personality:'Спокойный, ироничный, себе на уме.',
-              category:'romance', tags:['черновик'], likes:0, chats:2, public:false, author:ME },
-            { id:8, name:'Морок', emoji:'🌒', short:'Только для меня. Тёмная история без цензуры.',
-              full:'Личный персонаж для приватных сюжетов. В общий каталог не выкладывал.',
-              personality:'Опасный, притягательный, не признаёт правил.',
-              category:'dark', tags:['приватное'], likes:0, chats:5, public:false, author:ME }
-        ];
+        let CHARACTERS = [];   /* заполняется данными из ?d= (присылает бот) */
 
-        let PERSONAS = [
-            { id:1, name:'Алиса', age:21, about:'Студентка академии, любопытная и упрямая. Внешне сдержанна, но за этим — жажда приключений и тайна, которую тщательно скрывает.', isDefault:true }
-        ];
+        let PERSONAS = [];     /* заполняется данными из ?d= (присылает бот) */
 
         let activeFilter = 'all';
         const LIKED = new Set(); // id персонажей, которым юзер поставил лайк (в реале — из бэка)
@@ -650,9 +612,9 @@
                 ${section('📖 История', c.story)}
                 ${tags ? `<div class="detail-block-title">🏷️ Теги</div><div class="tag-row">${tags}</div>` : ''}
                 ${publishBlock}
-                ${isMinePrivate
+                ${(isMinePrivate || IS_ADMIN)
                     ? `<div class="form-actions" style="margin-top:22px">
-                           <button class="btn btn-danger" onclick="deleteCharacter(${c.id})">🗑 Удалить</button>
+                           <button class="btn btn-danger" onclick="deleteCharacter(${c.id})">🗑 Удалить${(!isMinePrivate && IS_ADMIN) ? ' (модератор)' : ''}</button>
                            <button class="btn btn-primary" onclick="selectChar(${c.id})">✅ Выбрать</button>
                        </div>`
                     : `<button class="btn btn-primary btn-full" style="margin-top:22px" onclick="selectChar(${c.id})">✅ Выбрать</button>`}`;
@@ -697,9 +659,15 @@
                 tg.sendData(JSON.stringify({ action: 'delete_character', character_id: id }));
                 haptic('imp'); closeOverlay('detailOverlay'); renderCatalog(); renderMyChars();
             };
+            // Для чужого/публичного персонажа удаление доступно только модератору —
+            // предупреждаем отдельно, чтобы не снести случайно.
+            const isMine = c.author && c.author.id === ME.id;
+            const msg = (!isMine && IS_ADMIN)
+                ? `Удалить персонажа «${c.name}» из общего каталога? Действие необратимо и затронет всех пользователей.`
+                : `Удалить персонажа «${c.name}»? Это действие нельзя отменить.`;
             if (tg.showConfirm) {
-                tg.showConfirm(`Удалить персонажа «${c.name}»? Это действие нельзя отменить.`, ok => { if (ok) go(); });
-            } else if (confirm(`Удалить персонажа «${c.name}»?`)) { go(); }
+                tg.showConfirm(msg, ok => { if (ok) go(); });
+            } else if (confirm(msg)) { go(); }
         }
 
         /* ===== Личности ===== */
