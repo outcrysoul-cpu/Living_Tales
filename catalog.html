@@ -226,6 +226,12 @@
         .upload-icon { font-size: 34px; }
         .upload-title { font-size: 14px; font-weight: 600; color: #fff; margin-top: 8px; }
         .upload-hint { font-size: 12px; color: var(--text-muted); margin-top: 4px; }
+        .card-photo, .hero-photo { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+        .img-preview { display: flex; gap: 10px; align-items: center; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.12); border-radius: 14px; padding: 10px; }
+        .img-preview img { width: 64px; height: 64px; object-fit: cover; border-radius: 10px; flex: 0 0 auto; }
+        .img-preview-info { flex: 1; min-width: 0; }
+        .img-preview-name { font-size: 12px; color: var(--text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .img-preview-del { margin-top: 6px; background: rgba(244,63,94,0.15); border: 1px solid rgba(244,63,94,0.4); color: #fda4af; font-size: 11px; padding: 4px 10px; border-radius: 8px; cursor: pointer; }
         .toggle-row { display: flex; align-items: center; justify-content: space-between; padding: 14px; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 14px; margin-top: 16px; }
         .toggle-text .t-title { font-size: 15px; font-weight: 600; }
         .toggle-text .t-sub { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
@@ -363,19 +369,19 @@
             <textarea id="cf-story" class="tall" placeholder="Откуда персонаж, что с ним происходило... Оставь пустым, если хочешь, чтобы игрок придумал сам." maxlength="700"></textarea>
             <div class="char-counter"><span id="cf-story-cnt">0</span>/700</div>
 
-            <label>Краткое описание <span class="req">*</span><span class="hint">1–2 предложения для карточки в каталоге</span></label>
+            <label>Краткое описание <span class="req">*</span><span class="hint">1–2 предложения — видно на плитке каталога</span></label>
             <textarea id="cf-short" placeholder="Властный гонщик, для которого правила не писаны" maxlength="160"></textarea>
             <div class="char-counter"><span id="cf-short-cnt">0</span>/160</div>
 
-            <label>Полное описание<span class="hint">Что видно при открытии карточки</span></label>
-            <textarea id="cf-full" class="tall" placeholder="Подробное описание для страницы персонажа..." maxlength="500"></textarea>
-            <div class="char-counter"><span id="cf-full-cnt">0</span>/500</div>
+            <label>Полное описание<span class="hint">Видно при открытии карточки персонажа</span></label>
+            <textarea id="cf-full" class="tall" placeholder="Подробное описание для страницы персонажа..." maxlength="1000"></textarea>
+            <div class="char-counter"><span id="cf-full-cnt">0</span>/1000</div>
 
             <label>Изображение</label>
-            <div class="upload-box" onclick="tg.showAlert && tg.showAlert('Загрузка фото откроется в боте')">
+            <div class="upload-box" id="cf-upload-box" style="cursor:default">
                 <div class="upload-icon">🖼️</div>
-                <div class="upload-title">Нажмите для загрузки</div>
-                <div class="upload-hint">JPEG, PNG, WebP — до 15 МБ</div>
+                <div class="upload-title">Фото добавляется в чате</div>
+                <div class="upload-hint" id="cf-upload-hint">После сохранения бот попросит прислать изображение сообщением</div>
             </div>
 
             <label>Категория</label>
@@ -389,7 +395,7 @@
                     <div class="t-title">Опубликовать в каталоге</div>
                     <div class="t-sub">После модерации персонаж станет доступен всем. Выкл — приватный, виден только тебе.</div>
                 </div>
-                <label class="switch"><input type="checkbox" id="cf-public" checked><span class="slider"></span></label>
+                <label class="switch"><input type="checkbox" id="cf-public" checked onchange="updateImageHint()"><span class="slider"></span></label>
             </div>
 
             <!-- Только для мастера/админов: пометка официального персонажа Living Tales -->
@@ -560,7 +566,7 @@
             card.className = 'char-card'; card.onclick = () => openDetail(c.id);
             card.innerHTML = `
                 <div class="card-img" style="background:${grad(c.id)}">
-                    <span>${c.emoji || initials(c.name)}</span>
+                    ${c.image ? `<img class="card-photo" src="${esc(c.image)}" alt="" loading="lazy">` : `<span>${c.emoji || initials(c.name)}</span>`}
                     ${c.public ? '' : '<div class="card-badge">🔒 Приватный</div>'}
                     ${c.official ? '<div class="card-official">⭐ Оригинал</div>' : ''}
                 </div>
@@ -635,7 +641,7 @@
                 </div>` : '';
 
             document.getElementById('detailContent').innerHTML = `
-                <div class="detail-hero" style="background:${grad(c.id)}"><span>${c.emoji || initials(c.name)}</span>${c.public ? '' : '<div class="card-badge">🔒 Приватный</div>'}${c.official ? '<div class="card-official">⭐ Оригинальный персонаж</div>' : ''}</div>
+                <div class="detail-hero" style="background:${grad(c.id)}">${c.image ? `<img class="hero-photo" src="${esc(c.image)}" alt="">` : `<span>${c.emoji || initials(c.name)}</span>`}${c.public ? '' : '<div class="card-badge">🔒 Приватный</div>'}${c.official ? '<div class="card-official">⭐ Оригинальный персонаж</div>' : ''}</div>
                 <div class="detail-name">${esc(c.name)}</div>
                 <div class="detail-tagline">${esc(c.short)}</div>
                 <div class="detail-author-row">
@@ -781,6 +787,22 @@
             if (row) row.style.display = IS_ADMIN ? 'flex' : 'none';
         }
 
+        /* Пометка у блока изображения: картинка показывается только у
+           публичных персонажей (приватные не попадают в каталог). */
+        function updateImageHint() {
+            const pub = document.getElementById('cf-public');
+            const hint = document.getElementById('cf-upload-hint');
+            const box = document.getElementById('cf-upload-box');
+            if (!pub || !hint || !box) return;
+            if (pub.checked) {
+                hint.textContent = 'После сохранения бот попросит прислать изображение сообщением в чат';
+                box.style.opacity = '1';
+            } else {
+                hint.textContent = 'Только для публичных персонажей. Включи «Опубликовать в каталоге» — и бот запросит фото. Можно опубликовать и позже.';
+                box.style.opacity = '0.55';
+            }
+        }
+
         function submitChar() {
             const name = document.getElementById('cf-name').value.trim();
             const short = document.getElementById('cf-short').value.trim();
@@ -887,7 +909,30 @@
                 }
             } catch (e) { console.error('catalog data parse failed', e); }
 
+            // Описания и картинки публикует бот рядом со страницей.
+            // Тот же домен → никаких настроек не требуется.
+            try {
+                const r = await fetch('catalog_data.json?t=' + Date.now(), { cache: 'no-store' });
+                if (r.ok) {
+                    const pub = await r.json();
+                    const byId = {};
+                    (pub.characters || []).forEach(c => { byId[c.id] = c; });
+                    CHARACTERS.forEach(c => {
+                        const extra = byId[c.id];
+                        if (!extra) return;
+                        c.short       = extra.short       || c.short;
+                        c.full        = extra.full        || c.full;
+                        c.personality = extra.personality || c.personality;
+                        c.appearance  = extra.appearance  || c.appearance;
+                        c.quirks      = extra.quirks      || c.quirks;
+                        c.image       = extra.image       || '';
+                        if (extra.official) c.official = true;
+                    });
+                }
+            } catch (e) { console.warn('catalog_data.json недоступен', e); }
+
             applyAdminUI();
+            updateImageHint();
             try {
                 if (tg.MainButton) { tg.MainButton.onClick(flushPending); tg.MainButton.hide(); }
             } catch (e) {}
