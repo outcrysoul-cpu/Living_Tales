@@ -508,6 +508,30 @@
 
         let PERSONAS = [];     /* заполняется данными из ?d= (присылает бот) */
 
+        /* ===== Очередь действий =====
+           tg.sendData() ЗАКРЫВАЕТ мини-апп (так устроен Telegram), поэтому
+           удаления и лайки копим здесь и отправляем одной пачкой по кнопке
+           «Сохранить изменения». */
+        const PENDING = [];
+        function queueAction(obj) {
+            PENDING.push(obj);
+            updateMainButton();
+        }
+        function updateMainButton() {
+            if (!tg.MainButton) return;
+            if (PENDING.length) {
+                tg.MainButton.setText(`💾 Сохранить изменения (${PENDING.length})`);
+                tg.MainButton.show();
+            } else {
+                tg.MainButton.hide();
+            }
+        }
+        function flushPending() {
+            if (!PENDING.length) return;
+            tg.sendData(JSON.stringify({ action: 'batch', items: PENDING }));
+            PENDING.length = 0;
+        }
+
         let activeFilter = 'all';
         const LIKED = new Set(); // id персонажей, которым юзер поставил лайк (в реале — из бэка)
         let searchQuery = '';
@@ -642,7 +666,7 @@
             const c = CHARACTERS.find(x => x.id === id); if (!c) return;
             c.pendingPublish = checked;
             haptic('sel');
-            tg.sendData(JSON.stringify({ action: 'publish_character', character_id: id, publish: checked }));
+            queueAction({ action: 'publish_character', character_id: id, publish: checked });
             if (checked && tg.showAlert) tg.showAlert('Персонаж отправлен на модерацию 📤');
         }
 
@@ -658,7 +682,7 @@
             if (wasLiked) { LIKED.delete(id); c.likes = Math.max(0, c.likes - 1); }
             else { LIKED.add(id); c.likes += 1; }
             haptic('imp');
-            tg.sendData(JSON.stringify({ action: 'like_character', character_id: id, liked: !wasLiked }));
+            queueAction({ action: 'like_character', character_id: id, liked: !wasLiked });
 
             // обновляем счётчики везде, где показан этот персонаж
             document.querySelectorAll(`[data-like="${id}"]`).forEach(el => { el.textContent = c.likes; });
@@ -673,7 +697,7 @@
             const c = CHARACTERS[idx];
             const go = () => {
                 CHARACTERS.splice(idx, 1);
-                tg.sendData(JSON.stringify({ action: 'delete_character', character_id: id }));
+                queueAction({ action: 'delete_character', character_id: id });
                 haptic('imp'); closeOverlay('detailOverlay'); renderCatalog(); renderMyChars();
             };
             // Для чужого/публичного персонажа удаление доступно только модератору —
@@ -733,7 +757,7 @@
             const p = PERSONAS.find(x => x.id === id); if (!p) return;
             const go = () => {
                 PERSONAS = PERSONAS.filter(x => x.id !== id);
-                tg.sendData(JSON.stringify({ action: 'delete_persona', persona_id: id }));
+                queueAction({ action: 'delete_persona', persona_id: id });
                 haptic('imp'); renderPersonas();
             };
             if (tg.showConfirm) {
@@ -845,7 +869,9 @@
                             official: !!(c.o || c.official),
                             tags: c.tags || [],
                             likes: c.likes || 0, chats: c.chats || 0,
-                            public: true, author: c.author || { name: 'LT', id: 'lt' }
+                            // u = публичный (общий каталог), m = мой персонаж
+                            public: !!c.u,
+                            author: c.m ? ME : (c.author || { name: 'LT', id: 'lt' })
                         }));
                     }
                     const psrc = d.p || d.personas;
@@ -862,6 +888,9 @@
             } catch (e) { console.error('catalog data parse failed', e); }
 
             applyAdminUI();
+            try {
+                if (tg.MainButton) { tg.MainButton.onClick(flushPending); tg.MainButton.hide(); }
+            } catch (e) {}
             createStars(); renderFilters(); renderCatalog(); renderPersonas();
             ['cf-name:cf-name-cnt','cf-appearance:cf-appearance-cnt','cf-personality:cf-personality-cnt','cf-quirks:cf-quirks-cnt','cf-kinks:cf-kinks-cnt','cf-story:cf-story-cnt','cf-short:cf-short-cnt','cf-full:cf-full-cnt','pf-about:pf-about-cnt']
                 .forEach(pair => { const [a,b]=pair.split(':'); bindCounter(a,b); });
