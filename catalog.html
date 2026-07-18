@@ -824,21 +824,29 @@
                 const p = new URLSearchParams(location.search).get('d');
                 if (p) {
                     const d = JSON.parse(decodeURIComponent(p));
-                    if (Array.isArray(d.characters) && d.characters.length) {
-                        CHARACTERS = d.characters.map((c, i) => ({
-                            id: c.id != null ? c.id : i + 1,
-                            name: c.name || '', emoji: c.emoji || '🎭',
-                            short: c.short || '', full: c.full || '',
-                            appearance: c.appearance || '', personality: c.personality || '',
-                            category: c.category || 'romance', tags: c.tags || [],
-                            likes: c.likes || 0, chats: c.chats || 0,
-                            public: true, author: c.author || { name: 'LT', id: 'lt' }
+                    // Короткие ключи от бота: i=id, n=name, e=emoji, c=category
+                    const src = d.c || d.characters;
+                    if (Array.isArray(src) && src.length) {
+                        CHARACTERS = src.map((c, i) => ({
+                            id: c.i != null ? c.i : (c.id != null ? c.id : i + 1),
+                            name: c.n || c.name || '',
+                            emoji: c.e || c.emoji || '🎭',
+                            short: c.short || '',
+                            full: c.full || '',
+                            category: c.c || c.category || 'romance',
+                            tags: c.tags || [],
+                            likes: c.likes || 0, chats: 0, public: true,
+                            author: { name: 'LT', id: 'lt' }
                         }));
                     }
-                    if (Array.isArray(d.personas)) {
-                        PERSONAS = d.personas.map(p => ({
-                            id: p.id, name: p.name, age: p.age,
-                            about: p.about, isDefault: !!p.isDefault
+                    const psrc = d.p || d.personas;
+                    if (Array.isArray(psrc)) {
+                        PERSONAS = psrc.map(p => ({
+                            id: p.i != null ? p.i : p.id,
+                            name: p.n || p.name || '',
+                            age: p.a != null ? p.a : p.age,
+                            about: p.about || '',
+                            isDefault: !!(p.d || p.isDefault)
                         }));
                     }
                 }
