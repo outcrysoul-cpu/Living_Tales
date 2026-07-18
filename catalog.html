@@ -191,6 +191,13 @@
         .rules-age { font-size: 12.5px; font-weight: 700; color: #fbbf24; text-align: center; margin-top: 12px; }
         .story-note { font-size: 12px; line-height: 1.45; color: #c4b5fd; background: rgba(168,85,247,0.10); border: 1px solid rgba(168,85,247,0.30); border-radius: 10px; padding: 8px 10px; margin-bottom: 8px; }
         .story-note.empty { color: var(--text-secondary); background: rgba(255,255,255,0.05); border-color: rgba(255,255,255,0.14); }
+        .persona-card-full { display: block; padding: 14px; }
+        .persona-top { display: flex; align-items: center; gap: 12px; }
+        .persona-about { font-size: 13px; line-height: 1.5; color: var(--text-secondary); margin-top: 10px; white-space: pre-wrap; word-break: break-word; }
+        .persona-empty { color: var(--text-muted); font-style: italic; }
+        .persona-trunc { margin-top: 8px; font-size: 11.5px; line-height: 1.45; color: #fbbf24; background: rgba(251,191,36,0.10); border: 1px solid rgba(251,191,36,0.30); border-radius: 10px; padding: 8px 10px; }
+        .persona-actions { display: flex; gap: 8px; margin-top: 12px; }
+        .persona-actions .btn { flex: 1; font-size: 12.5px; padding: 9px 10px; }
         .persona-default-badge { font-size: 10px; font-weight: 600; color: #a855f7; border: 1px solid rgba(168,85,247,0.5); border-radius: 8px; padding: 2px 7px; margin-top: 4px; display: inline-block; }
         .add-persona { width: 100%; padding: 16px; border-radius: 18px; border: 1.5px dashed rgba(168,85,247,0.5); background: rgba(168,85,247,0.06); color: var(--accent-glow); font-size: 15px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: background 0.2s ease; }
         .add-persona:active { background: rgba(168,85,247,0.15); }
@@ -331,15 +338,15 @@
         <div class="view" id="view-personas">
             <div class="topbar">
                 <div>
-                    <h1 class="page-title">Личности</h1>
+                    <h1 class="page-title">Мои героини</h1>
                     <div class="page-sub">Твои герои для любых чатов</div>
                 </div>
                 <div class="brand-wrap"><span class="brand">Living&nbsp;Tales</span><span class="book-icon">📖</span></div>
             </div>
-            <div class="section-label">Мои личности <span id="personaCount">0</span></div>
+            <div class="section-label">Сохранённые героини <span id="personaCount">0</span></div>
             <div id="personaList"></div>
-            <button class="add-persona" onclick="openPersonaForm()">＋ Создать личность</button>
-            <div class="empty-hint">Личность — это ты в истории. Опиши героя один раз и подключай к любому персонажу: своему или из каталога.</div>
+            <button class="add-persona" onclick="openPersonaForm()">＋ Создать героиню</button>
+            <div class="empty-hint">Героиня — это ты в истории. Опиши её один раз и подключай к любому персонажу. В самой истории текст можно дописать под сюжет — это не изменит сохранённую здесь.</div>
         </div>
     </div>
 
@@ -348,7 +355,7 @@
     <nav class="bottom-nav">
         <div class="nav-item active" id="nav-catalog" onclick="switchView('catalog')"><span class="nav-ic">🎭</span>Каталог</div>
         <div class="nav-item" id="nav-mychars" onclick="switchView('mychars')"><span class="nav-ic">🗂️</span>Мои</div>
-        <div class="nav-item" id="nav-personas" onclick="switchView('personas')"><span class="nav-ic">👤</span>Личности</div>
+        <div class="nav-item" id="nav-personas" onclick="switchView('personas')"><span class="nav-ic">👩‍🦰</span>Мои героини</div>
     </nav>
 
     <!-- Детали персонажа -->
@@ -537,12 +544,12 @@
         </div>
     </div>
 
-    <!-- Создать личность -->
+    <!-- Создать героиню -->
     <div class="overlay" id="personaFormOverlay">
         <div class="sheet">
             <div class="sheet-grip"></div>
             <div class="sheet-head">
-                <div class="sheet-title">👤 Новая личность</div>
+                <div class="sheet-title">👩‍🦰 Новая героиня</div>
                 <button class="sheet-close" onclick="closeOverlay('personaFormOverlay')">✕</button>
             </div>
 
@@ -559,7 +566,7 @@
             <div class="toggle-row">
                 <div class="toggle-text">
                     <div class="t-title">По умолчанию для новых чатов</div>
-                    <div class="t-sub">Эта личность будет подставляться автоматически</div>
+                    <div class="t-sub">Будет подставляться в новые истории автоматически</div>
                 </div>
                 <label class="switch"><input type="checkbox" id="pf-default"><span class="slider"></span></label>
             </div>
@@ -856,22 +863,35 @@
             } else if (confirm(msg)) { go(); }
         }
 
-        /* ===== Личности ===== */
+        /* ===== Мои героини ===== */
+        function warnTruncated() {
+            const msg = 'Описание этой героини слишком длинное и показано частично. '
+                      + 'Редактирование здесь отключено, чтобы сохранение не стёрло остальной текст.';
+            tg.showAlert ? tg.showAlert(msg) : alert(msg);
+        }
+
         function renderPersonas() {
             document.getElementById('personaCount').textContent = PERSONAS.length;
             const box = document.getElementById('personaList'); box.innerHTML = '';
             PERSONAS.forEach(p => {
-                const el = document.createElement('div'); el.className = 'persona-card';
-                el.onclick = (e) => { if (e.target.closest('.persona-del')) return; openPersonaForm(p.id); };
-                const ageTxt = p.age ? `${p.age} лет · ` : '';
+                const el = document.createElement('div');
+                el.className = 'persona-card persona-card-full';
+                const ageTxt = p.age ? `${p.age} лет` : '';
+                const about = (p.about || '').trim();
                 el.innerHTML = `
-                    <div class="persona-ava">${initials(p.name)}</div>
-                    <div class="persona-info">
-                        <div class="persona-name">${esc(p.name)}</div>
-                        <div class="persona-meta">${ageTxt}${esc((p.about||'').slice(0,50))}${(p.about||'').length>50?'…':''}</div>
-                        ${p.isDefault ? '<div class="persona-default-badge">По умолчанию</div>' : ''}
+                    <div class="persona-top">
+                        <div class="persona-ava">${initials(p.name)}</div>
+                        <div class="persona-info">
+                            <div class="persona-name">${esc(p.name)}</div>
+                            ${ageTxt ? `<div class="persona-meta">${ageTxt}</div>` : ''}
+                            ${p.isDefault ? '<div class="persona-default-badge">По умолчанию</div>' : ''}
+                        </div>
                     </div>
-                    <button class="persona-del" onclick="deletePersona(${p.id})" aria-label="Удалить">🗑</button>`;
+                    <div class="persona-about">${about ? esc(about) : '<span class="persona-empty">Описание не заполнено</span>'}${p.truncated ? '<div class="persona-trunc">⚠️ Показана только часть описания — правка отключена, чтобы не потерять остальное. Отредактируй эту героиню в боте.</div>' : ''}</div>
+                    <div class="persona-actions">
+                        <button class="btn btn-ghost persona-edit" onclick="${p.truncated ? `warnTruncated()` : `openPersonaForm(${p.id})`}">✏️ Редактировать</button>
+                        <button class="btn btn-danger persona-del" onclick="deletePersona(${p.id})">🗑 Удалить</button>
+                    </div>`;
                 box.appendChild(el);
             });
         }
@@ -889,7 +909,7 @@
         function submitPersona() {
             const name = document.getElementById('pf-name').value.trim();
             const about = document.getElementById('pf-about').value.trim();
-            if (!name) { tg.showAlert('Укажи имя личности'); return; }
+            if (!name) { tg.showAlert('Укажи имя героини'); return; }
             if (!about) { tg.showAlert('Опиши своего героя'); return; }
             const data = { id: editingPersonaId || Date.now(), name, age: parseInt(document.getElementById('pf-age').value) || null, about, isDefault: document.getElementById('pf-default').checked };
             if (editingPersonaId) PERSONAS = PERSONAS.map(p => p.id === editingPersonaId ? data : p);
@@ -906,8 +926,8 @@
                 haptic('imp'); renderPersonas();
             };
             if (tg.showConfirm) {
-                tg.showConfirm(`Удалить личность «${p.name}»? Это действие нельзя отменить.`, ok => { if (ok) go(); });
-            } else if (confirm(`Удалить личность «${p.name}»?`)) { go(); }
+                tg.showConfirm(`Удалить героиню «${p.name}» из библиотеки? Это действие нельзя отменить.`, ok => { if (ok) go(); });
+            } else if (confirm(`Удалить героиню «${p.name}»?`)) { go(); }
         }
 
         /* ===== Форма персонажа ===== */
@@ -1151,9 +1171,19 @@
             try {
                 const params = new URLSearchParams(location.search);
                 IS_ADMIN = params.get('a') === '1';
+                // Новый формат — base64 (?b=), старый — percent-encoding (?d=).
+                const pB = params.get('b');
                 const p = params.get('d');
-                if (p) {
-                    const d = JSON.parse(decodeURIComponent(p));
+                if (pB || p) {
+                    let d;
+                    if (pB) {
+                        const b64 = pB.replace(/-/g, '+').replace(/_/g, '/');
+                        const bin = atob(b64 + '==='.slice((b64.length + 3) % 4));
+                        const bytes = Uint8Array.from(bin, ch => ch.charCodeAt(0));
+                        d = JSON.parse(new TextDecoder('utf-8').decode(bytes));
+                    } else {
+                        d = JSON.parse(decodeURIComponent(p));
+                    }
                     // Бот шлёт короткие ключи (i,n,e,c,o), чтобы ссылка не была длинной.
                     // Длинные имена поддерживаем для обратной совместимости.
                     const src = d.c || d.characters;
@@ -1179,7 +1209,8 @@
                             id: p.i != null ? p.i : p.id,
                             name: p.n || p.name || '',
                             age: p.a != null ? p.a : p.age,
-                            about: p.about || '',
+                            about: p.o || p.about || '',
+                            truncated: !!p.t,   // описание урезано из-за длины ссылки
                             isDefault: !!(p.d || p.isDefault)
                         }));
                     }
