@@ -1,16 +1,3 @@
 {
- "characters": [
-  {
-   "id": 316,
-   "name": "Челик",
-   "short": "Тест",
-   "full": "Челик — Тест",
-   "personality": "Норм",
-   "appearance": "Высокий",
-   "quirks": "Ест вафли",
-   "official": true,
-   "image": "media/char_316_1784378653.jpg",
-   "tone": "dark"
-  }
- ]
+ "characters": []
 }
