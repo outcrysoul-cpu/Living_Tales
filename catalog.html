@@ -105,6 +105,28 @@
         }
         .search-clear.show { display: flex; }
 
+        /* ===== Вкладки сортировки каталога ===== */
+        /* Плашка «публикация — премиум» в форме персонажа */
+        .premium-lock { display: none; margin: 10px 0 4px; padding: 14px 16px; border-radius: 16px; background: linear-gradient(135deg, rgba(245,158,11,0.14), rgba(217,119,6,0.08)); border: 1px solid rgba(245,158,11,0.35); font-size: 12.5px; line-height: 1.55; color: var(--text-secondary); }
+        .premium-lock.show { display: block; }
+        .premium-lock b { color: #fbbf24; }
+        .premium-lock a { color: #93c5fd; text-decoration: none; font-weight: 600; }
+        .pl-title { font-size: 13.5px; font-weight: 800; color: #fbbf24; margin-bottom: 6px; }
+        .lock-badge { display: inline-flex; align-items: center; gap: 3px; margin-left: 6px; padding: 1px 7px; border-radius: 8px; background: linear-gradient(135deg,#f59e0b,#d97706); color: #1a1005; font-size: 9.5px; font-weight: 800; vertical-align: middle; }
+        /* Заблокированный переключатель */
+        .switch.locked { opacity: 0.45; pointer-events: none; }
+
+        .sort-tabs { display: flex; gap: 4px; margin-bottom: 12px; padding: 4px; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; }
+        .sort-tab { flex: 1 1 0; text-align: center; padding: 9px 6px; border-radius: 12px; font-size: 12.5px; font-weight: 700; color: var(--text-secondary); cursor: pointer; white-space: nowrap; transition: all 0.2s ease; display: flex; align-items: center; justify-content: center; gap: 5px; user-select: none; }
+        .sort-tab .st-ic { font-size: 13px; line-height: 1; }
+        .sort-tab.active { background: var(--primary-gradient); color: #fff; box-shadow: 0 0 14px rgba(168,85,247,0.35); }
+        .sort-tab:active { transform: scale(0.97); }
+        /* Бейдж «новинка» на карточке — виден только во вкладке «Новые» */
+        .card-fresh { position: absolute; z-index: 3; bottom: 8px; left: 8px; background: linear-gradient(135deg,#22c55e,#15803d); color: #fff; font-size: 9.5px; font-weight: 800; padding: 3px 7px; border-radius: 9px; letter-spacing: 0.3px; }
+        /* Автор-проект (оригинальные персонажи) — золотистая подпись вместо ника заливавшего */
+        .author-ava.lt { background: linear-gradient(135deg,#f59e0b,#d97706); color: #1a1005; }
+        .card-author.lt span, .detail-author-name.lt { color: #fbbf24; font-weight: 700; }
+
         .filters { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 6px; -webkit-overflow-scrolling: touch; scrollbar-width: none; margin-bottom: 16px; }
         .filters::-webkit-scrollbar { display: none; }
         .filter-chip { flex: 0 0 auto; padding: 9px 16px; border-radius: 16px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: var(--text-secondary); font-size: 13px; font-weight: 600; cursor: pointer; white-space: nowrap; transition: all 0.2s ease; display: flex; align-items: center; gap: 6px; }
@@ -309,6 +331,8 @@
                 <button class="search-clear" id="searchClear" onclick="clearSearch()">✕</button>
             </div>
 
+            <div class="sort-tabs" id="sortTabs"></div>
+
             <div class="filters" id="filters"></div>
 
             <div class="nsfw-banner" id="nsfwBanner">
@@ -511,7 +535,18 @@
                     <div class="t-title">Опубликовать в каталоге</div>
                     <div class="t-sub">После модерации персонаж станет доступен всем. Выкл — приватный, виден только тебе.</div>
                 </div>
-                <label class="switch"><input type="checkbox" id="cf-public" checked onchange="updateImageHint()"><span class="slider"></span></label>
+                <label class="switch" id="cf-public-switch"><input type="checkbox" id="cf-public" checked onchange="onPublicToggle()"><span class="slider"></span></label>
+            </div>
+
+            <div class="premium-lock" id="cf-premium-lock">
+                <div class="pl-title">🔒 Публикация в общий каталог — Премиум</div>
+                На базовом тарифе тебе доступно всё остальное: каталог целиком, героини,
+                слоты и создание своих персонажей — они сохраняются во вкладке
+                <b>«Мои персонажи»</b> и работают в игре без ограничений.<br><br>
+                Отправить персонажа на модерацию и выложить его в общий каталог можно
+                на <b>Премиум-тарифе</b>.<br><br>
+                💬 А поделиться персонажем можно уже сейчас — в чате сообщества:<br>
+                <a href="https://t.me/living_tales_officialchat" target="_blank">t.me/living_tales_officialchat</a>
             </div>
             <div class="toggle-row" id="cf-author-row">
                 <div class="toggle-text">
@@ -640,6 +675,10 @@
         const ME = { name: 'Ты', id: 'you' };
 
         let IS_ADMIN = false;   /* из ?a=1 — только для UI, права проверяет бот */
+        /* из ?w=1 — есть ли право публиковать в общий каталог (премиум/админ).
+           Только для UI: бот проверяет право заново при приёме данных. */
+        let CAN_PUBLISH = false;
+        const COMMUNITY_CHAT_URL = 'https://t.me/living_tales_officialchat';
         let CHARACTERS = [];   /* заполняется данными из ?d= (присылает бот) */
 
         let PERSONAS = [];     /* заполняется данными из ?d= (присылает бот) */
@@ -668,8 +707,20 @@
             PENDING.length = 0;
         }
 
+        /* ===== Вкладки каталога =====
+           Работают ВМЕСТЕ с чипсами категорий: вкладка задаёт порядок и отбор,
+           категория — тематический фильтр поверх него. */
+        const SORT_TABS = [
+            { id: 'new',      label: 'Новые',        icon: '🆕' },
+            { id: 'popular',  label: 'Популярные',   icon: '🔥' },
+            { id: 'official', label: 'Оригинальные', icon: '⭐' }
+        ];
+        /* Сколько дней персонаж считается новинкой (бейдж «NEW») */
+        const FRESH_DAYS = 14;
+
         let activeFilter = 'all';
-        const LIKED = new Set(); // id персонажей, которым юзер поставил лайк (в реале — из бэка)
+        let activeTab = 'new';   /* стартуем с «Новых»: свежие смещают старых */
+        const LIKED = new Set(); // id персонажей, которым юзер поставил лайк — приходит от бота
         let searchQuery = '';
 
         const TONE_LABELS = {
@@ -680,13 +731,74 @@
 
         function currentCategory(){ return CATEGORIES.find(c => c.id === activeFilter); }
 
+        /* Дата добавления персонажа → миллисекунды.
+           Бот отдаёт created_at из БД; если его нет (старые записи или
+           catalog_data.json недоступен) — падаем на id: он автоинкрементный,
+           поэтому больший id = более новый персонаж. */
+        function createdMs(c) {
+            if (c.created_ms != null) return c.created_ms;
+            let ms = 0;
+            if (c.created_at) {
+                /* SQLite отдаёт "YYYY-MM-DD HH:MM:SS" — Safari такой формат
+                   без 'T' не парсит, поэтому нормализуем. */
+                const t = Date.parse(String(c.created_at).replace(' ', 'T'));
+                if (!isNaN(t)) ms = t;
+            }
+            c.created_ms = ms;
+            return ms;
+        }
+
+        function isFresh(c) {
+            const ms = createdMs(c);
+            if (!ms) return false;
+            return (Date.now() - ms) < FRESH_DAYS * 86400000;
+        }
+
+        function renderSortTabs() {
+            const box = document.getElementById('sortTabs');
+            if (!box) return;
+            box.innerHTML = '';
+            SORT_TABS.forEach(t => {
+                const el = document.createElement('div');
+                el.className = 'sort-tab' + (t.id === activeTab ? ' active' : '');
+                el.innerHTML = `<span class="st-ic">${t.icon}</span>${t.label}`;
+                el.onclick = () => {
+                    if (activeTab === t.id) return;
+                    activeTab = t.id;
+                    haptic('sel');
+                    renderSortTabs();
+                    renderGrid();
+                };
+                box.appendChild(el);
+            });
+        }
+
+        /* Отбор и порядок внутри вкладки. */
+        function applyTab(list) {
+            if (activeTab === 'official') {
+                /* Только персонажи с галочкой «Оригинальный», свежие сверху */
+                return list.filter(c => c.official)
+                           .sort((a, b) => (createdMs(b) - createdMs(a)) || (b.id - a.id));
+            }
+            if (activeTab === 'popular') {
+                /* По количеству лайков. При равенстве — новее выше, чтобы
+                   персонажи без лайков не залипали в случайном порядке. */
+                return list.slice().sort((a, b) =>
+                    ((b.likes || 0) - (a.likes || 0)) ||
+                    (createdMs(b) - createdMs(a)) ||
+                    (b.id - a.id));
+            }
+            /* new: новые смещают старых */
+            return list.slice().sort((a, b) => (createdMs(b) - createdMs(a)) || (b.id - a.id));
+        }
+
         function renderFilters() {
             const box = document.getElementById('filters'); box.innerHTML = '';
             CATEGORIES.forEach(c => {
                 const el = document.createElement('div');
                 el.className = 'filter-chip' + (c.id === activeFilter ? ' active' : '');
                 el.innerHTML = `<span>${c.icon}</span>${c.label}`;
-                el.onclick = () => { activeFilter = c.id; haptic('sel'); renderFilters(); renderCatalog(); };
+                el.onclick = () => { activeFilter = c.id; haptic('sel'); renderFilters(); renderSortTabs(); renderCatalog(); };
                 box.appendChild(el);
             });
         }
@@ -697,6 +809,16 @@
             renderGrid();
         }
 
+        /* Имя автора для показа.
+           У оригинальных персонажей автор — сам проект, а не тот админ/мастер,
+           который их залил: раньше в карточке стоял его ник, и персонаж
+           выглядел как пользовательский. */
+        function authorName(c) {
+            if (c.official) return 'LT (Living Tales)';
+            if (c.show_author) return c.show_author;
+            return (c.author && c.author.name) || 'LT';
+        }
+
         function charCardEl(c) {
             const card = document.createElement('div');
             card.className = 'char-card'; card.onclick = () => openDetail(c.id);
@@ -705,13 +827,14 @@
                     ${c.image ? `<img class="card-photo" src="${esc(c.image)}" alt="" loading="lazy">` : `<span>${c.emoji || initials(c.name)}</span>`}
                     ${c.public ? '' : '<div class="card-badge">🔒 Приватный</div>'}
                     ${c.official ? '<div class="card-official">⭐ Оригинал</div>' : ''}
+                    ${(activeTab === 'new' && isFresh(c)) ? '<div class="card-fresh">NEW</div>' : ''}
                 </div>
                 <div class="card-body">
                     <div class="card-name">${esc(c.name)}</div>
                     <div class="card-desc">${esc(c.short)}</div>
                     <div class="card-meta">
                         <button class="card-likes ${LIKED.has(c.id)?'liked':''}" data-id="${c.id}" onclick="toggleLike(event, ${c.id})"><span class="heart">❤️</span><span data-like="${c.id}">${c.likes}</span></button>
-                        <div class="card-author"><div class="author-ava">${initials(c.author.name)}</div><span>${esc(c.author.name)}</span></div>
+                        <div class="card-author${c.official ? ' lt' : ''}"><div class="author-ava${c.official ? ' lt' : ''}">${c.official ? 'LT' : initials(authorName(c))}</div><span>${esc(authorName(c))}</span></div>
                     </div>
                 </div>`;
             return card;
@@ -726,8 +849,15 @@
             });
             if (q) list = list.filter(c => (c.name + ' ' + (c.short||'') + ' ' + (c.tags||[]).join(' ')).toLowerCase().includes(q));
 
+            /* Вкладка задаёт отбор и порядок поверх категории и поиска */
+            list = applyTab(list);
+
             if (!list.length) {
-                grid.innerHTML = `<div class="empty-hint" style="grid-column:1/-1">${q ? 'Ничего не найдено. Попробуй другой запрос.' : 'Здесь пока пусто.'}</div>`;
+                let hint;
+                if (q) hint = 'Ничего не найдено. Попробуй другой запрос.';
+                else if (activeTab === 'official') hint = 'Оригинальных персонажей в этой категории пока нет.';
+                else hint = 'Здесь пока пусто.';
+                grid.innerHTML = `<div class="empty-hint" style="grid-column:1/-1">${hint}</div>`;
                 return;
             }
             list.forEach(c => grid.appendChild(charCardEl(c)));
@@ -793,8 +923,8 @@
                 <div class="detail-name">${esc(c.name)}</div>
                 <div class="detail-tagline">${esc(c.short)}</div>
                 <div class="detail-author-row">
-                    <div class="author-ava">${initials(c.author.name)}</div>
-                    <div><div class="detail-author-label">Автор персонажа</div><div class="detail-author-name">${esc(c.author.name)} · @${esc(c.author.id)}</div></div>
+                    <div class="author-ava${c.official ? ' lt' : ''}">${c.official ? 'LT' : initials(authorName(c))}</div>
+                    <div><div class="detail-author-label">Автор персонажа</div><div class="detail-author-name${c.official ? ' lt' : ''}">${esc(authorName(c))}${c.official ? '' : ' · @' + esc(c.author.id)}</div></div>
                 </div>
                 <div class="detail-stats">
                     <div class="stat-pill like-pill ${LIKED.has(c.id)?'liked':''}" data-id="${c.id}" onclick="toggleLike(event, ${c.id})"><div class="stat-num"><span class="heart">❤️</span> <span data-like="${c.id}">${c.likes}</span></div><div class="stat-lbl">${LIKED.has(c.id)?'Тебе нравится':'Лайков'}</div></div>
@@ -805,6 +935,9 @@
                 ${tags ? `<div class="detail-block-title">🏷️ Теги</div><div class="tag-row">${tags}</div>` : ''}
                 ${publishBlock}
                 ${isMine ? `<button class="btn btn-ghost btn-full" style="margin-top:16px" onclick="editChar(${c.id})">✏️ Редактировать персонажа</button>` : ''}
+                ${(c.anketa_missing && isMine)
+                    ? `<button class="btn btn-secondary" onclick="requestFullAnketa(${c.id})">✏️ Редактировать (загрузить анкету)</button>`
+                    : ''}
                 ${(isMinePrivate || IS_ADMIN)
                     ? `<div class="form-actions" style="margin-top:12px">
                            <button class="btn btn-danger" onclick="deleteCharacter(${c.id})">🗑 Удалить${(!isMinePrivate && IS_ADMIN) ? ' (модератор)' : ''}</button>
@@ -931,6 +1064,46 @@
         }
 
         /* ===== Форма персонажа ===== */
+        /* Публикация доступна только на премиуме.
+           Переключатель не прячем: пользователь должен видеть, что функция есть,
+           и понимать, что именно даёт премиум. */
+        function applyPublishGate() {
+            const pub  = document.getElementById('cf-public');
+            const sw   = document.getElementById('cf-public-switch');
+            const lock = document.getElementById('cf-premium-lock');
+            const title = sw && sw.closest('.toggle-row') &&
+                          sw.closest('.toggle-row').querySelector('.t-title');
+            if (!pub) return;
+            if (CAN_PUBLISH) {
+                if (sw) sw.classList.remove('locked');
+                if (lock) lock.classList.remove('show');
+                if (title) title.innerHTML = 'Опубликовать в каталоге';
+                return;
+            }
+            /* Нет премиума: выключаем, блокируем и показываем объяснение */
+            pub.checked = false;
+            if (sw) sw.classList.add('locked');
+            if (lock) lock.classList.add('show');
+            if (title) title.innerHTML = 'Опубликовать в каталоге<span class="lock-badge">💎 ПРЕМИУМ</span>';
+            updateImageHint();
+        }
+
+        function onPublicToggle() {
+            const pub = document.getElementById('cf-public');
+            if (!CAN_PUBLISH && pub && pub.checked) {
+                pub.checked = false;
+                haptic('err');
+                if (tg.showAlert) {
+                    tg.showAlert('Публикация в общий каталог доступна на Премиум-тарифе. '
+                               + 'Персонаж сохранится приватным — он будет доступен тебе '
+                               + 'во вкладке «Мои персонажи» и в игре.');
+                }
+                applyPublishGate();
+                return;
+            }
+            updateImageHint();
+        }
+
         function openCharForm() {
             const sel = document.getElementById('cf-category');
             if (!sel.options.length) {
@@ -970,6 +1143,19 @@
            При сохранении уходит action 'update_character' с его id. */
         let EDITING_ID = null;
 
+        /* Персонажи, чья анкета не влезла в ссылку, правим через бота:
+           он переоткроет мини-апп в режиме фокуса — только этот персонаж,
+           зато с полной анкетой. */
+        function requestFullAnketa(id) {
+            haptic('sel');
+            if (tg.showAlert) {
+                tg.showAlert('Анкета этого персонажа объёмная и не поместилась в общий '
+                           + 'список. Сейчас закроем каталог — бот пришлёт кнопку '
+                           + '«Открыть редактор» с полной анкетой.');
+            }
+            tg.sendData(JSON.stringify({ action: 'edit_request', character_id: id }));
+        }
+
         function editChar(id) {
             const c = CHARACTERS.find(x => x.id === id);
             if (!c) return;
@@ -984,6 +1170,9 @@
             set('cf-kinks', c.kinks);
             set('cf-story', c.story);
             set('cf-heroine', c.heroine);
+            const _sa = document.getElementById('cf-author');
+            if (_sa) _sa.checked = !!c.show_author;
+            applyPublishGate();
             set('cf-tags', (c.tags || []).join(', '));
             const cat = document.getElementById('cf-category');
             if (cat) cat.value = c.category || 'romance';
@@ -1013,7 +1202,8 @@
             });
             const g = document.querySelector('input[name="cf-tone"][value="gray"]');
             if (g) g.checked = true;
-            const pub = document.getElementById('cf-public'); if (pub) pub.checked = true;
+            const pub = document.getElementById('cf-public'); if (pub) pub.checked = CAN_PUBLISH;
+            applyPublishGate();
             const auth = document.getElementById('cf-author'); if (auth) auth.checked = false;
             const off = document.getElementById('cf-official'); if (off) off.checked = false;
             const title = document.getElementById('charFormTitle');
@@ -1171,6 +1361,8 @@
             try {
                 const params = new URLSearchParams(location.search);
                 IS_ADMIN = params.get('a') === '1';
+                /* w=1 — право публиковать в общий каталог (премиум/админ) */
+                CAN_PUBLISH = params.get('w') === '1' || IS_ADMIN;
                 // Новый формат — base64 (?b=), старый — percent-encoding (?d=).
                 const pB = params.get('b');
                 const p = params.get('d');
@@ -1200,9 +1392,33 @@
                             likes: c.likes || 0, chats: c.chats || 0,
                             // u = публичный (общий каталог), m = мой персонаж
                             public: !!c.u,
-                            author: c.m ? ME : (c.author || { name: 'LT', id: 'lt' })
+                            author: c.m ? ME : (c.author || { name: 'LT', id: 'lt' }),
+                            /* Полная анкета своего персонажа — заглавные ключи.
+                               Раньше бот их не слал вовсе, поэтому форма правки
+                               открывалась ПУСТОЙ и сохранение затирало характер,
+                               внешность, особенности и предпочтения в базе. */
+                            personality: c.P || c.personality || '',
+                            appearance:  c.A || c.appearance  || '',
+                            quirks:      c.Q || c.quirks      || '',
+                            kinks:       c.K || '',
+                            story:       c.S || '',
+                            heroine:     c.H || '',
+                            short:       c.sh || c.short || '',
+                            full:        c.fu || c.full  || '',
+                            tone:        c.tn || 'gray',
+                            show_author: !!c.sa,
+                            /* x=1 — анкета не поместилась в ссылку. Форму правки
+                               по такому персонажу открывать НЕЛЬЗЯ: пустые поля
+                               перезаписали бы реальные данные. Запрашиваем у бота. */
+                            anketa_missing: !!c.x
                         }));
                     }
+                    /* Лайки, уже поставленные игроком (бот шлёт в ключе l).
+                       Раньше LIKED всегда стартовал пустым: сердечки не были
+                       подсвечены, и первый тап по «своему» лайку его снимал. */
+                    const lsrc = d.l || d.liked;
+                    if (Array.isArray(lsrc)) lsrc.forEach(id => LIKED.add(id));
+
                     const psrc = d.p || d.personas;
                     if (Array.isArray(psrc)) {
                         PERSONAS = psrc.map(p => ({
@@ -1243,6 +1459,12 @@
                         if (extra.heroine !== undefined) c.heroine = extra.heroine;
                         if (extra.author  !== undefined) c.show_author = extra.author;
                         if (extra.official) c.official = true;
+                        /* Данные для вкладок: количество лайков и дата добавления.
+                           До этой правки бот их не отдавал вовсе — likes всегда
+                           было 0, а created_at не существовало, поэтому
+                           «Популярные» и «Новые» построить было не из чего. */
+                        if (extra.likes      !== undefined) c.likes = extra.likes || 0;
+                        if (extra.created_at !== undefined) { c.created_at = extra.created_at; c.created_ms = null; }
                     });
                 }
             } catch (e) { console.warn('catalog_data.json недоступен', e); }
@@ -1252,7 +1474,8 @@
             try {
                 if (tg.MainButton) { tg.MainButton.onClick(flushPending); tg.MainButton.hide(); }
             } catch (e) {}
-            createStars(); renderFilters(); renderCatalog(); renderPersonas();
+            applyPublishGate();
+            createStars(); renderSortTabs(); renderFilters(); renderCatalog(); renderPersonas();
             ['cf-name:cf-name-cnt','cf-appearance:cf-appearance-cnt','cf-personality:cf-personality-cnt','cf-quirks:cf-quirks-cnt','cf-kinks:cf-kinks-cnt','cf-story:cf-story-cnt','cf-heroine:cf-heroine-cnt','cf-short:cf-short-cnt','cf-full:cf-full-cnt','pf-about:pf-about-cnt']
                 .forEach(pair => { const [a,b]=pair.split(':'); bindCounter(a,b); });
 
