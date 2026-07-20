@@ -1435,8 +1435,14 @@
 
             // Описания и картинки публикует бот рядом со страницей.
             // Тот же домен → никаких настроек не требуется.
+            // env=test → тестовый бот; читаем catalog_data.test.json, иначе боевой
+            // catalog_data.json. Так одна страница обслуживает оба бота, не смешивая
+            // их каталоги (id персонажей у тест/осн ботов не совпадают).
             try {
-                const r = await fetch('catalog_data.json?t=' + Date.now(), { cache: 'no-store' });
+                const envParam = (new URLSearchParams(location.search).get('env') || 'main').toLowerCase();
+                const isTest = ['test','beta','dev','staging'].includes(envParam);
+                const catalogFile = isTest ? 'catalog_data.test.json' : 'catalog_data.json';
+                const r = await fetch(catalogFile + '?t=' + Date.now(), { cache: 'no-store' });
                 if (r.ok) {
                     const pub = await r.json();
                     const byId = {};
@@ -1474,29 +1480,63 @@
             try {
                 if (tg.MainButton) { tg.MainButton.onClick(flushPending); tg.MainButton.hide(); }
             } catch (e) {}
-            applyPublishGate();
-            createStars(); renderSortTabs(); renderFilters(); renderCatalog(); renderPersonas();
-            ['cf-name:cf-name-cnt','cf-appearance:cf-appearance-cnt','cf-personality:cf-personality-cnt','cf-quirks:cf-quirks-cnt','cf-kinks:cf-kinks-cnt','cf-story:cf-story-cnt','cf-heroine:cf-heroine-cnt','cf-short:cf-short-cnt','cf-full:cf-full-cnt','pf-about:pf-about-cnt']
-                .forEach(pair => { const [a,b]=pair.split(':'); bindCounter(a,b); });
+            // ИСПРАВЛЕНО (кнопка «Создать персонажа» не нажимается на ПК): весь
+            // хвост init() был без защиты. Если любой из рендеров падал (на ПК в
+            // браузере часто нет ?d=/Telegram API, и CHARACTERS пустой), функция
+            // прерывалась ДО снятия loadingScreen — а он растянут на весь экран
+            // поверх контента и перехватывает все клики. Кнопки видны, но
+            // «мёртвые». Теперь каждый шаг изолирован, а loadingScreen снимается
+            // в finally при любом исходе.
+            try { applyPublishGate(); } catch (e) { console.error('applyPublishGate', e); }
+            try { createStars(); } catch (e) { console.error('createStars', e); }
+            try { renderSortTabs(); } catch (e) { console.error('renderSortTabs', e); }
+            try { renderFilters(); } catch (e) { console.error('renderFilters', e); }
+            try { renderCatalog(); } catch (e) { console.error('renderCatalog', e); }
+            try { renderPersonas(); } catch (e) { console.error('renderPersonas', e); }
+            try {
+                ['cf-name:cf-name-cnt','cf-appearance:cf-appearance-cnt','cf-personality:cf-personality-cnt','cf-quirks:cf-quirks-cnt','cf-kinks:cf-kinks-cnt','cf-story:cf-story-cnt','cf-heroine:cf-heroine-cnt','cf-short:cf-short-cnt','cf-full:cf-full-cnt','pf-about:pf-about-cnt']
+                    .forEach(pair => { const [a,b]=pair.split(':'); bindCounter(a,b); });
+            } catch (e) { console.error('bindCounter', e); }
 
-            const si = document.getElementById('searchInput');
-            si.addEventListener('input', function(){
-                searchQuery = this.value;
-                document.getElementById('searchClear').classList.toggle('show', this.value.length>0);
-                renderGrid();
-            });
+            try {
+                const si = document.getElementById('searchInput');
+                if (si) si.addEventListener('input', function(){
+                    searchQuery = this.value;
+                    document.getElementById('searchClear').classList.toggle('show', this.value.length>0);
+                    renderGrid();
+                });
+            } catch (e) { console.error('searchInput', e); }
 
-            switchView(initialView());
-            setTimeout(() => {
-                document.getElementById('loadingScreen').classList.add('hide');
-                document.getElementById('app').classList.add('visible');
-                setTimeout(() => {
-                    document.getElementById('loadingScreen').style.display='none';
-                    checkRules();   // правила показываем поверх готового каталога
-                }, 300);
-            }, 300);
+            try { switchView(initialView()); } catch (e) { console.error('switchView', e); }
         }
-        if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init); else init();
+
+        // Снятие экрана загрузки ВЫНЕСЕНО из init и вызывается всегда, даже если
+        // init упал целиком — иначе loadingScreen навечно блокирует интерфейс.
+        function dismissLoadingScreen() {
+            try {
+                const ls = document.getElementById('loadingScreen');
+                const app = document.getElementById('app');
+                if (app) app.classList.add('visible');
+                if (ls) {
+                    ls.classList.add('hide');
+                    setTimeout(() => {
+                        ls.style.display = 'none';
+                        try { checkRules(); } catch (e) {}
+                    }, 300);
+                }
+            } catch (e) { console.error('dismissLoadingScreen', e); }
+        }
+
+        async function boot() {
+            try {
+                await init();
+            } catch (e) {
+                console.error('init failed', e);
+            } finally {
+                dismissLoadingScreen();
+            }
+        }
+        if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot); else boot();
     </script>
 </body>
 </html>
