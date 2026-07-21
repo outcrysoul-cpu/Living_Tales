@@ -717,6 +717,11 @@
         ];
         /* Сколько дней персонаж считается новинкой (бейдж «NEW») */
         const FRESH_DAYS = 14;
+        // Бейдж NEW на карточке — только для СОВСЕМ свежих (иначе, когда все
+        // персонажи добавлены недавно, NEW висит на всех и выглядит как «всё
+        // подсвечено»). Вкладка «Новые» при этом всё равно сортирует по дате —
+        // бейдж лишь помечает самых новых.
+        const FRESH_BADGE_DAYS = 3;
 
         let activeFilter = 'all';
         let activeTab = 'new';   /* стартуем с «Новых»: свежие смещают старых */
@@ -752,6 +757,12 @@
             const ms = createdMs(c);
             if (!ms) return false;
             return (Date.now() - ms) < FRESH_DAYS * 86400000;
+        }
+
+        function isFreshBadge(c) {
+            const ms = createdMs(c);
+            if (!ms) return false;
+            return (Date.now() - ms) < FRESH_BADGE_DAYS * 86400000;
         }
 
         function renderSortTabs() {
@@ -827,7 +838,7 @@
                     ${c.image ? `<img class="card-photo" src="${esc(c.image)}" alt="" loading="lazy">` : `<span>${c.emoji || initials(c.name)}</span>`}
                     ${c.public ? '' : '<div class="card-badge">🔒 Приватный</div>'}
                     ${c.official ? '<div class="card-official">⭐ Оригинал</div>' : ''}
-                    ${(activeTab === 'new' && isFresh(c)) ? '<div class="card-fresh">NEW</div>' : ''}
+                    ${(activeTab === 'new' && isFreshBadge(c)) ? '<div class="card-fresh">NEW</div>' : ''}
                 </div>
                 <div class="card-body">
                     <div class="card-name">${esc(c.name)}</div>
