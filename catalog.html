@@ -456,8 +456,8 @@
             </div>
 
             <label>Имя <span class="req">*</span></label>
-            <input type="text" id="cf-name" placeholder="Имя персонажа" maxlength="50">
-            <div class="char-counter"><span id="cf-name-cnt">0</span>/50</div>
+            <input type="text" id="cf-name" placeholder="Имя персонажа" maxlength="100">
+            <div class="char-counter"><span id="cf-name-cnt">0</span>/100</div>
 
             <label>Характер<span class="hint">Темперамент, манера речи, привычки</span></label>
             <textarea id="cf-personality" placeholder="Какой он в общении, как реагирует..." maxlength="500"></textarea>
@@ -676,7 +676,15 @@
             'linear-gradient(160deg,#4c1d95,#0ea5e9)','linear-gradient(160deg,#be123c,#4c1d95)'
         ];
         function grad(i){ return GRADIENTS[i % GRADIENTS.length]; }
-        function initials(name){ return (name||'?').trim().charAt(0).toUpperCase(); }
+        function initials(name){
+            // Приводим к строке (name мог прийти boolean/undefined — тогда .trim падал).
+            const s = String(name == null ? '' : name).trim();
+            if (!s) return '?';
+            // Первый ГРАФЕМ, а не charAt(0): ник из эмодзи — суррогатная пара,
+            // charAt(0) вернул бы половину пары и «квадрат». [...s][0] берёт эмодзи целиком.
+            const first = [...s][0];
+            return first ? first.toUpperCase() : '?';
+        }
 
         /* Текущий пользователь (демо). В реале — из initDataUnsafe.user */
         const ME = { name: 'Ты', id: 'you' };
@@ -833,8 +841,20 @@
            выглядел как пользовательский. */
         function authorName(c) {
             if (c.official) return 'LT (Living Tales)';
-            if (c.show_author) return c.show_author;
-            return (c.author && c.author.name) || 'LT';
+            // show_author может прийти строкой (готовое имя) ИЛИ булевым флагом
+            // (галочка «указать авторство»). Раньше при флаге=true функция
+            // возвращала boolean true → initials(true) падал с "true.trim is not
+            // a function", цикл отрисовки «Мои» обрывался ПОСЛЕ установки счётчика:
+            // число «Всего» менялось, а карточки не появлялись.
+            if (typeof c.show_author === 'string' && c.show_author.trim()) {
+                return c.show_author.trim();
+            }
+            if (c.show_author && c.author && c.author.name) return c.author.name;
+            // Авторство не указано (галочка снята) — показываем «Аноним», а НЕ «LT»:
+            // «LT» — это подпись оригинальных персонажей проекта, чужой автор так
+            // выглядел бы как официальный.
+            const nm = (c.author && c.author.name) || '';
+            return nm.trim() ? nm.trim() : 'Аноним';
         }
 
         function charCardEl(c) {
@@ -942,7 +962,7 @@
                 <div class="detail-tagline">${esc(c.short)}</div>
                 <div class="detail-author-row">
                     <div class="author-ava${c.official ? ' lt' : ''}">${c.official ? 'LT' : initials(authorName(c))}</div>
-                    <div><div class="detail-author-label">Автор персонажа</div><div class="detail-author-name${c.official ? ' lt' : ''}">${esc(authorName(c))}${c.official ? '' : ' · @' + esc(c.author.id)}</div></div>
+                    <div><div class="detail-author-label">Автор персонажа</div><div class="detail-author-name${c.official ? ' lt' : ''}">${esc(authorName(c))}</div></div>
                 </div>
                 <div class="detail-stats">
                     <div class="stat-pill like-pill ${LIKED.has(c.id)?'liked':''}" data-id="${c.id}" onclick="toggleLike(event, ${c.id})"><div class="stat-num"><span class="heart">❤️</span> <span data-like="${c.id}">${c.likes}</span></div><div class="stat-lbl">${LIKED.has(c.id)?'Тебе нравится':'Лайков'}</div></div>
@@ -1433,7 +1453,12 @@
                             likes: c.likes || 0, chats: c.chats || 0,
                             // u = публичный (общий каталог), m = мой персонаж
                             public: !!c.u,
-                            author: c.m ? ME : (c.author || { name: 'LT', id: 'lt' }),
+                            // Автор: мой → ME; есть подпись (au, автор разрешил) → она;
+                            // иначе «Аноним». «LT» здесь НЕ ставим — так подписаны только
+                            // оригинальные персонажи проекта (у них c.o=1, см. authorName).
+                            author: c.m ? ME
+                                        : (c.au ? { name: c.au, id: 'a' }
+                                                : (c.author || { name: 'Аноним', id: '' })),
                             /* Полная анкета своего персонажа — заглавные ключи.
                                Раньше бот их не слал вовсе, поэтому форма правки
                                открывалась ПУСТОЙ и сохранение затирало характер,
