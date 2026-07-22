@@ -1,6 +1,22 @@
 {
  "characters": [
   {
+   "id": 362,
+   "name": "Тест",
+   "short": "Темт",
+   "full": "Тест — Темт",
+   "personality": "Тест",
+   "appearance": "Тест",
+   "quirks": "Тест",
+   "official": false,
+   "image": "",
+   "tone": "gray",
+   "has_heroine": true,
+   "author": "",
+   "created_at": "2026-07-22 10:33:38",
+   "likes": 0
+  },
+  {
    "id": 361,
    "name": "Яна тест 2",
    "short": "Тест",
