@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Living Tales — Каталог</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pako/2.1.0/pako.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400;1,500&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -717,9 +718,25 @@
                 tg.MainButton.hide();
             }
         }
+        function sendSafeData(payload) {
+            const jsonStr = JSON.stringify(payload);
+            // Если размер меньше 3500 байт, отправляем как есть (для совместимости)
+            if (new Blob([jsonStr]).size < 3500) {
+                tg.sendData(jsonStr);
+            } else {
+                // Иначе сжимаем через gzip (pako) и кодируем в base64 для безопасной передачи строкой
+                const compressed = pako.gzip(jsonStr);
+                let binary = '';
+                for (let i = 0; i < compressed.length; i++) {
+                    binary += String.fromCharCode(compressed[i]);
+                }
+                const base64Data = window.btoa(binary);
+                tg.sendData(JSON.stringify({ _compressed: 'gzip', data: base64Data }));
+            }
+        }
         function flushPending() {
             if (!PENDING.length) return;
-            tg.sendData(JSON.stringify({ action: 'batch', items: PENDING }));
+            sendSafeData({ action: 'batch', items: PENDING });
             PENDING.length = 0;
         }
 
@@ -996,7 +1013,7 @@
 
         function selectChar(id) {
             const c = CHARACTERS.find(x => x.id === id); haptic('imp');
-            tg.sendData(JSON.stringify({ action: 'select_character', character_id: id, character_name: c ? c.name : '' }));
+            sendSafeData({ action: 'select_character', character_id: id, character_name: c ? c.name : '' });
             try { tg.close(); } catch(e){}
         }
         function toggleLike(e, id) {
@@ -1087,7 +1104,7 @@
             if (editingPersonaId) PERSONAS = PERSONAS.map(p => p.id === editingPersonaId ? data : p);
             else PERSONAS.push(data);
             if (data.isDefault) PERSONAS = PERSONAS.map(p => ({...p, isDefault: p.id === data.id}));
-            tg.sendData(JSON.stringify({ action: 'save_persona', persona: data }));
+            sendSafeData({ action: 'save_persona', persona: data });
             haptic('imp'); renderPersonas(); closeOverlay('personaFormOverlay');
         }
         function deletePersona(id) {
@@ -1193,7 +1210,7 @@
                            + 'список. Сейчас закроем каталог — бот пришлёт кнопку '
                            + '«Открыть редактор» с полной анкетой.');
             }
-            tg.sendData(JSON.stringify({ action: 'edit_request', character_id: id }));
+            sendSafeData({ action: 'edit_request', character_id: id });
         }
 
         function editChar(id) {
@@ -1315,9 +1332,7 @@
             // после создания и новый персонаж не успевал появиться во вкладке
             // «Мои». Теперь приложение остаётся открытым, персонаж виден сразу,
             // а боту данные уйдут пачкой по кнопке «💾 Сохранить изменения».
-            // Отправляем данные боту СРАЗУ, без очереди
-            tg.sendData(JSON.stringify({ action: 'submit_character', character: ch }));
-            haptic('imp');
+            sendSafeData({ action: 'submit_character', character: ch });
 
             // Показать сразу в «Мои персонажи» (и в каталоге, если публичный).
             CHARACTERS.push({
