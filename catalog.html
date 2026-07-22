@@ -645,6 +645,13 @@
                 tg.onEvent('contentSafeAreaChanged', syncViewport);
             }
             window.addEventListener('resize', syncViewport);
+            // Подстраховка: если игрок закрывает каталог, не нажав «Сохранить»,
+            // отправляем накопленные действия (в т.ч. создание персонажа) боту,
+            // чтобы они не потерялись. sendData закроет апп — но он и так
+            // закрывается.
+            window.addEventListener('beforeunload', function(){
+                try { if (PENDING.length) flushPending(); } catch(e){}
+            });
             window.addEventListener('orientationchange', function(){ setTimeout(syncViewport, 250); });
             // Чтобы свайп вниз по каталогу не закрывал мини-апп на новых клиентах.
             if (tg && tg.disableVerticalSwipes) tg.disableVerticalSwipes();
@@ -1255,25 +1262,48 @@
             };
             if (EDITING_ID) {
                 ch.id = EDITING_ID;
-                tg.sendData(JSON.stringify({ action: 'update_character', character: ch }));
+                queueAction({ action: 'update_character', character: ch });
                 haptic('imp');
-                tg.showAlert && tg.showAlert('Изменения сохранены ✏️');
+                // Обновляем персонажа локально, чтобы правка была видна сразу.
+                const _idx = CHARACTERS.findIndex(x => x.id === EDITING_ID);
+                if (_idx >= 0) {
+                    CHARACTERS[_idx] = Object.assign({}, CHARACTERS[_idx], {
+                        name: ch.name, short: ch.short, full: ch.full,
+                        appearance: ch.appearance, personality: ch.personality,
+                        quirks: ch.quirks, kinks: ch.kinks, story: ch.story,
+                        heroine: ch.heroine, category: ch.category, tags: ch.tags,
+                        public: ch.is_public, official: !!ch.official,
+                        tone: ch.tone, show_author: ch.show_author
+                    });
+                }
+                renderCatalog(); renderMyChars();
+                tg.showAlert && tg.showAlert('Изменения сохранены ✏️ Не забудь «💾 Сохранить изменения».');
                 closeOverlay('charFormOverlay');
                 EDITING_ID = null;
                 return;
             }
-            tg.sendData(JSON.stringify({ action: 'submit_character', character: ch })); haptic('imp');
+            // СОЗДАНИЕ: через очередь (queueAction), а НЕ tg.sendData напрямую —
+            // sendData закрывает мини-апп, из-за чего каталог захлопывался сразу
+            // после создания и новый персонаж не успевал появиться во вкладке
+            // «Мои». Теперь приложение остаётся открытым, персонаж виден сразу,
+            // а боту данные уйдут пачкой по кнопке «💾 Сохранить изменения».
+            queueAction({ action: 'submit_character', character: ch }); haptic('imp');
 
-            // демо: сразу показать в «Мои персонажи» (и в каталоге, если публичный)
+            // Показать сразу в «Мои персонажи» (и в каталоге, если публичный).
             CHARACTERS.push({
                 id: Date.now(), name: ch.name, emoji: '🎭', short: ch.short, full: ch.full,
-                appearance: ch.appearance, personality: ch.personality, quirks: ch.quirks, story: ch.story,
+                appearance: ch.appearance, personality: ch.personality, quirks: ch.quirks,
+                kinks: ch.kinks, story: ch.story, heroine: ch.heroine,
                 category: ch.category, tags: ch.tags, likes: 0, chats: 0,
+                tone: ch.tone, show_author: ch.show_author,
                 public: ch.is_public, official: !!ch.official, author: ME
             });
             renderCatalog(); renderMyChars();
+            switchView('mychars');   // сразу показываем вкладку «Мои», где он появился
 
-            tg.showAlert && tg.showAlert(ch.is_public ? 'Персонаж отправлен на модерацию 📤' : 'Приватный персонаж создан 🔒');
+            tg.showAlert && tg.showAlert(
+                (ch.is_public ? 'Персонаж создан и будет отправлен на модерацию 📤' : 'Приватный персонаж создан 🔒')
+                + '\n\nНажми «💾 Сохранить изменения» внизу, чтобы бот его записал.');
             closeOverlay('charFormOverlay');
         }
 
