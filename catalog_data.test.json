@@ -33,22 +33,6 @@
    "likes": 0
   },
   {
-   "id": 369,
-   "name": "Яна тест 5",
-   "short": "Ттттт",
-   "full": "Яна тест 5 — Ттттт",
-   "personality": "Ппппр",
-   "appearance": "Титтт",
-   "quirks": "Ррттт",
-   "official": false,
-   "image": "",
-   "tone": "gray",
-   "has_heroine": true,
-   "author": "@SaYappl",
-   "created_at": "2026-07-22T14:49:57.880293",
-   "likes": 0
-  },
-  {
    "id": 368,
    "name": "Тест",
    "short": "Тест",
