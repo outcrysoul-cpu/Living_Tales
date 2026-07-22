@@ -165,6 +165,7 @@
         .char-card:active { transform: scale(0.97); }
         .card-img { width: 100%; aspect-ratio: 3/4; position: relative; display: flex; align-items: center; justify-content: center; font-size: 54px; overflow: hidden; }
         .card-badge { position: absolute; z-index: 3; top: 8px; left: 8px; background: rgba(0,0,0,0.55); backdrop-filter: blur(4px); color: #e9d5ff; font-size: 10px; font-weight: 600; padding: 3px 8px; border-radius: 10px; display: flex; align-items: center; gap: 3px; }
+        .card-moderation { position: absolute; z-index: 3; top: 8px; left: 8px; background: linear-gradient(135deg,#3b82f6,#6366f1); color: #fff; font-size: 10px; font-weight: 700; padding: 3px 8px; border-radius: 10px; display: flex; align-items: center; gap: 3px; box-shadow: 0 2px 8px rgba(59,130,246,0.4); }
         .card-body { padding: 10px 11px 12px; display: flex; flex-direction: column; gap: 5px; flex: 1; }
         .card-name { font-size: 15px; font-weight: 700; color: #fff; line-height: 1.15; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .card-desc { font-size: 12px; color: var(--text-muted); line-height: 1.3; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; min-height: 31px; }
@@ -863,7 +864,7 @@
             card.innerHTML = `
                 <div class="card-img" style="background:${grad(c.id)}">
                     ${c.image ? `<img class="card-photo" src="${esc(c.image)}" alt="" loading="lazy">` : `<span>${c.emoji || initials(c.name)}</span>`}
-                    ${c.public ? '' : '<div class="card-badge">🔒 Приватный</div>'}
+                    ${c.pending ? '<div class="card-moderation">⏳ На модерации</div>' : (c.public ? '' : '<div class="card-badge">🔒 Приватный</div>')}
                     ${c.official ? '<div class="card-official">⭐ Оригинал</div>' : ''}
                     ${(activeTab === 'new' && isFreshBadge(c)) ? '<div class="card-fresh">NEW</div>' : ''}
                 </div>
@@ -957,7 +958,7 @@
                 </div>` : '';
 
             document.getElementById('detailContent').innerHTML = `
-                <div class="detail-hero" style="background:${grad(c.id)}">${c.image ? `<img class="hero-blur" src="${esc(c.image)}" alt=""><img class="hero-photo" src="${esc(c.image)}" alt="">` : `<span>${c.emoji || initials(c.name)}</span>`}${c.public ? '' : '<div class="card-badge">🔒 Приватный</div>'}${c.official ? '<div class="card-official">⭐ Оригинальный персонаж</div>' : ''}</div>
+                <div class="detail-hero" style="background:${grad(c.id)}">${c.image ? `<img class="hero-blur" src="${esc(c.image)}" alt=""><img class="hero-photo" src="${esc(c.image)}" alt="">` : `<span>${c.emoji || initials(c.name)}</span>`}${c.pending ? '<div class="card-moderation">⏳ На модерации</div>' : (c.public ? '' : '<div class="card-badge">🔒 Приватный</div>')}${c.official ? '<div class="card-official">⭐ Оригинальный персонаж</div>' : ''}</div>
                 <div class="detail-name">${esc(c.name)}</div>
                 <div class="detail-tagline">${esc(c.short)}</div>
                 <div class="detail-author-row">
@@ -1299,7 +1300,8 @@
                         quirks: ch.quirks, kinks: ch.kinks, story: ch.story,
                         heroine: ch.heroine, category: ch.category, tags: ch.tags,
                         public: ch.is_public, official: IS_ADMIN && !!ch.official,
-                        tone: ch.tone, show_author: ch.show_author
+                        tone: ch.tone, show_author: ch.show_author,
+                        pending: ch.is_public && !IS_ADMIN
                     });
                 }
                 renderCatalog(); renderMyChars();
@@ -1322,7 +1324,8 @@
                 kinks: ch.kinks, story: ch.story, heroine: ch.heroine,
                 category: ch.category, tags: ch.tags, likes: 0, chats: 0,
                 tone: ch.tone, show_author: ch.show_author,
-                public: ch.is_public, official: IS_ADMIN && !!ch.official, author: ME
+                public: ch.is_public, official: IS_ADMIN && !!ch.official, author: ME,
+                pending: ch.is_public && !IS_ADMIN
             });
             renderCatalog(); renderMyChars();
             switchView('mychars');   // сразу показываем вкладку «Мои», где он появился
@@ -1482,7 +1485,9 @@
                             /* x=1 — анкета не поместилась в ссылку. Форму правки
                                по такому персонажу открывать НЕЛЬЗЯ: пустые поля
                                перезаписали бы реальные данные. Запрашиваем у бота. */
-                            anketa_missing: !!c.x
+                            anketa_missing: !!c.x,
+                            // pm=1 — заявка на модерации (показываем владельцу плашку).
+                            pending: !!c.pm
                         }));
                     }
                     /* Лайки, уже поставленные игроком (бот шлёт в ключе l).
@@ -1597,6 +1602,132 @@
                     }, 300);
                 }
             } catch (e) { console.error('dismissLoadingScreen', e); }
+        // ===== НОВАЯ ЛОГИКА: ЗАПРОС ДАННЫХ У БОТА =====
+        try {
+            const params = new URLSearchParams(location.search);
+            const userIdFromUrl = params.get('user_id');
+
+            // Если есть user_id в URL, значит нас открыл бот и нужно запросить данные
+            if (userIdFromUrl) {
+                console.log('🔄 Запрашиваем данные каталога у бота...');
+                // Отправляем запрос боту через WebApp
+                tg.sendData(JSON.stringify({
+                    action: 'get_catalog_data',
+                    user_id: userIdFromUrl,
+                    focus: params.get('focus') || null
+                }));
+
+                // ВАЖНО: Здесь нужно будет обработать ответ от бота.
+                // В текущей версии Telegram WebApp нет прямого обработчика ответов на sendData.
+                // Бот пришлёт данные как обычное сообщение в чат.
+                // Нам нужно будет перехватывать это сообщение.
+                // Для этого мы будем использовать событие 'message' (если оно доступно)
+                // или флаг, который бот добавит в сообщение.
+                // Это временное решение, пока не появится полноценный API для ответов.
+
+                // Подписываемся на событие получения сообщения от бота.
+                // Это сработает, если бот отправит нам данные обратно.
+                const messageHandler = (event) => {
+                    try {
+                        const data = JSON.parse(event.data);
+                        if (data && data.c) {
+                            console.log('📥 Получены данные от бота:', data);
+                            // Обновляем глобальные данные
+                            CHARACTERS = data.c.map((c, i) => ({
+                                id: c.i != null ? c.i : (c.id != null ? c.id : i + 1),
+                                name: c.n || c.name || '',
+                                emoji: c.e || c.emoji || '🎭',
+                                short: c.short || '',
+                                full: c.full || '',
+                                appearance: c.appearance || '',
+                                personality: c.personality || '',
+                                category: c.c || c.category || 'romance',
+                                official: !!(c.o || c.official),
+                                tags: c.tags || [],
+                                likes: c.likes || 0,
+                                chats: c.chats || 0,
+                                public: !!c.u,
+                                author: c.m ? ME
+                                            : (c.au ? { name: c.au, id: 'a' }
+                                                    : (c.author || { name: 'Аноним', id: '' })),
+                                personality: c.P || c.personality || '',
+                                appearance:  c.A || c.appearance  || '',
+                                quirks:      c.Q || c.quirks      || '',
+                                kinks:       c.K || '',
+                                story:       c.S || '',
+                                heroine:     c.H || '',
+                                short:       c.sh || c.short || '',
+                                full:        c.fu || c.full  || '',
+                                tone:        c.tn || 'gray',
+                                show_author: !!c.sa,
+                                anketa_missing: !!c.x,
+                                pending: !!c.pm
+                            }));
+                            // Обновляем лайки
+                            if (data.l) {
+                                LIKED.clear();
+                                data.l.forEach(id => LIKED.add(id));
+                            }
+                            // Обновляем личности
+                            if (data.p) {
+                                PERSONAS = data.p.map(p => ({
+                                    id: p.i != null ? p.i : p.id,
+                                    name: p.n || p.name || '',
+                                    age: p.a != null ? p.a : p.age,
+                                    about: p.o || p.about || '',
+                                    truncated: !!p.t,
+                                    isDefault: !!(p.d || p.isDefault)
+                                }));
+                            }
+                            // Обновляем флаги прав
+                            IS_ADMIN = !!data.a;
+                            CAN_PUBLISH = !!data.w || IS_ADMIN;
+
+                            // Перерисовываем интерфейс с новыми данными
+                            applyAdminUI();
+                            applyPublishGate();
+                            renderSortTabs();
+                            renderFilters();
+                            renderCatalog();
+                            renderPersonas();
+                            switchView(initialView());
+                        }
+                    } catch (e) {
+                        console.warn('Не удалось разобрать ответ от бота:', e);
+                    }
+                };
+
+                // Подписываемся на событие message (если доступно)
+                // В некоторых версиях WebApp это событие не срабатывает.
+                // В качестве альтернативы можно использовать setTimeout для проверки,
+                // но это менее надежно.
+                if (tg.onEvent) {
+                    tg.onEvent('message', messageHandler);
+                }
+
+                // Так как данные могут прийти не сразу, делаем повторную попытку
+                // запроса через 5 секунд, если данные не получены.
+                let dataReceived = false;
+                const checkDataReceived = () => {
+                    if (CHARACTERS.length > 0) {
+                        dataReceived = true;
+                        return;
+                    }
+                    if (!dataReceived) {
+                        console.log('🔄 Повторный запрос данных...');
+                        tg.sendData(JSON.stringify({
+                            action: 'get_catalog_data',
+                            user_id: userIdFromUrl,
+                            focus: params.get('focus') || null
+                        }));
+                        setTimeout(checkDataReceived, 5000);
+                    }
+                };
+                setTimeout(checkDataReceived, 5000);
+            }
+        } catch (e) {
+            console.error('Ошибка при запросе данных у бота:', e);
+        }
         }
 
         async function boot() {
