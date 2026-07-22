@@ -17,22 +17,6 @@
    "likes": 0
   },
   {
-   "id": 365,
-   "name": "Яяя",
-   "short": "Трутутутуту",
-   "full": "Яяя — Трутутутуту",
-   "personality": "Яяя",
-   "appearance": "Яяяя",
-   "quirks": "Ттыыы",
-   "official": false,
-   "image": "media_test/char_test_365_1784717401.jpg",
-   "tone": "dark",
-   "has_heroine": true,
-   "author": "",
-   "created_at": "2026-07-22 10:49:53",
-   "likes": 0
-  },
-  {
    "id": 364,
    "name": "Тест",
    "short": "Тест",
