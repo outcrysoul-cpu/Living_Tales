@@ -713,7 +713,6 @@
             if (PENDING.length) {
                 tg.MainButton.setText(`💾 Сохранить изменения (${PENDING.length})`);
                 tg.MainButton.show();
-                tg.MainButton.enable();
             } else {
                 tg.MainButton.hide();
             }
@@ -1316,7 +1315,9 @@
             // после создания и новый персонаж не успевал появиться во вкладке
             // «Мои». Теперь приложение остаётся открытым, персонаж виден сразу,
             // а боту данные уйдут пачкой по кнопке «💾 Сохранить изменения».
-            queueAction({ action: 'submit_character', character: ch }); haptic('imp');
+            // Отправляем данные боту СРАЗУ, без очереди
+            tg.sendData(JSON.stringify({ action: 'submit_character', character: ch }));
+            haptic('imp');
 
             // Показать сразу в «Мои персонажи» (и в каталоге, если публичный).
             CHARACTERS.push({
@@ -1555,48 +1556,26 @@
 
             applyAdminUI();
             updateImageHint();
-            // ===== ИСПРАВЛЕННАЯ КНОПКА СОХРАНЕНИЯ =====
             try {
-                if (tg.MainButton) {
-                    tg.MainButton.onClick(function() {
-                        if (!PENDING.length) {
-                            tg.MainButton.hide();
-                            return;
-                        }
-
-                        // Показываем, что идет сохранение
-                        tg.MainButton.setText(`⏳ Сохраняем (${PENDING.length})...`);
-                        tg.MainButton.disable();
-
-                        try {
-                            // Отправляем данные боту
-                            const dataToSend = JSON.stringify({ action: 'batch', items: PENDING });
-                            console.log('📤 Отправляем данные боту:', dataToSend);
-                            tg.sendData(dataToSend);
-
-                            // Очищаем очередь после отправки
-                            PENDING.length = 0;
-
-                            // Восстанавливаем кнопку
-                            tg.MainButton.enable();
-                            tg.MainButton.hide();
-
-                            // Показываем уведомление об успехе
-                            if (tg.showAlert) {
-                                tg.showAlert('✅ Изменения сохранены!');
-                            }
-                        } catch (e) {
-                            console.error('❌ Ошибка при сохранении:', e);
-                            tg.MainButton.enable();
-                            tg.MainButton.setText(`💾 Сохранить изменения (${PENDING.length})`);
-                            if (tg.showAlert) {
-                                tg.showAlert('❌ Ошибка при сохранении. Попробуйте еще раз.');
-                            }
-                        }
-                    });
-                    tg.MainButton.hide();
-                }
+                if (tg.MainButton) { tg.MainButton.onClick(flushPending); tg.MainButton.hide(); }
             } catch (e) {}
+            // ИСПРАВЛЕНО (кнопка «Создать персонажа» не нажимается на ПК): весь
+            // хвост init() был без защиты. Если любой из рендеров падал (на ПК в
+            // браузере часто нет ?d=/Telegram API, и CHARACTERS пустой), функция
+            // прерывалась ДО снятия loadingScreen — а он растянут на весь экран
+            // поверх контента и перехватывает все клики. Кнопки видны, но
+            // «мёртвые». Теперь каждый шаг изолирован, а loadingScreen снимается
+            // в finally при любом исходе.
+            try { applyPublishGate(); } catch (e) { console.error('applyPublishGate', e); }
+            try { createStars(); } catch (e) { console.error('createStars', e); }
+            try { renderSortTabs(); } catch (e) { console.error('renderSortTabs', e); }
+            try { renderFilters(); } catch (e) { console.error('renderFilters', e); }
+            try { renderCatalog(); } catch (e) { console.error('renderCatalog', e); }
+            try { renderPersonas(); } catch (e) { console.error('renderPersonas', e); }
+            try {
+                ['cf-name:cf-name-cnt','cf-appearance:cf-appearance-cnt','cf-personality:cf-personality-cnt','cf-quirks:cf-quirks-cnt','cf-kinks:cf-kinks-cnt','cf-story:cf-story-cnt','cf-heroine:cf-heroine-cnt','cf-short:cf-short-cnt','cf-full:cf-full-cnt','pf-about:pf-about-cnt']
+                    .forEach(pair => { const [a,b]=pair.split(':'); bindCounter(a,b); });
+            } catch (e) { console.error('bindCounter', e); }
 
             try {
                 const si = document.getElementById('searchInput');
@@ -1625,132 +1604,6 @@
                     }, 300);
                 }
             } catch (e) { console.error('dismissLoadingScreen', e); }
-        // ===== НОВАЯ ЛОГИКА: ЗАПРОС ДАННЫХ У БОТА =====
-        try {
-            const params = new URLSearchParams(location.search);
-            const userIdFromUrl = params.get('user_id');
-
-            // Если есть user_id в URL, значит нас открыл бот и нужно запросить данные
-            if (userIdFromUrl) {
-                console.log('🔄 Запрашиваем данные каталога у бота...');
-                // Отправляем запрос боту через WebApp
-                tg.sendData(JSON.stringify({
-                    action: 'get_catalog_data',
-                    user_id: userIdFromUrl,
-                    focus: params.get('focus') || null
-                }));
-
-                // ВАЖНО: Здесь нужно будет обработать ответ от бота.
-                // В текущей версии Telegram WebApp нет прямого обработчика ответов на sendData.
-                // Бот пришлёт данные как обычное сообщение в чат.
-                // Нам нужно будет перехватывать это сообщение.
-                // Для этого мы будем использовать событие 'message' (если оно доступно)
-                // или флаг, который бот добавит в сообщение.
-                // Это временное решение, пока не появится полноценный API для ответов.
-
-                // Подписываемся на событие получения сообщения от бота.
-                // Это сработает, если бот отправит нам данные обратно.
-                const messageHandler = (event) => {
-                    try {
-                        const data = JSON.parse(event.data);
-                        if (data && data.c) {
-                            console.log('📥 Получены данные от бота:', data);
-                            // Обновляем глобальные данные
-                            CHARACTERS = data.c.map((c, i) => ({
-                                id: c.i != null ? c.i : (c.id != null ? c.id : i + 1),
-                                name: c.n || c.name || '',
-                                emoji: c.e || c.emoji || '🎭',
-                                short: c.short || '',
-                                full: c.full || '',
-                                appearance: c.appearance || '',
-                                personality: c.personality || '',
-                                category: c.c || c.category || 'romance',
-                                official: !!(c.o || c.official),
-                                tags: c.tags || [],
-                                likes: c.likes || 0,
-                                chats: c.chats || 0,
-                                public: !!c.u,
-                                author: c.m ? ME
-                                            : (c.au ? { name: c.au, id: 'a' }
-                                                    : (c.author || { name: 'Аноним', id: '' })),
-                                personality: c.P || c.personality || '',
-                                appearance:  c.A || c.appearance  || '',
-                                quirks:      c.Q || c.quirks      || '',
-                                kinks:       c.K || '',
-                                story:       c.S || '',
-                                heroine:     c.H || '',
-                                short:       c.sh || c.short || '',
-                                full:        c.fu || c.full  || '',
-                                tone:        c.tn || 'gray',
-                                show_author: !!c.sa,
-                                anketa_missing: !!c.x,
-                                pending: !!c.pm
-                            }));
-                            // Обновляем лайки
-                            if (data.l) {
-                                LIKED.clear();
-                                data.l.forEach(id => LIKED.add(id));
-                            }
-                            // Обновляем личности
-                            if (data.p) {
-                                PERSONAS = data.p.map(p => ({
-                                    id: p.i != null ? p.i : p.id,
-                                    name: p.n || p.name || '',
-                                    age: p.a != null ? p.a : p.age,
-                                    about: p.o || p.about || '',
-                                    truncated: !!p.t,
-                                    isDefault: !!(p.d || p.isDefault)
-                                }));
-                            }
-                            // Обновляем флаги прав
-                            IS_ADMIN = !!data.a;
-                            CAN_PUBLISH = !!data.w || IS_ADMIN;
-
-                            // Перерисовываем интерфейс с новыми данными
-                            applyAdminUI();
-                            applyPublishGate();
-                            renderSortTabs();
-                            renderFilters();
-                            renderCatalog();
-                            renderPersonas();
-                            switchView(initialView());
-                        }
-                    } catch (e) {
-                        console.warn('Не удалось разобрать ответ от бота:', e);
-                    }
-                };
-
-                // Подписываемся на событие message (если доступно)
-                // В некоторых версиях WebApp это событие не срабатывает.
-                // В качестве альтернативы можно использовать setTimeout для проверки,
-                // но это менее надежно.
-                if (tg.onEvent) {
-                    tg.onEvent('message', messageHandler);
-                }
-
-                // Так как данные могут прийти не сразу, делаем повторную попытку
-                // запроса через 5 секунд, если данные не получены.
-                let dataReceived = false;
-                const checkDataReceived = () => {
-                    if (CHARACTERS.length > 0) {
-                        dataReceived = true;
-                        return;
-                    }
-                    if (!dataReceived) {
-                        console.log('🔄 Повторный запрос данных...');
-                        tg.sendData(JSON.stringify({
-                            action: 'get_catalog_data',
-                            user_id: userIdFromUrl,
-                            focus: params.get('focus') || null
-                        }));
-                        setTimeout(checkDataReceived, 5000);
-                    }
-                };
-                setTimeout(checkDataReceived, 5000);
-            }
-        } catch (e) {
-            console.error('Ошибка при запросе данных у бота:', e);
-        }
         }
 
         async function boot() {
