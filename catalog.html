@@ -1150,6 +1150,7 @@
                 });
             }
             resetCharForm();   // всегда открываем чистую форму создания
+            applyAdminUI();    // и пере-скрываем «Оригинальный» для не-админов (на каждое открытие)
             openOverlay('charFormOverlay');
         }
         /* Показывает админскую опцию «Оригинальный персонаж» при открытии формы. */
@@ -1225,6 +1226,11 @@
             if (title) title.textContent = 'Редактировать персонажа';
             const btn = document.getElementById('charFormSubmit');
             if (btn) btn.textContent = '💾 Сохранить изменения';
+            // «Оригинальный персонаж» — только админ/мастер. Для остальных прячем
+            // строку и снимаем галочку, чтобы плашка не могла появиться у тестера.
+            applyAdminUI();
+            const _off = document.getElementById('cf-official');
+            if (_off) _off.checked = IS_ADMIN && !!c.official;
             updateImageHint();
             refreshCounters();
             closeOverlay('detailOverlay');
@@ -1292,7 +1298,7 @@
                         appearance: ch.appearance, personality: ch.personality,
                         quirks: ch.quirks, kinks: ch.kinks, story: ch.story,
                         heroine: ch.heroine, category: ch.category, tags: ch.tags,
-                        public: ch.is_public, official: !!ch.official,
+                        public: ch.is_public, official: IS_ADMIN && !!ch.official,
                         tone: ch.tone, show_author: ch.show_author
                     });
                 }
@@ -1316,7 +1322,7 @@
                 kinks: ch.kinks, story: ch.story, heroine: ch.heroine,
                 category: ch.category, tags: ch.tags, likes: 0, chats: 0,
                 tone: ch.tone, show_author: ch.show_author,
-                public: ch.is_public, official: !!ch.official, author: ME
+                public: ch.is_public, official: IS_ADMIN && !!ch.official, author: ME
             });
             renderCatalog(); renderMyChars();
             switchView('mychars');   // сразу показываем вкладку «Мои», где он появился
