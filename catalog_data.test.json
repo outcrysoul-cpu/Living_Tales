@@ -1,6 +1,22 @@
 {
  "characters": [
   {
+   "id": 365,
+   "name": "Яяя",
+   "short": "Трутутутуту",
+   "full": "Яяя — Трутутутуту",
+   "personality": "Яяя",
+   "appearance": "Яяяя",
+   "quirks": "Ттыыы",
+   "official": false,
+   "image": "",
+   "tone": "dark",
+   "has_heroine": true,
+   "author": "",
+   "created_at": "2026-07-22 10:49:53",
+   "likes": 0
+  },
+  {
    "id": 364,
    "name": "Тест",
    "short": "Тест",
