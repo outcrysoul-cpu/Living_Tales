@@ -65,22 +65,6 @@
    "likes": 0
   },
   {
-   "id": 336,
-   "name": "Тест",
-   "short": "тест",
-   "full": "Тест — тест",
-   "personality": "Тест",
-   "appearance": "тест",
-   "quirks": "тест",
-   "official": false,
-   "image": "media_test/char_test_336_1784586527.jpg",
-   "tone": "dark",
-   "has_heroine": true,
-   "author": "",
-   "created_at": "2026-07-20 22:28:33",
-   "likes": 1
-  },
-  {
    "id": 332,
    "name": "ЛОТАН «ИЕРИХОН» КРОСС",
    "short": "«Не учи меня жить, блядь. Просто знай: я не обещаю нежности, но со мной ты выжив",
