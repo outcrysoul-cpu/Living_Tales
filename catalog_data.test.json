@@ -1,6 +1,22 @@
 {
  "characters": [
   {
+   "id": 364,
+   "name": "Тест",
+   "short": "Тест",
+   "full": "Тест — Тест",
+   "personality": "Тест",
+   "appearance": "Тест",
+   "quirks": "Тест",
+   "official": true,
+   "image": "",
+   "tone": "dark",
+   "has_heroine": true,
+   "author": "LT (Living Tales)",
+   "created_at": "2026-07-22 10:47:11",
+   "likes": 0
+  },
+  {
    "id": 361,
    "name": "Яна тест 2",
    "short": "Тест",
