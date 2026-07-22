@@ -49,22 +49,6 @@
    "likes": 0
   },
   {
-   "id": 357,
-   "name": "Темт",
-   "short": "Тест",
-   "full": "Темт — Тест",
-   "personality": "Темт",
-   "appearance": "Тест",
-   "quirks": "Тест",
-   "official": false,
-   "image": "media_test/char_test_357_1784712689.jpg",
-   "tone": "gray",
-   "has_heroine": true,
-   "author": "",
-   "created_at": "2026-07-22 09:31:07",
-   "likes": 0
-  },
-  {
    "id": 355,
    "name": "Тест",
    "short": "Тест",
