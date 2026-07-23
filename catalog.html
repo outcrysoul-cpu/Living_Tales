@@ -461,41 +461,38 @@
             <div class="char-counter"><span id="cf-name-cnt">0</span>/100</div>
 
             <label>Характер<span class="hint">Темперамент, манера речи, привычки</span></label>
-            <textarea id="cf-personality" placeholder="Какой он в общении, как реагирует..." maxlength="150"></textarea>
-            <div class="char-counter"><span id="cf-personality-cnt">0</span>/150</div>
+            <textarea id="cf-personality" placeholder="Какой он в общении, как реагирует..." maxlength="500"></textarea>
+            <div class="char-counter"><span id="cf-personality-cnt">0</span>/500</div>
 
             <label>Внешность<span class="hint">Как выглядит персонаж</span></label>
-            <textarea id="cf-appearance" placeholder="Рост, телосложение, черты лица, стиль..." maxlength="150"></textarea>
-            <div class="char-counter"><span id="cf-appearance-cnt">0</span>/150</div>
+            <textarea id="cf-appearance" placeholder="Рост, телосложение, черты лица, стиль..." maxlength="500"></textarea>
+            <div class="char-counter"><span id="cf-appearance-cnt">0</span>/500</div>
 
             <label>Особенности<span class="hint">Что выделяет персонажа: сила, дар, тайна</span></label>
-            <textarea id="cf-quirks" placeholder="Уникальные черты, способности, странности..." maxlength="150"></textarea>
-            <div class="char-counter"><span id="cf-quirks-cnt">0</span>/150</div>
+            <textarea id="cf-quirks" placeholder="Уникальные черты, способности, странности..." maxlength="500"></textarea>
+            <div class="char-counter"><span id="cf-quirks-cnt">0</span>/500</div>
 
             <label>Предпочтения<span class="hint">Особые пожелания к 18+ сценам (необязательно)</span></label>
-            <textarea id="cf-kinks" placeholder="Через запятую или свободным текстом..." maxlength="100"></textarea>
-            <div class="char-counter"><span id="cf-kinks-cnt">0</span>/100</div>
+            <textarea id="cf-kinks" placeholder="Через запятую или свободным текстом..." maxlength="300"></textarea>
+            <div class="char-counter"><span id="cf-kinks-cnt">0</span>/300</div>
 
             <label>История<span class="hint">Предыстория и мир персонажа. Необязательно: если оставить пустым, каждый игрок напишет свою историю сам — в боте, кнопка «📜 История» (там лимит больше — можно дополнить позже)</span></label>
-            <textarea id="cf-story" class="tall" placeholder="Откуда персонаж, что с ним происходило... Оставь пустым, если хочешь, чтобы игрок придумал сам." maxlength="200"></textarea>
-            <div class="char-counter"><span id="cf-story-cnt">0</span>/200</div>
+            <textarea id="cf-story" class="tall" placeholder="Откуда персонаж, что с ним происходило... Оставь пустым, если хочешь, чтобы игрок придумал сам." maxlength="700"></textarea>
+            <div class="char-counter"><span id="cf-story-cnt">0</span>/700</div>
 
             <label>Героиня<span class="hint">Кем играет собеседница рядом с этим персонажем. Необязательно: оставь пустым — игрок опишет себя сам (полнее можно дописать позже в боте, кнопка «👩‍🦰 Героиня»)</span></label>
-            <textarea id="cf-heroine" class="tall" placeholder="Кто она, как связана с персонажем, её роль в истории... Оставь пустым, если героиню придумает игрок." maxlength="200"></textarea>
-            <div class="char-counter"><span id="cf-heroine-cnt">0</span>/200</div>
+            <textarea id="cf-heroine" class="tall" placeholder="Кто она, как связана с персонажем, её роль в истории... Оставь пустым, если героиню придумает игрок." maxlength="600"></textarea>
+            <div class="char-counter"><span id="cf-heroine-cnt">0</span>/600</div>
 
             <label>Краткое описание <span class="req">*</span><span class="hint">1–2 предложения — видно на плитке каталога</span></label>
             <textarea id="cf-short" placeholder="Властный гонщик, для которого правила не писаны" maxlength="160"></textarea>
             <div class="char-counter"><span id="cf-short-cnt">0</span>/160</div>
 
             <label>Полное описание<span class="hint">Видно при открытии карточки персонажа</span></label>
-            <textarea id="cf-full" class="tall" placeholder="Подробное описание для страницы персонажа..." maxlength="300"></textarea>
-            <div class="char-counter"><span id="cf-full-cnt">0</span>/300</div>
+            <textarea id="cf-full" class="tall" placeholder="Подробное описание для страницы персонажа..." maxlength="1000"></textarea>
+            <div class="char-counter"><span id="cf-full-cnt">0</span>/1000</div>
 
-            <div class="char-counter" id="cf-budget-row" style="margin-top:4px">
-                Общий объём анкеты: <span id="cf-budget-cnt">0</span>/<span id="cf-budget-max">3800</span> байт
-            </div>
-
+            
             <label>Изображение</label>
             <div class="upload-box" id="cf-upload-box" style="cursor:default">
                 <div class="upload-icon">🖼️</div>
@@ -726,8 +723,7 @@
            и дальше на модерацию. tg.sendData() оставлен только для лёгких
            одиночных действий в других местах файла (выбор персонажа и т.п.),
            где 4096 байт всегда достаточно.
-           ЗАМЕНИ на реальный домен твоего сервера (см. настройку HTTPS/nginx
-           в инструкции). */
+           Адрес выбирается автоматически по IS_TEST_ENV (см. выше). */
         const WEBAPP_API_URL = IS_TEST_ENV
             ? 'https://test.bot.livingtales.ru/webapp/action'
             : 'https://bot.livingtales.ru/webapp/action';
