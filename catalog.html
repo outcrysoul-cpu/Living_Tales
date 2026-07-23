@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Living Tales — Каталог</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pako/2.1.0/pako.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400;1,500&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -462,36 +461,40 @@
             <div class="char-counter"><span id="cf-name-cnt">0</span>/100</div>
 
             <label>Характер<span class="hint">Темперамент, манера речи, привычки</span></label>
-            <textarea id="cf-personality" placeholder="Какой он в общении, как реагирует..." maxlength="500"></textarea>
-            <div class="char-counter"><span id="cf-personality-cnt">0</span>/500</div>
+            <textarea id="cf-personality" placeholder="Какой он в общении, как реагирует..." maxlength="150"></textarea>
+            <div class="char-counter"><span id="cf-personality-cnt">0</span>/150</div>
 
             <label>Внешность<span class="hint">Как выглядит персонаж</span></label>
-            <textarea id="cf-appearance" placeholder="Рост, телосложение, черты лица, стиль..." maxlength="500"></textarea>
-            <div class="char-counter"><span id="cf-appearance-cnt">0</span>/500</div>
+            <textarea id="cf-appearance" placeholder="Рост, телосложение, черты лица, стиль..." maxlength="150"></textarea>
+            <div class="char-counter"><span id="cf-appearance-cnt">0</span>/150</div>
 
             <label>Особенности<span class="hint">Что выделяет персонажа: сила, дар, тайна</span></label>
-            <textarea id="cf-quirks" placeholder="Уникальные черты, способности, странности..." maxlength="500"></textarea>
-            <div class="char-counter"><span id="cf-quirks-cnt">0</span>/500</div>
+            <textarea id="cf-quirks" placeholder="Уникальные черты, способности, странности..." maxlength="150"></textarea>
+            <div class="char-counter"><span id="cf-quirks-cnt">0</span>/150</div>
 
             <label>Предпочтения<span class="hint">Особые пожелания к 18+ сценам (необязательно)</span></label>
-            <textarea id="cf-kinks" placeholder="Через запятую или свободным текстом..." maxlength="300"></textarea>
-            <div class="char-counter"><span id="cf-kinks-cnt">0</span>/300</div>
+            <textarea id="cf-kinks" placeholder="Через запятую или свободным текстом..." maxlength="100"></textarea>
+            <div class="char-counter"><span id="cf-kinks-cnt">0</span>/100</div>
 
-            <label>История<span class="hint">Предыстория и мир персонажа. Необязательно: если оставить пустым, каждый игрок напишет свою историю сам — в боте, кнопка «📜 История»</span></label>
-            <textarea id="cf-story" class="tall" placeholder="Откуда персонаж, что с ним происходило... Оставь пустым, если хочешь, чтобы игрок придумал сам." maxlength="700"></textarea>
-            <div class="char-counter"><span id="cf-story-cnt">0</span>/700</div>
+            <label>История<span class="hint">Предыстория и мир персонажа. Необязательно: если оставить пустым, каждый игрок напишет свою историю сам — в боте, кнопка «📜 История» (там лимит больше — можно дополнить позже)</span></label>
+            <textarea id="cf-story" class="tall" placeholder="Откуда персонаж, что с ним происходило... Оставь пустым, если хочешь, чтобы игрок придумал сам." maxlength="200"></textarea>
+            <div class="char-counter"><span id="cf-story-cnt">0</span>/200</div>
 
-            <label>Героиня<span class="hint">Кем играет собеседница рядом с этим персонажем. Необязательно: оставь пустым — игрок опишет себя сам</span></label>
-            <textarea id="cf-heroine" class="tall" placeholder="Кто она, как связана с персонажем, её роль в истории... Оставь пустым, если героиню придумает игрок." maxlength="700"></textarea>
-            <div class="char-counter"><span id="cf-heroine-cnt">0</span>/700</div>
+            <label>Героиня<span class="hint">Кем играет собеседница рядом с этим персонажем. Необязательно: оставь пустым — игрок опишет себя сам (полнее можно дописать позже в боте, кнопка «👩‍🦰 Героиня»)</span></label>
+            <textarea id="cf-heroine" class="tall" placeholder="Кто она, как связана с персонажем, её роль в истории... Оставь пустым, если героиню придумает игрок." maxlength="200"></textarea>
+            <div class="char-counter"><span id="cf-heroine-cnt">0</span>/200</div>
 
             <label>Краткое описание <span class="req">*</span><span class="hint">1–2 предложения — видно на плитке каталога</span></label>
             <textarea id="cf-short" placeholder="Властный гонщик, для которого правила не писаны" maxlength="160"></textarea>
             <div class="char-counter"><span id="cf-short-cnt">0</span>/160</div>
 
             <label>Полное описание<span class="hint">Видно при открытии карточки персонажа</span></label>
-            <textarea id="cf-full" class="tall" placeholder="Подробное описание для страницы персонажа..." maxlength="1000"></textarea>
-            <div class="char-counter"><span id="cf-full-cnt">0</span>/1000</div>
+            <textarea id="cf-full" class="tall" placeholder="Подробное описание для страницы персонажа..." maxlength="300"></textarea>
+            <div class="char-counter"><span id="cf-full-cnt">0</span>/300</div>
+
+            <div class="char-counter" id="cf-budget-row" style="margin-top:4px">
+                Общий объём анкеты: <span id="cf-budget-cnt">0</span>/<span id="cf-budget-max">3800</span> байт
+            </div>
 
             <label>Изображение</label>
             <div class="upload-box" id="cf-upload-box" style="cursor:default">
@@ -705,6 +708,38 @@
            удаления и лайки копим здесь и отправляем одной пачкой по кнопке
            «Сохранить изменения». */
         const PENDING = [];
+
+        /* ===== Отправка на сервер бота (НЕ через tg.sendData) =====
+           tg.sendData() физически режет полезную нагрузку на 4096 байт — при
+           анкете, заполненной на 100% по всем полям, этого не хватает, и
+           раньше кнопка «Сохранить изменения» просто ничего не делала.
+           Теперь пачка действий уходит POST-запросом на сервер бота — лимита
+           по размеру фактически нет, анкета передаётся ПОЛНОСТЬЮ и в бот,
+           и дальше на модерацию. tg.sendData() оставлен только для лёгких
+           одиночных действий в других местах файла (выбор персонажа и т.п.),
+           где 4096 байт всегда достаточно.
+           ЗАМЕНИ на реальный домен твоего сервера (см. настройку HTTPS/nginx
+           в инструкции). */
+        const WEBAPP_API_URL = 'https://ВАШ-ДОМЕН/webapp/action';
+        function byteSize(obj) {
+            return new TextEncoder().encode(JSON.stringify(obj)).length;
+        }
+        function pendingBatchBytes(extraItem) {
+            const items = extraItem ? PENDING.concat([extraItem]) : PENDING;
+            return byteSize({ action: 'batch', items });
+        }
+        function updateBudgetIndicator() {
+            const cnt = document.getElementById('cf-budget-cnt');
+            const row = document.getElementById('cf-budget-row');
+            if (!cnt || !row) return;
+            // Лимита больше нет (данные идут через HTTP, а не sendData) —
+            // счётчик оставлен просто как информация об объёме анкеты.
+            const draft = collectCharDraft();
+            const bytes = pendingBatchBytes({ action: EDITING_ID ? 'update_character' : 'submit_character', character: draft });
+            cnt.textContent = bytes;
+            row.style.color = '';
+        }
+
         function queueAction(obj) {
             PENDING.push(obj);
             updateMainButton();
@@ -718,26 +753,36 @@
                 tg.MainButton.hide();
             }
         }
-        function sendSafeData(payload) {
-            const jsonStr = JSON.stringify(payload);
-            // Если размер меньше 3500 байт, отправляем как есть (для совместимости)
-            if (new Blob([jsonStr]).size < 3500) {
-                tg.sendData(jsonStr);
-            } else {
-                // Иначе сжимаем через gzip (pako) и кодируем в base64 для безопасной передачи строкой
-                const compressed = pako.gzip(jsonStr);
-                let binary = '';
-                for (let i = 0; i < compressed.length; i++) {
-                    binary += String.fromCharCode(compressed[i]);
-                }
-                const base64Data = window.btoa(binary);
-                tg.sendData(JSON.stringify({ _compressed: 'gzip', data: base64Data }));
-            }
-        }
-        function flushPending() {
+        async function flushPending() {
             if (!PENDING.length) return;
-            sendSafeData({ action: 'batch', items: PENDING });
-            PENDING.length = 0;
+            if (tg.MainButton) { tg.MainButton.showProgress(true); tg.MainButton.disable(); }
+            const items = PENDING.slice();
+            try {
+                const resp = await fetch(WEBAPP_API_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ initData: tg.initData, action: 'batch', items })
+                });
+                let res = {};
+                try { res = await resp.json(); } catch (e) {}
+                if (resp.ok && res.ok) {
+                    PENDING.length = 0;
+                    haptic('imp');
+                    updateMainButton();
+                    if (tg.close) tg.close();
+                } else {
+                    if (tg.showAlert) {
+                        tg.showAlert('⚠️ Не удалось сохранить изменения на сервере. Попробуй ещё раз чуть позже.');
+                    }
+                }
+            } catch (e) {
+                console.error('flushPending: fetch failed', e);
+                if (tg.showAlert) {
+                    tg.showAlert('⚠️ Нет связи с сервером. Проверь интернет-соединение и попробуй снова.');
+                }
+            } finally {
+                if (tg.MainButton) { tg.MainButton.hideProgress(); tg.MainButton.enable(); }
+            }
         }
 
         /* ===== Вкладки каталога =====
@@ -1013,7 +1058,7 @@
 
         function selectChar(id) {
             const c = CHARACTERS.find(x => x.id === id); haptic('imp');
-            sendSafeData({ action: 'select_character', character_id: id, character_name: c ? c.name : '' });
+            tg.sendData(JSON.stringify({ action: 'select_character', character_id: id, character_name: c ? c.name : '' }));
             try { tg.close(); } catch(e){}
         }
         function toggleLike(e, id) {
@@ -1104,7 +1149,7 @@
             if (editingPersonaId) PERSONAS = PERSONAS.map(p => p.id === editingPersonaId ? data : p);
             else PERSONAS.push(data);
             if (data.isDefault) PERSONAS = PERSONAS.map(p => ({...p, isDefault: p.id === data.id}));
-            sendSafeData({ action: 'save_persona', persona: data });
+            tg.sendData(JSON.stringify({ action: 'save_persona', persona: data }));
             haptic('imp'); renderPersonas(); closeOverlay('personaFormOverlay');
         }
         function deletePersona(id) {
@@ -1210,7 +1255,7 @@
                            + 'список. Сейчас закроем каталог — бот пришлёт кнопку '
                            + '«Открыть редактор» с полной анкетой.');
             }
-            sendSafeData({ action: 'edit_request', character_id: id });
+            tg.sendData(JSON.stringify({ action: 'edit_request', character_id: id }));
         }
 
         function editChar(id) {
@@ -1282,20 +1327,16 @@
             });
         }
 
-        function submitChar() {
-            const name = document.getElementById('cf-name').value.trim();
-            const short = document.getElementById('cf-short').value.trim();
-            if (!name) { tg.showAlert('Укажи имя персонажа'); return; }
-            if (!short) { tg.showAlert('Добавь краткое описание для карточки'); return; }
-            const ch = {
-                name,
+        function collectCharDraft() {
+            return {
+                name: document.getElementById('cf-name').value.trim(),
                 appearance: document.getElementById('cf-appearance').value.trim(),
                 personality: document.getElementById('cf-personality').value.trim(),
                 quirks: document.getElementById('cf-quirks').value.trim(),
                 kinks: document.getElementById('cf-kinks').value.trim(),
                 story: document.getElementById('cf-story').value.trim(),
                 heroine: document.getElementById('cf-heroine').value.trim(),
-                short,
+                short: document.getElementById('cf-short').value.trim(),
                 full: document.getElementById('cf-full').value.trim(),
                 tone: (document.querySelector('input[name="cf-tone"]:checked') || {}).value || 'gray',
                 category: document.getElementById('cf-category').value,
@@ -1304,6 +1345,17 @@
                 official: IS_ADMIN && document.getElementById('cf-official').checked,
                 show_author: document.getElementById('cf-author').checked
             };
+        }
+        function submitChar() {
+            const ch = collectCharDraft();
+            if (!ch.name) { tg.showAlert('Укажи имя персонажа'); return; }
+            if (!ch.short) { tg.showAlert('Добавь краткое описание для карточки'); return; }
+            const name = ch.name, short = ch.short;
+            // Раньше здесь была проверка на 4096-байтовый лимит tg.sendData,
+            // из-за которой анкета, заполненная на 100% по всем полям, вообще
+            // не сохранялась. Теперь данные уходят через HTTP (flushPending),
+            // а не через sendData — искусственного лимита на объём анкеты
+            // больше нет, проверять и блокировать нечего.
             if (EDITING_ID) {
                 ch.id = EDITING_ID;
                 queueAction({ action: 'update_character', character: ch });
@@ -1332,7 +1384,7 @@
             // после создания и новый персонаж не успевал появиться во вкладке
             // «Мои». Теперь приложение остаётся открытым, персонаж виден сразу,
             // а боту данные уйдут пачкой по кнопке «💾 Сохранить изменения».
-            sendSafeData({ action: 'submit_character', character: ch });
+            queueAction({ action: 'submit_character', character: ch }); haptic('imp');
 
             // Показать сразу в «Мои персонажи» (и в каталоге, если публичный).
             CHARACTERS.push({
@@ -1590,6 +1642,8 @@
             try {
                 ['cf-name:cf-name-cnt','cf-appearance:cf-appearance-cnt','cf-personality:cf-personality-cnt','cf-quirks:cf-quirks-cnt','cf-kinks:cf-kinks-cnt','cf-story:cf-story-cnt','cf-heroine:cf-heroine-cnt','cf-short:cf-short-cnt','cf-full:cf-full-cnt','pf-about:pf-about-cnt']
                     .forEach(pair => { const [a,b]=pair.split(':'); bindCounter(a,b); });
+                ['cf-name','cf-appearance','cf-personality','cf-quirks','cf-kinks','cf-story','cf-heroine','cf-short','cf-full']
+                    .forEach(id => { const el = document.getElementById(id); if (el) el.addEventListener('input', updateBudgetIndicator); });
             } catch (e) { console.error('bindCounter', e); }
 
             try {
