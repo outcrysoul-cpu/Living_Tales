@@ -694,6 +694,14 @@
         /* Текущий пользователь (демо). В реале — из initDataUnsafe.user */
         const ME = { name: 'Ты', id: 'you' };
 
+        /* env=test в ссылке — бот сам добавляет его для тестового бота (см.
+           build_catalog_url/env_flag в telegram_bot.py). Единая точка правды:
+           от неё зависит и какой JSON с каталогом читать, и на какой адрес
+           отправлять сохранение анкет — так одна страница catalog.html
+           обслуживает оба бота (основной и тестовый), не путая их данные. */
+        const IS_TEST_ENV = ['test', 'beta', 'dev', 'staging']
+            .includes((new URLSearchParams(location.search).get('env') || 'main').toLowerCase());
+
         let IS_ADMIN = false;   /* из ?a=1 — только для UI, права проверяет бот */
         /* из ?w=1 — есть ли право публиковать в общий каталог (премиум/админ).
            Только для UI: бот проверяет право заново при приёме данных. */
@@ -720,7 +728,9 @@
            где 4096 байт всегда достаточно.
            ЗАМЕНИ на реальный домен твоего сервера (см. настройку HTTPS/nginx
            в инструкции). */
-        const WEBAPP_API_URL = 'https://ВАШ-ДОМЕН/webapp/action';
+        const WEBAPP_API_URL = IS_TEST_ENV
+            ? 'https://test.bot.livingtales.ru/webapp/action'
+            : 'https://bot.livingtales.ru/webapp/action';
         function byteSize(obj) {
             return new TextEncoder().encode(JSON.stringify(obj)).length;
         }
@@ -1585,9 +1595,7 @@
             // catalog_data.json. Так одна страница обслуживает оба бота, не смешивая
             // их каталоги (id персонажей у тест/осн ботов не совпадают).
             try {
-                const envParam = (new URLSearchParams(location.search).get('env') || 'main').toLowerCase();
-                const isTest = ['test','beta','dev','staging'].includes(envParam);
-                const catalogFile = isTest ? 'catalog_data.test.json' : 'catalog_data.json';
+                const catalogFile = IS_TEST_ENV ? 'catalog_data.test.json' : 'catalog_data.json';
                 const r = await fetch(catalogFile + '?t=' + Date.now(), { cache: 'no-store' });
                 if (r.ok) {
                     const pub = await r.json();
