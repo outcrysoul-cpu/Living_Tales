@@ -763,11 +763,22 @@
             if (!PENDING.length) return;
             if (tg.MainButton) { tg.MainButton.showProgress(true); tg.MainButton.disable(); }
             const items = PENDING.slice();
+            // Диагностика на случай пустой initData — пишем в консоль (доступно
+            // через chrome://inspect при USB-отладке) и передаём на сервер, чтобы
+            // видеть причину прямо в логах pm2, не гоняя телефон туда-сюда.
+            const _diag = {
+                hasTelegramObj: !!(window.Telegram && window.Telegram.WebApp),
+                initDataLen: (tg.initData || '').length,
+                hasInitDataUnsafeUser: !!(tg.initDataUnsafe && tg.initDataUnsafe.user),
+                platform: (tg.platform || 'n/a'),
+                version: (tg.version || 'n/a')
+            };
+            console.log('[flushPending diag]', _diag);
             try {
                 const resp = await fetch(WEBAPP_API_URL, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ initData: tg.initData, action: 'batch', items })
+                    body: JSON.stringify({ initData: tg.initData, action: 'batch', items, _diag })
                 });
                 let res = {};
                 try { res = await resp.json(); } catch (e) {}
