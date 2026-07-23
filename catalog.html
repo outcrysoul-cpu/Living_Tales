@@ -453,7 +453,7 @@
             <div class="sheet-grip"></div>
             <div class="sheet-head">
                 <div class="sheet-title" id="charFormTitle">✨ Создать персонажа</div>
-                <button class="sheet-close" onclick="closeOverlay('charFormOverlay')">✕</button>
+                <button class="sheet-close" onclick="closeCharFormGuarded()">✕</button>
             </div>
 
             <label>Имя <span class="req">*</span></label>
@@ -575,7 +575,7 @@
             </div>
 
             <div class="form-actions">
-                <button class="btn btn-ghost" onclick="closeOverlay('charFormOverlay')">Отмена</button>
+                <button class="btn btn-ghost" onclick="closeCharFormGuarded()">Отмена</button>
                 <button class="btn btn-primary" id="charFormSubmit" onclick="submitChar()">✅ Готово</button>
             </div>
         </div>
@@ -587,7 +587,7 @@
             <div class="sheet-grip"></div>
             <div class="sheet-head">
                 <div class="sheet-title">👩‍🦰 Новая героиня</div>
-                <button class="sheet-close" onclick="closeOverlay('personaFormOverlay')">✕</button>
+                <button class="sheet-close" onclick="closePersonaFormGuarded()">✕</button>
             </div>
 
             <label>Имя <span class="req">*</span></label>
@@ -720,6 +720,13 @@
 
         let PERSONAS = [];     /* заполняется данными из ?d= (присылает бот) */
 
+        /* Персонаж, с которым игрок уже играет (бот присылает в ключе cur).
+           Нужен, чтобы перед выбором ДРУГОГО персонажа спросить подтверждение —
+           иначе тап по карточке (в том числе случайный, во время создания или
+           редактирования своего персонажа) молча переключал активную игру без
+           единого уведомления. */
+        let ACTIVE_CHARACTER = null; /* {id, name} | null */
+
         /* ===== Очередь действий =====
            tg.sendData() ЗАКРЫВАЕТ мини-апп (так устроен Telegram), поэтому
            удаления и лайки копим здесь и отправляем одной пачкой по кнопке
@@ -727,14 +734,13 @@
         const PENDING = [];
 
         /* ===== Отправка на сервер бота (НЕ через tg.sendData) =====
-           tg.sendData() физически режет полезную нагрузку на 4096 байт — при
-           анкете, заполненной на 100% по всем полям, этого не хватает, и
-           раньше кнопка «Сохранить изменения» просто ничего не делала.
-           Теперь пачка действий уходит POST-запросом на сервер бота — лимита
-           по размеру фактически нет, анкета передаётся ПОЛНОСТЬЮ и в бот,
-           и дальше на модерацию. tg.sendData() оставлен только для лёгких
-           одиночных действий в других местах файла (выбор персонажа и т.п.),
-           где 4096 байт всегда достаточно.
+           tg.sendData() физически режет полезную нагрузку на 4096 байт, а
+           главное — работает ТОЛЬКО если мини-апп открыт кнопкой в обычной
+           клавиатуре (KeyboardButton). Мы открываем каталог инлайн-кнопкой
+           (см. _catalog_keyboard в telegram_bot.py — так надёжнее передаётся
+           initData), поэтому sendData() нигде в этом файле больше не
+           используется — все действия идут через fetch() на сервер бота,
+           см. flushPending (очередь) и sendServerActionNow (одиночные).
            Адрес выбирается автоматически по IS_TEST_ENV (см. выше). */
         const WEBAPP_API_URL = IS_TEST_ENV
             ? 'https://test.bot.livingtales.ru/webapp/action'
@@ -811,6 +817,40 @@
                 }
             } finally {
                 if (tg.MainButton) { tg.MainButton.hideProgress(); tg.MainButton.enable(); }
+            }
+        }
+
+        /* ===== Одиночное действие мимо очереди (НЕ через tg.sendData) =====
+           tg.sendData() работает ТОЛЬКО если мини-апп открыт кнопкой в обычной
+           клавиатуре (KeyboardButton) — Telegram документирует это явно. Мы же
+           теперь открываем каталог инлайн-кнопкой (см. _catalog_keyboard в
+           telegram_bot.py — так надёжнее передаётся initData), поэтому
+           sendData() больше не работает вообще. Используем тот же HTTP-путь,
+           что и flushPending, но без очереди — для действий, которые нужно
+           выполнить сразу (выбор персонажа, сохранение личности, запрос
+           полной анкеты). Сервер поддерживает как батч (action:'batch'), так
+           и одиночное действие в том же формате (см. handle_catalog_action).
+           closeApp=true — закрыть мини-апп после успеха (как раньше делал
+           sendData сам по себе). */
+        async function sendServerActionNow(actionObj, closeApp) {
+            try {
+                const resp = await fetch(WEBAPP_API_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(Object.assign({ initData: tg.initData }, actionObj))
+                });
+                let res = {};
+                try { res = await resp.json(); } catch (e) {}
+                if (resp.ok && res.ok) {
+                    if (closeApp && tg.close) tg.close();
+                    return true;
+                }
+                if (tg.showAlert) tg.showAlert('⚠️ Не удалось выполнить действие. Попробуй ещё раз чуть позже.');
+                return false;
+            } catch (e) {
+                console.error('sendServerActionNow: fetch failed', e);
+                if (tg.showAlert) tg.showAlert('⚠️ Нет связи с сервером. Проверь интернет-соединение.');
+                return false;
             }
         }
 
@@ -1086,9 +1126,28 @@
         }
 
         function selectChar(id) {
-            const c = CHARACTERS.find(x => x.id === id); haptic('imp');
-            tg.sendData(JSON.stringify({ action: 'select_character', character_id: id, character_name: c ? c.name : '' }));
-            try { tg.close(); } catch(e){}
+            const c = CHARACTERS.find(x => x.id === id);
+            const go = () => {
+                haptic('imp');
+                sendServerActionNow({ action: 'select_character', character_id: id, character_name: c ? c.name : '' }, true);
+            };
+            // Игрок уже играет с другим персонажем — предупреждаем перед сменой.
+            // Ничего не «стирается» (у каждого персонажа своя память), но игрок
+            // должен ЯВНО согласиться на переключение, а не обнаружить его
+            // постфактум по ответам не того персонажа (см. жалобу: случайный
+            // тап по карточке во время создания/редактирования молча подменял
+            // активного персонажа без единого уведомления).
+            if (ACTIVE_CHARACTER && ACTIVE_CHARACTER.id !== id) {
+                const activeName = ACTIVE_CHARACTER.name || 'текущим персонажем';
+                const newName = c ? c.name : 'этого персонажа';
+                const msg = `Ты сейчас играешь с «${activeName}». Переключиться на «${newName}»? `
+                          + `История с «${activeName}» сохранится, и ты сможешь вернуться к ней в любой момент.`;
+                if (tg.showConfirm) {
+                    tg.showConfirm(msg, ok => { if (ok) go(); });
+                } else if (confirm(msg)) { go(); }
+                return;
+            }
+            go();
         }
         function toggleLike(e, id) {
             if (e) e.stopPropagation();
@@ -1159,6 +1218,17 @@
             });
         }
         let editingPersonaId = null;
+        /* Снимок формы героини на момент открытия — та же логика, что у
+           CHAR_FORM_BASELINE (см. closePersonaFormGuarded). */
+        let PERSONA_FORM_BASELINE = null;
+        function collectPersonaDraft() {
+            return {
+                name: document.getElementById('pf-name').value.trim(),
+                age: document.getElementById('pf-age').value.trim(),
+                about: document.getElementById('pf-about').value.trim(),
+                isDefault: document.getElementById('pf-default').checked
+            };
+        }
         function openPersonaForm(id) {
             editingPersonaId = id || null;
             const p = id ? PERSONAS.find(x => x.id === id) : null;
@@ -1168,6 +1238,20 @@
             document.getElementById('pf-default').checked = p ? !!p.isDefault : false;
             document.getElementById('pf-about-cnt').textContent = p ? (p.about||'').length : 0;
             openOverlay('personaFormOverlay');
+            PERSONA_FORM_BASELINE = JSON.stringify(collectPersonaDraft());
+        }
+        function hasUnsavedPersonaChanges() {
+            if (PERSONA_FORM_BASELINE == null) return false;
+            try { return JSON.stringify(collectPersonaDraft()) !== PERSONA_FORM_BASELINE; }
+            catch (e) { return false; }
+        }
+        /* Аналог closeCharFormGuarded для формы героини. */
+        function closePersonaFormGuarded() {
+            if (!hasUnsavedPersonaChanges()) { closeOverlay('personaFormOverlay'); return; }
+            const msg = 'Есть несохранённые изменения героини. Закрыть без сохранения?';
+            const go = () => { PERSONA_FORM_BASELINE = null; closeOverlay('personaFormOverlay'); };
+            if (tg.showConfirm) { tg.showConfirm(msg, ok => { if (ok) go(); }); }
+            else if (confirm(msg)) { go(); }
         }
         function submitPersona() {
             const name = document.getElementById('pf-name').value.trim();
@@ -1178,7 +1262,8 @@
             if (editingPersonaId) PERSONAS = PERSONAS.map(p => p.id === editingPersonaId ? data : p);
             else PERSONAS.push(data);
             if (data.isDefault) PERSONAS = PERSONAS.map(p => ({...p, isDefault: p.id === data.id}));
-            tg.sendData(JSON.stringify({ action: 'save_persona', persona: data }));
+            sendServerActionNow({ action: 'save_persona', persona: data }, false);
+            PERSONA_FORM_BASELINE = null;
             haptic('imp'); renderPersonas(); closeOverlay('personaFormOverlay');
         }
         function deletePersona(id) {
@@ -1244,6 +1329,7 @@
             resetCharForm();   // всегда открываем чистую форму создания
             applyAdminUI();    // и пере-скрываем «Оригинальный» для не-админов (на каждое открытие)
             openOverlay('charFormOverlay');
+            CHAR_FORM_BASELINE = JSON.stringify(collectCharDraft());
         }
         /* Показывает админскую опцию «Оригинальный персонаж» при открытии формы. */
         function applyAdminUI() {
@@ -1273,6 +1359,10 @@
            Открывает форму создания, заполненную данными персонажа.
            При сохранении уходит action 'update_character' с его id. */
         let EDITING_ID = null;
+        /* Снимок формы (JSON) на момент открытия — используется, чтобы понять,
+           есть ли несохранённые изменения, когда игрок пытается закрыть форму
+           крестиком/«Отмена» или тапом мимо (см. closeCharFormGuarded). */
+        let CHAR_FORM_BASELINE = null;
 
         /* Персонажи, чья анкета не влезла в ссылку, правим через бота:
            он переоткроет мини-апп в режиме фокуса — только этот персонаж,
@@ -1284,12 +1374,12 @@
                            + 'список. Сейчас закроем каталог — бот пришлёт кнопку '
                            + '«Открыть редактор» с полной анкетой.');
             }
-            tg.sendData(JSON.stringify({ action: 'edit_request', character_id: id }));
+            sendServerActionNow({ action: 'edit_request', character_id: id }, true);
         }
 
         function editChar(id) {
             const c = CHARACTERS.find(x => x.id === id);
-            if (!c) return;
+            if (!c) { requestFullAnketa(id); return; }
             EDITING_ID = id;
             const set = (el, val) => { const e = document.getElementById(el); if (e) e.value = val || ''; };
             set('cf-name', c.name);
@@ -1327,6 +1417,7 @@
             refreshCounters();
             closeOverlay('detailOverlay');
             openOverlay('charFormOverlay');
+            CHAR_FORM_BASELINE = JSON.stringify(collectCharDraft());
         }
 
         /* Сброс формы в режим создания. */
@@ -1404,6 +1495,7 @@
                 }
                 renderCatalog(); renderMyChars();
                 tg.showAlert && tg.showAlert('Изменения сохранены ✏️ Не забудь «💾 Сохранить изменения».');
+                CHAR_FORM_BASELINE = null;
                 closeOverlay('charFormOverlay');
                 EDITING_ID = null;
                 return;
@@ -1431,6 +1523,7 @@
             tg.showAlert && tg.showAlert(
                 (ch.is_public ? 'Персонаж создан и будет отправлен на модерацию 📤' : 'Приватный персонаж создан 🔒')
                 + '\n\nНажми «💾 Сохранить изменения» внизу, чтобы бот его записал.');
+            CHAR_FORM_BASELINE = null;
             closeOverlay('charFormOverlay');
         }
 
@@ -1505,7 +1598,31 @@
             }
         }
         function closeOverlay(id) { document.getElementById(id).classList.remove('open'); document.body.style.overflow = ''; }
-        document.querySelectorAll('.overlay').forEach(ov => ov.addEventListener('click', e => { if (e.target === ov) closeOverlay(ov.id); }));
+
+        /* Есть ли несохранённые изменения в форме персонажа? Сравниваем текущее
+           состояние с тем, что было при открытии формы (см. CHAR_FORM_BASELINE). */
+        function hasUnsavedCharChanges() {
+            if (CHAR_FORM_BASELINE == null) return false;
+            try { return JSON.stringify(collectCharDraft()) !== CHAR_FORM_BASELINE; }
+            catch (e) { return false; }
+        }
+        /* Закрытие формы персонажа крестиком/«Отмена»/тапом мимо. Если есть
+           несохранённые правки — спрашиваем подтверждение, а не закрываем молча:
+           именно это и терялось раньше, когда случайный тап мимо формы (или по
+           карточке персонажа под ней) сносил всё введённое без предупреждения. */
+        function closeCharFormGuarded() {
+            if (!hasUnsavedCharChanges()) { closeOverlay('charFormOverlay'); return; }
+            const msg = 'Есть несохранённые изменения персонажа. Закрыть без сохранения?';
+            const go = () => { CHAR_FORM_BASELINE = null; closeOverlay('charFormOverlay'); };
+            if (tg.showConfirm) { tg.showConfirm(msg, ok => { if (ok) go(); }); }
+            else if (confirm(msg)) { go(); }
+        }
+        document.querySelectorAll('.overlay').forEach(ov => ov.addEventListener('click', e => {
+            if (e.target !== ov) return;
+            if (ov.id === 'charFormOverlay') { closeCharFormGuarded(); return; }
+            if (ov.id === 'personaFormOverlay') { closePersonaFormGuarded(); return; }
+            closeOverlay(ov.id);
+        }));
 
         /* ===== Поиск ===== */
         function clearSearch(){ searchQuery=''; const i=document.getElementById('searchInput'); i.value=''; document.getElementById('searchClear').classList.remove('show'); renderGrid(); i.focus(); }
@@ -1593,6 +1710,12 @@
                        подсвечены, и первый тап по «своему» лайку его снимал. */
                     const lsrc = d.l || d.liked;
                     if (Array.isArray(lsrc)) lsrc.forEach(id => LIKED.add(id));
+
+                    // Текущий активный персонаж (см. ACTIVE_CHARACTER выше).
+                    const curSrc = d.cur;
+                    if (curSrc && curSrc.i != null) {
+                        ACTIVE_CHARACTER = { id: curSrc.i, name: curSrc.n || '' };
+                    }
 
                     const psrc = d.p || d.personas;
                     if (Array.isArray(psrc)) {
