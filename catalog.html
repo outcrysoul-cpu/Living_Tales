@@ -1330,13 +1330,21 @@
             updateImageHint();
         }
 
-        function openCharForm() {
+        /* Заполняет <select id="cf-category"> вариантами категорий, если
+           ещё не заполнен. Раньше это делалось ТОЛЬКО в openCharForm (создание)
+           — если игрок открывал редактирование, ни разу не создав персонажа
+           через эту форму, select оставался пустым, и выбрать категорию было
+           физически нечем (нет ни одного <option>). Теперь вызывается и при
+           редактировании (см. populateCharForm). */
+        function ensureCategoryOptions() {
             const sel = document.getElementById('cf-category');
-            if (!sel.options.length) {
-                CATEGORIES.filter(c => c.id !== 'all' && c.id !== 'private').forEach(c => {
-                    const o = document.createElement('option'); o.value = c.id; o.textContent = `${c.icon} ${c.label}`; sel.appendChild(o);
-                });
-            }
+            if (!sel || sel.options.length) return;
+            CATEGORIES.filter(c => c.id !== 'all' && c.id !== 'private').forEach(c => {
+                const o = document.createElement('option'); o.value = c.id; o.textContent = `${c.icon} ${c.label}`; sel.appendChild(o);
+            });
+        }
+        function openCharForm() {
+            ensureCategoryOptions();
             resetCharForm();   // всегда открываем чистую форму создания
             applyAdminUI();    // и пере-скрываем «Оригинальный» для не-админов (на каждое открытие)
             openOverlay('charFormOverlay');
@@ -1439,6 +1447,7 @@
            (см. fetchFullAnketaAndEdit) без дублирования кода. */
         function populateCharForm(id, c) {
             EDITING_ID = id;
+            ensureCategoryOptions();
             const set = (el, val) => { const e = document.getElementById(el); if (e) e.value = val || ''; };
             set('cf-name', c.name);
             set('cf-short', c.short);
