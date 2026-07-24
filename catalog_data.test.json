@@ -31,22 +31,6 @@
    "author": "LT (Living Tales)",
    "created_at": "2026-07-22 10:47:11",
    "likes": 0
-  },
-  {
-   "id": 358,
-   "name": "Лори",
-   "short": "Тест",
-   "full": "Лори — Тест",
-   "personality": "Да",
-   "appearance": "Да",
-   "quirks": "Ой",
-   "official": true,
-   "image": "https://outcrysoul-cpu.github.io/Living_Tales/media_test/char_test_358_1784712925.jpg",
-   "tone": "gray",
-   "has_heroine": false,
-   "author": "LT (Living Tales)",
-   "created_at": "2026-07-22 09:34:56",
-   "likes": 0
   }
  ]
 }
