@@ -1105,9 +1105,6 @@
                 ${tags ? `<div class="detail-block-title">🏷️ Теги</div><div class="tag-row">${tags}</div>` : ''}
                 ${publishBlock}
                 ${isMine ? `<button class="btn btn-ghost btn-full" style="margin-top:16px" onclick="editChar(${c.id})">✏️ Редактировать персонажа</button>` : ''}
-                ${(c.anketa_missing && isMine)
-                    ? `<button class="btn btn-secondary" onclick="requestFullAnketa(${c.id})">✏️ Редактировать (загрузить анкету)</button>`
-                    : ''}
                 ${(isMinePrivate || IS_ADMIN)
                     ? `<div class="form-actions" style="margin-top:12px">
                            <button class="btn btn-danger" onclick="deleteCharacter(${c.id})">🗑 Удалить${(!isMinePrivate && IS_ADMIN) ? ' (модератор)' : ''}</button>
@@ -1122,7 +1119,10 @@
             c.pendingPublish = checked;
             haptic('sel');
             queueAction({ action: 'publish_character', character_id: id, publish: checked });
-            if (checked && tg.showAlert) tg.showAlert('Персонаж отправлен на модерацию 📤');
+            if (checked && tg.showAlert) {
+                tg.showAlert('Персонаж отправлен на модерацию 📤\nБот попросит прислать фото '
+                           + 'сообщением в чат — без этого шага анкета не уйдёт модераторам.');
+            }
         }
 
         function selectChar(id) {
@@ -1316,6 +1316,17 @@
                 applyPublishGate();
                 return;
             }
+            // Явно предупреждаем в момент включения публикации, а не только
+            // пассивной подсказкой у поля (updateImageHint) — иначе игрок жмёт
+            // «Сохранить» и не понимает, зачем бот вдруг просит фото в чате.
+            if (pub && pub.checked) {
+                haptic('sel');
+                if (tg.showAlert) {
+                    tg.showAlert('После сохранения бот попросит прислать фото персонажа '
+                               + 'сообщением в чат — анкета уйдёт на модерацию только после '
+                               + 'этого, одним сообщением вместе с фото.');
+                }
+            }
             updateImageHint();
         }
 
@@ -1364,10 +1375,17 @@
            крестиком/«Отмена» или тапом мимо (см. closeCharFormGuarded). */
         let CHAR_FORM_BASELINE = null;
 
-        /* Персонажи, чья анкета не влезла в ссылку, правим через бота:
-           он переоткроет мини-апп в режиме фокуса — только этот персонаж,
-           зато с полной анкетой. */
-        function requestFullAnketa(id) {
+        /* Персонажи, чья анкета не влезла в общую ссылку каталога (см. x=1 /
+           anketa_missing в build_catalog_url), раньше правились через бота:
+           он закрывал мини-апп и присылал НОВУЮ кнопку «Открыть редактор» —
+           отдельным сообщением, с повторным открытием каталога, который к
+           тому же не открывал форму редактирования автоматически. Игроку
+           казалось, что редактор сломан: «даёт ссылку на каталог и открывает
+           его заново, ничего не отображая». Теперь анкету дозапрашиваем прямо
+           из открытого мини-аппа через fetch — без закрытия и новых сообщений.
+           requestFullAnketaLegacy оставлен как резервный путь на случай, если
+           бот ещё не обновлён и не знает action='get_character_anketa'. */
+        function requestFullAnketaLegacy(id) {
             haptic('sel');
             if (tg.showAlert) {
                 tg.showAlert('Анкета этого персонажа объёмная и не поместилась в общий '
@@ -1377,9 +1395,49 @@
             sendServerActionNow({ action: 'edit_request', character_id: id }, true);
         }
 
+        async function fetchFullAnketaAndEdit(id) {
+            haptic('sel');
+            try {
+                const resp = await fetch(WEBAPP_API_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ initData: tg.initData, action: 'get_character_anketa', character_id: id })
+                });
+                let res = {};
+                try { res = await resp.json(); } catch (e) {}
+                if (!resp.ok || !res.ok || !res.anketa) {
+                    // Бот без поддержки этого action — старый резервный путь.
+                    requestFullAnketaLegacy(id);
+                    return;
+                }
+                const a = res.anketa;
+                const idx = CHARACTERS.findIndex(x => x.id === id);
+                const merged = Object.assign({}, idx >= 0 ? CHARACTERS[idx] : { id },
+                    { name: a.name, short: a.short, full: a.full,
+                      appearance: a.appearance, personality: a.personality, quirks: a.quirks,
+                      kinks: a.kinks, story: a.story, heroine: a.heroine,
+                      tone: a.tone || 'gray', show_author: !!a.show_author,
+                      public: !!a.is_public, official: !!a.official,
+                      anketa_missing: false });
+                if (idx >= 0) CHARACTERS[idx] = merged; else CHARACTERS.push(merged);
+                populateCharForm(id, merged);
+            } catch (e) {
+                console.error('fetchFullAnketaAndEdit failed', e);
+                requestFullAnketaLegacy(id);
+            }
+        }
+
         function editChar(id) {
             const c = CHARACTERS.find(x => x.id === id);
-            if (!c) { requestFullAnketa(id); return; }
+            if (!c) { requestFullAnketaLegacy(id); return; }
+            if (c.anketa_missing) { fetchFullAnketaAndEdit(id); return; }
+            populateCharForm(id, c);
+        }
+
+        /* Заполняет форму редактирования данными персонажа и открывает её.
+           Вынесено из editChar, чтобы использовать и после дозапроса анкеты
+           (см. fetchFullAnketaAndEdit) без дублирования кода. */
+        function populateCharForm(id, c) {
             EDITING_ID = id;
             const set = (el, val) => { const e = document.getElementById(el); if (e) e.value = val || ''; };
             set('cf-name', c.name);
