@@ -33,22 +33,6 @@
    "likes": 0
   },
   {
-   "id": 367,
-   "name": "Яна тест 4",
-   "short": "Ллолллл",
-   "full": "Яна тест 4 — Ллолллл",
-   "personality": "Лдддд",
-   "appearance": "Жждддд",
-   "quirks": "Шщшшш",
-   "official": false,
-   "image": "https://outcrysoul-cpu.github.io/Living_Tales/media_test/char_test_367_1784718624.jpg",
-   "tone": "gray",
-   "has_heroine": true,
-   "author": "@SaYappl",
-   "created_at": "2026-07-22T11:10:42.672002",
-   "likes": 0
-  },
-  {
    "id": 364,
    "name": "Тест",
    "short": "Тест",
