@@ -79,6 +79,22 @@
    "author": "LT (Living Tales)",
    "created_at": "2026-07-22 10:47:11",
    "likes": 0
+  },
+  {
+   "id": 363,
+   "name": "Яна тест 3",
+   "short": "Рртттт",
+   "full": "Яна тест 3 — Рртттт",
+   "personality": "Тест 3",
+   "appearance": "Тест 3",
+   "quirks": "Ороо",
+   "official": false,
+   "image": "https://outcrysoul-cpu.github.io/Living_Tales/media_test/char_test_363_1784716835.jpg",
+   "tone": "gray",
+   "has_heroine": true,
+   "author": "@SaYappl",
+   "created_at": "2026-07-24T08:39:02.169788",
+   "likes": 0
   }
  ]
 }
