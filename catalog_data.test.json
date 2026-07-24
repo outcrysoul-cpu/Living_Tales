@@ -65,22 +65,6 @@
    "likes": 1
   },
   {
-   "id": 368,
-   "name": "Тест",
-   "short": "Тест",
-   "full": "Тест — Тест",
-   "personality": "Тест",
-   "appearance": "Ищу",
-   "quirks": "Общение",
-   "official": true,
-   "image": "https://outcrysoul-cpu.github.io/Living_Tales/media_test/char_test_368_1784727517.jpg",
-   "tone": "dark",
-   "has_heroine": true,
-   "author": "LT (Living Tales)",
-   "created_at": "2026-07-22 13:38:15",
-   "likes": 3
-  },
-  {
    "id": 366,
    "name": "Яна тест 3",
    "short": "Итиир",
