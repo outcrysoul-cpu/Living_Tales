@@ -14,7 +14,7 @@
    "has_heroine": true,
    "author": "",
    "created_at": "2026-07-24 08:35:49",
-   "likes": 1
+   "likes": 2
   },
   {
    "id": 390,
@@ -30,7 +30,7 @@
    "has_heroine": false,
    "author": "",
    "created_at": "2026-07-24 08:21:48",
-   "likes": 1
+   "likes": 2
   },
   {
    "id": 389,
@@ -46,7 +46,7 @@
    "has_heroine": true,
    "author": "LT (Living Tales)",
    "created_at": "2026-07-24 08:12:04",
-   "likes": 2
+   "likes": 3
   },
   {
    "id": 368,
@@ -62,7 +62,7 @@
    "has_heroine": true,
    "author": "LT (Living Tales)",
    "created_at": "2026-07-22 13:38:15",
-   "likes": 2
+   "likes": 3
   },
   {
    "id": 366,
@@ -78,7 +78,7 @@
    "has_heroine": true,
    "author": "@SaYappl",
    "created_at": "2026-07-24T08:39:09.460911",
-   "likes": 1
+   "likes": 2
   },
   {
    "id": 364,
@@ -94,7 +94,7 @@
    "has_heroine": true,
    "author": "LT (Living Tales)",
    "created_at": "2026-07-22 10:47:11",
-   "likes": 1
+   "likes": 2
   },
   {
    "id": 363,
@@ -110,7 +110,7 @@
    "has_heroine": true,
    "author": "@SaYappl",
    "created_at": "2026-07-24T08:39:08.233141",
-   "likes": 1
+   "likes": 2
   }
  ]
 }
