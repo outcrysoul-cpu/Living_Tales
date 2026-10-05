@@ -8,12 +8,13 @@
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400;1,500&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg-dark: #0f0720;
-            --card-bg: rgba(76, 29, 149, 0.3);
-            --primary-gradient: linear-gradient(135deg, #a855f7 0%, #4c1d95 100%);
-            --accent-glow: #d8b4fe;
-            --text-main: #ffffff;
-            --text-secondary: #cbd5e1;
+            /* ОСЕННЯЯ ТЕМА: жёлтый (горчица) · тыквенный · пыльно-зелёный */
+            --bg-dark: #1a130c;
+            --card-bg: rgba(92, 58, 26, 0.32);
+            --primary-gradient: linear-gradient(135deg, #f0a04b 0%, #c2561c 100%);
+            --accent-glow: #f2c862;
+            --text-main: #fff8ec;
+            --text-secondary: #e6dac4;
             --safe-area-bottom: env(safe-area-inset-bottom, 20px);
         }
 
@@ -37,17 +38,21 @@
             width: 100%;
             height: 100%;
             z-index: -1;
-            background: radial-gradient(ellipse at bottom, #1b2735 0%, #090a0f 100%);
+            background:
+                radial-gradient(ellipse at 15% 0%, rgba(143,159,114,0.16) 0%, rgba(26,19,12,0) 55%),
+                radial-gradient(ellipse at bottom, #33240f 0%, #120c07 100%);
             overflow: hidden;
             pointer-events: none;
         }
 
-        .star {
-            position: absolute;
-            background: white;
-            border-radius: 50%;
-            opacity: 0.5;
-        }
+        /* Тыквы и листья на фоне (контейнер id="stars" оставлен ради совместимости) */
+        .bg-pumpkin { position: absolute; display: block; pointer-events: none; filter: drop-shadow(0 3px 6px rgba(0,0,0,0.35)); }
+        .bg-pumpkin svg { display: block; width: 100%; height: auto; }
+        .bg-pumpkin.sway { animation: pumpkinSway 7s ease-in-out infinite; transform-origin: 50% 100%; }
+        @keyframes pumpkinSway { 0%,100% { transform: rotate(var(--r, 0deg)); } 50% { transform: rotate(calc(var(--r, 0deg) + 4deg)); } }
+        .bg-leaf { position: absolute; pointer-events: none; }
+        .bg-leaf svg { display: block; width: 100%; height: 100%; }
+        @media (prefers-reduced-motion: reduce) { .bg-pumpkin.sway { animation: none; } }
 
         .background-glow {
             position: fixed;
@@ -55,7 +60,9 @@
             left: -20%;
             width: 140%;
             height: 140%;
-            background: radial-gradient(circle at center, rgba(168, 85, 247, 0.15) 0%, rgba(15, 7, 32, 0) 70%);
+            background:
+                radial-gradient(circle at 50% 85%, rgba(232, 137, 43, 0.16) 0%, rgba(26, 19, 12, 0) 45%),
+                radial-gradient(circle at 80% 20%, rgba(224, 177, 58, 0.08) 0%, rgba(26, 19, 12, 0) 40%);
             z-index: -1;
             pointer-events: none;
         }
@@ -73,8 +80,8 @@
             font-size: 34px;
             font-weight: 700;
             /* Базовый стиль — работает везде */
-            color: #d8b4fe;
-            background: linear-gradient(135deg, #f5e6d3 0%, #d8b4fe 50%, #a855f7 100%);
+            color: #f2c862;
+            background: linear-gradient(135deg, #f7e7b4 0%, #f2c862 45%, #e8892b 100%);
             background-size: 200% auto;
             animation: shimmer 3s ease infinite;
             letter-spacing: 2px;
@@ -103,12 +110,12 @@
             display: inline-block;
             font-size: 34px;
             margin-left: 8px;
-            filter: drop-shadow(0 0 3px rgba(168, 85, 247, 0.4));
+            filter: drop-shadow(0 0 3px rgba(232, 137, 43, 0.45));
             vertical-align: middle;
             background: none;
             -webkit-background-clip: unset;
             background-clip: unset;
-            color: #d8b4fe;
+            color: #f2c862;
             animation: none;
         }
         
@@ -142,8 +149,8 @@
         .loading-spinner {
             width: 50px;
             height: 50px;
-            border: 3px solid rgba(168, 85, 247, 0.2);
-            border-top: 3px solid #a855f7;
+            border: 3px solid rgba(232, 137, 43, 0.2);
+            border-top: 3px solid #e8892b;
             border-radius: 50%;
             animation: spin 1s linear infinite;
         }
@@ -189,16 +196,16 @@
             align-items: center;
             gap: 8px;
             color: var(--accent-glow);
-            text-shadow: 0 0 10px rgba(168, 85, 247, 0.5);
+            text-shadow: 0 0 10px rgba(232, 137, 43, 0.45);
         }
 
         .card {
             /* Fallback для Samsung Internet < 17 и старых Android WebView */
-            background: rgba(50, 20, 100, 0.85);
+            background: rgba(60, 40, 20, 0.88);
             background: var(--card-bg);
             backdrop-filter: blur(12px);
             -webkit-backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(242, 200, 98, 0.14);
             border-radius: 20px;
             padding: 16px;
             margin-bottom: 16px;
@@ -251,8 +258,8 @@
             min-width: 68px;
             padding: 10px 8px;
             border-radius: 16px;
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            background: rgba(143, 159, 114, 0.10);
+            border: 1px solid rgba(143, 159, 114, 0.28);
             color: var(--text-secondary);
             font-size: 12px;
             font-weight: 500;
@@ -271,7 +278,7 @@
             background: var(--primary-gradient);
             color: white;
             border-color: transparent;
-            box-shadow: 0 0 15px rgba(168, 85, 247, 0.4);
+            box-shadow: 0 0 15px rgba(232, 137, 43, 0.4);
         }
         /* Режим письма — текст в 2 строки, размер как у остальных */
         .chip-wrap {
@@ -283,7 +290,7 @@
         
         .chip:active {
             transform: scale(0.96);
-            background: rgba(168, 85, 247, 0.5);
+            background: rgba(232, 137, 43, 0.5);
         }
 
         .chip-icon {
@@ -293,7 +300,7 @@
         textarea {
             width: 100%;
             background: rgba(0, 0, 0, 0.3);
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 236, 200, 0.12);
             border-radius: 14px;
             padding: 12px;
             color: white;
@@ -306,8 +313,8 @@
         }
 
         textarea:focus {
-            border-color: #a855f7;
-            box-shadow: 0 0 0 2px rgba(168, 85, 247, 0.2);
+            border-color: #e8892b;
+            box-shadow: 0 0 0 2px rgba(232, 137, 43, 0.22);
         }
 
         .save-btn-container {
@@ -331,7 +338,7 @@
             font-size: 15px;
             font-weight: bold;
             cursor: pointer;
-            box-shadow: 0 4px 20px rgba(168, 85, 247, 0.5);
+            box-shadow: 0 4px 20px rgba(232, 137, 43, 0.45);
             transition: transform 0.15s;
             display: flex;
             align-items: center;
@@ -410,14 +417,14 @@
                 <div class="chip" data-val="allowed"><span class="chip-icon">👥</span>Разрешены</div>
             </div>
             <!-- ЛИЦО ПОВЕСТВОВАНИЯ -->
-            <label style="margin-top: 16px;">📖 Лицо повествования</label>
+            <label style="margin-top: 16px;">Лицо повествования</label>
             <div class="chips-container" id="person-mode-group">
                 <div class="chip" data-val="third"><span class="chip-icon">📖</span>От 3-го лица</div>
                 <div class="chip" data-val="first"><span class="chip-icon">🗣</span>От 1-го лица</div>
             </div>
 
             <!-- РЕЖИМ ПИСЬМА -->
-            <label style="margin-top: 16px;">✍️ Режим письма</label>
+            <label style="margin-top: 16px;">Режим письма</label>
             <div class="chips-container" id="write-mode-group">
                 <div class="chip chip-wrap" data-val="self"><span class="chip-icon">🎭</span>Только<br>за себя</div>
                 <div class="chip chip-wrap" data-val="all"><span class="chip-icon">👥</span>За всех</div>
@@ -451,7 +458,7 @@
             tg.ready();
             if (tg.enableClosingConfirmation) tg.enableClosingConfirmation();
             
-            if (tg.setBackgroundColor) tg.setBackgroundColor('#0f0720');
+            if (tg.setBackgroundColor) tg.setBackgroundColor('#1a130c');
             if (tg.setHeaderColor) tg.setHeaderColor('bg_color');
             
             // Telegram expand() уже управляет высотой — не нужно фиксировать body
@@ -486,27 +493,134 @@
             person_mode: 'third'
         };
         
-        function createStars() {
-            const box = document.getElementById('stars');
-            if (!box) return;
-            const fragment = document.createDocumentFragment();
-            const starCount = 250;
-            for (let i = 0; i < starCount; i++) {
-                const s = document.createElement('div');
-                s.className = 'star';
-                s.style.cssText = [
-                    'left:' + (Math.random() * 100) + '%',
-                    'top:' + (Math.random() * 100) + '%',
-                    'width:' + (Math.random() * 2.5 + 0.5) + 'px',
-                    'height:' + (Math.random() * 2.5 + 0.5) + 'px',
-                    'opacity:' + (Math.random() * 0.6 + 0.2)
-                ].join(';');
-                fragment.appendChild(s);
-            }
-            box.innerHTML = '';
-            box.appendChild(fragment);
+        // ===== ОСЕННИЙ ФОН: тыквы трёх цветов + падающие листья =====
+        // Палитра тыкв: [светлый, основной, тень]
+        const PUMPKIN_COLORS = [
+            ['#f6b468', '#e07a26', '#9a4314'],   // тыквенная
+            ['#f6d77a', '#dcaa30', '#94701a'],   // жёлтая (горчица)
+            ['#c6d0aa', '#8f9f72', '#56653f']    // пыльно-зелёная
+        ];
+        function pumpkinSVG(idx, colorIdx) {
+            const [l, m, d] = PUMPKIN_COLORS[colorIdx % PUMPKIN_COLORS.length];
+            const g = 'lt-pg-' + idx;
+            return `<svg viewBox="0 0 64 60" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                <defs><radialGradient id="${g}" cx="38%" cy="32%" r="75%">
+                    <stop offset="0" stop-color="${l}"/><stop offset="0.55" stop-color="${m}"/><stop offset="1" stop-color="${d}"/>
+                </radialGradient></defs>
+                <path d="M30.5 15 C30 9 31.5 5 35.5 2.5 L37.8 5.2 C34.8 7.2 33.6 10.5 34.4 15 Z" fill="#5b4a2a"/>
+                <path d="M35 9 C41 2.5 50 4 53 8.5 C46 11.5 40 11.5 35 9 Z" fill="#7d8f62"/>
+                <ellipse cx="17" cy="38" rx="14" ry="18.5" fill="url(#${g})"/>
+                <ellipse cx="47" cy="38" rx="14" ry="18.5" fill="url(#${g})"/>
+                <ellipse cx="24.5" cy="38" rx="12.5" ry="20.5" fill="url(#${g})"/>
+                <ellipse cx="39.5" cy="38" rx="12.5" ry="20.5" fill="url(#${g})"/>
+                <ellipse cx="32" cy="38" rx="10.5" ry="21.5" fill="url(#${g})"/>
+                <g fill="none" stroke="${d}" stroke-opacity="0.55" stroke-width="1.1">
+                    <path d="M24.5 18.5 C19 26 19 50 24.5 58"/>
+                    <path d="M39.5 18.5 C45 26 45 50 39.5 58"/>
+                    <path d="M14 22 C7 30 8 48 15 55"/>
+                    <path d="M50 22 C57 30 56 48 49 55"/>
+                </g>
+            </svg>`;
         }
-        
+        // Четыре формы листьев: клён, дуб, берёза, ива
+        const LEAF_SHAPES = [
+            // клён
+            { vb: '0 0 24 24', d: 'M12 1.5 L13.6 6 L16.8 4.4 L16 8.6 L21 7.6 L19 11.4 L22.5 13 L17.8 15 L18.6 18 L13.2 16.6 L12.6 22.5 L11.4 22.5 L10.8 16.6 L5.4 18 L6.2 15 L1.5 13 L5 11.4 L3 7.6 L8 8.6 L7.2 4.4 L10.4 6 Z',
+              veins: 'M12 22.5 L12 6 M12 15 L18 9 M12 15 L6 9 M12 17 L17 15.5 M12 17 L7 15.5' },
+            // дуб
+            { vb: '0 0 24 24', d: 'M12 1.5 C14 2.5 14.5 4 13.5 5.2 C16 4.6 16.8 6.6 15 8 C17.8 7.8 18.2 10.4 15.6 11.4 C18.4 11.8 18.4 14.4 15.6 15 C17.4 16.4 16 18.6 13.6 17.6 C13.4 19.4 12.6 20.6 12.4 22.5 L11.6 22.5 C11.4 20.6 10.6 19.4 10.4 17.6 C8 18.6 6.6 16.4 8.4 15 C5.6 14.4 5.6 11.8 8.4 11.4 C5.8 10.4 6.2 7.8 9 8 C7.2 6.6 8 4.6 10.5 5.2 C9.5 4 10 2.5 12 1.5 Z',
+              veins: 'M12 22.5 L12 3 M12 8 L14.5 7 M12 11.5 L9.5 10.5 M12 14.5 L15 13.5 M12 16.5 L9.5 16' },
+            // берёза
+            { vb: '0 0 24 24', d: 'M12 2 C16.5 5.5 18.5 10 17.4 14 C16.4 17.6 13.8 19.4 12 20 C10.2 19.4 7.6 17.6 6.6 14 C5.5 10 7.5 5.5 12 2 Z M11.6 20 L11.2 23 L12.8 23 L12.4 20 Z',
+              veins: 'M12 20 L12 4 M12 9 L15 7.5 M12 12 L8.6 10.2 M12 15 L15.6 13.2 M12 17 L9 15.6' },
+            // ива
+            { vb: '0 0 24 24', d: 'M12 1 C14.4 6 14.6 14 12.4 21 L12.6 23 L11.4 23 L11.6 21 C9.4 14 9.6 6 12 1 Z',
+              veins: 'M12 22 L12 3 M12 9 L13.4 7.6 M12 13 L10.6 11.6 M12 17 L13.2 15.8' }
+        ];
+        function leafSVG(color, shape) {
+            const L = LEAF_SHAPES[shape % LEAF_SHAPES.length];
+            return `<svg viewBox="${L.vb}" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                <path d="${L.d}" fill="${color}"/>
+                <path d="${L.veins}" stroke="rgba(40,25,10,0.45)" stroke-width="0.7" fill="none"/>
+            </svg>`;
+        }
+        // Фиксированная раскладка, чтобы тыквы не налезали друг на друга и не мешали чтению
+        const PUMPKIN_LAYOUT = [
+            // «грядка» внизу экрана, над нижним меню
+            { l: -3,  b: 0,  w: 92, c: 0, r: -6, o: 0.9, sway: true },
+            { l: 17,  b: 0,  w: 54, c: 2, r: 5,  o: 0.85 },
+            { l: 58,  b: 0,  w: 66, c: 1, r: -3, o: 0.88, sway: true },
+            { l: 80,  b: 0,  w: 100, c: 0, r: 7, o: 0.9 },
+            { l: 40,  b: 0,  w: 38, c: 0, r: 10, o: 0.8 },
+            // редкие тыковки по краям экрана
+            { l: -5,  t: 14, w: 48, c: 1, r: -14, o: 0.7 },
+            { l: 87,  t: 9,  w: 40, c: 2, r: 12,  o: 0.68 },
+            { l: 89,  t: 42, w: 56, c: 0, r: -8,  o: 0.68 },
+            { l: -7,  t: 55, w: 44, c: 2, r: 9,   o: 0.65 },
+            { l: 46,  t: 33, w: 26, c: 1, r: 16,  o: 0.4 }
+        ];
+        const LEAF_LAYOUT = [
+            { l: 3, t: 79, s: 22, r: -102, o: 0.52, f: 0 },
+            { l: 30, t: 26, s: 18, r: 116, o: 0.65, f: 1 },
+            { l: 80, t: 50, s: 24, r: -74, o: 0.54, f: 2 },
+            { l: 62, t: 25, s: 14, r: 146, o: 0.5, f: 3 },
+            { l: 39, t: 80, s: 18, r: 68, o: 0.6, f: 0 },
+            { l: 35, t: 17, s: 16, r: -46, o: 0.47, f: 1 },
+            { l: 82, t: 18, s: 18, r: 59, o: 0.52, f: 2 },
+            { l: 70, t: 57, s: 20, r: -86, o: 0.64, f: 3 },
+            { l: 5, t: 7, s: 14, r: -131, o: 0.64, f: 0 },
+            { l: 62, t: 42, s: 18, r: 4, o: 0.62, f: 1 },
+            { l: 13, t: 29, s: 20, r: -135, o: 0.66, f: 2 },
+            { l: 94, t: 39, s: 24, r: -137, o: 0.47, f: 3 },
+            { l: 90, t: 61, s: 24, r: 58, o: 0.52, f: 0 },
+            { l: 9, t: 72, s: 14, r: 66, o: 0.54, f: 1 },
+            { l: 38, t: 60, s: 16, r: -23, o: 0.48, f: 2 },
+            { l: 31, t: 38, s: 20, r: -129, o: 0.49, f: 3 },
+            { l: 34, t: 69, s: 16, r: 50, o: 0.67, f: 0 },
+            { l: 82, t: 70, s: 18, r: 24, o: 0.69, f: 1 },
+            { l: 55, t: 16, s: 16, r: 167, o: 0.51, f: 2 },
+            { l: 11, t: 50, s: 18, r: -26, o: 0.45, f: 3 },
+            { l: 60, t: 70, s: 22, r: -7, o: 0.69, f: 0 },
+            { l: 64, t: 50, s: 22, r: 165, o: 0.62, f: 1 },
+            { l: 78, t: 31, s: 24, r: 116, o: 0.55, f: 2 },
+            { l: 84, t: 5, s: 24, r: 35, o: 0.47, f: 3 },
+            { l: 28, t: 47, s: 16, r: -114, o: 0.54, f: 0 },
+            { l: 53, t: 4, s: 16, r: 104, o: 0.48, f: 1 }
+        ];
+        const LEAF_COLORS = ['#e8892b', '#dcaa30', '#c2561c', '#8f9f72', '#b5701e', '#a3b18a', '#d4682a', '#e3bf4f', '#9b3d1c'];
+        function createAutumnBg(){
+            const c = document.getElementById('stars');
+            if (!c) return;
+            const frag = document.createDocumentFragment();
+            PUMPKIN_LAYOUT.forEach((p, i) => {
+                const el = document.createElement('div');
+                el.className = 'bg-pumpkin' + (p.sway ? ' sway' : '');
+                el.style.width = p.w + 'px';
+                el.style.left = p.l + '%';
+                if (p.t != null) el.style.top = p.t + '%';
+                else el.style.bottom = '-' + Math.round(p.w * 0.12) + 'px';
+                el.style.opacity = p.o;
+                el.style.setProperty('--r', p.r + 'deg');
+                el.style.transform = 'rotate(' + p.r + 'deg)';
+                if (p.sway) el.style.animationDelay = (-i * 1.3) + 's';
+                el.innerHTML = pumpkinSVG(i, p.c);
+                frag.appendChild(el);
+            });
+            // Листья лежат неподвижно — без анимации, чтобы не нагружать телефон
+            LEAF_LAYOUT.forEach((f, i) => {
+                const lf = document.createElement('div');
+                lf.className = 'bg-leaf';
+                lf.style.width = lf.style.height = f.s + 'px';
+                lf.style.left = f.l + '%';
+                lf.style.top = f.t + '%';
+                lf.style.opacity = f.o;
+                lf.style.transform = 'rotate(' + f.r + 'deg)';
+                lf.innerHTML = leafSVG(LEAF_COLORS[i % LEAF_COLORS.length], f.f);
+                frag.appendChild(lf);
+            });
+            c.appendChild(frag);
+        }
+
         function loadFromTelegram() {
             return new Promise((resolve) => {
                 try {
@@ -658,7 +772,7 @@
                 } catch(e) {}
                 
                 btn.innerHTML = '✅ Отправлено!';
-                btn.style.background = '#22c55e';
+                btn.style.background = 'linear-gradient(135deg, #9aab7a, #5f6d47)';
                 
                 setTimeout(() => {
                     try {
@@ -687,7 +801,7 @@
             const loadingScreen = document.getElementById('loadingScreen');
             const mainContainer = document.getElementById('mainContainer');
             
-            createStars();
+            try { createAutumnBg(); } catch (e) { console.error('createAutumnBg', e); }
             await loadFromTelegram();
             updateUI();
             setupChips();
